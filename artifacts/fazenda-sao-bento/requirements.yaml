@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "Animations for page transitions and components"
+  "recharts": "Dashboard analytics charts and data visualization"
+  "date-fns": "Human-readable date formatting"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod validation for forms"
+  "zod": "Schema validation"
+
+images:
+  - path: "artifacts/fazenda-sao-bento/public/images/logo.png"
+    description: "A professional, minimalist logo for a Brazilian farm named 'Fazenda São Bento'. It should feature a subtle stylized leaf or grain element combined with modern, clean typography in deep earthy green and amber/gold. White background, highly legible."
+    aspect_ratio: "16:9"
+  - path: "artifacts/fazenda-sao-bento/public/images/auth-bg.png"
+    description: "A stunning, cinematic drone shot of a vast soybean field at golden hour sunset. Rich amber and deep green colors. The image should have a professional, premium agricultural aesthetic with a slight dark wash on the left side for text readability."
+    aspect_ratio: "16:9"
+
+notes:
+  - Intercepting window.fetch to inject JWT tokens for the generated @workspace/api-client-react.
+  - Assuming the API handles cascading deletes or validations correctly.
+  - Zod schemas for forms are built locally to pair with React Hook Form.

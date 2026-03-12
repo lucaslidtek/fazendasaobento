@@ -1,22 +1,41 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Fazenda São Bento — Sistema de Gestão Agrícola
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: machines
+    description: Machines and equipment
+  - name: trucks
+    description: Trucks management
+  - name: harvest
+    description: Harvest records
+  - name: transport
+    description: Transport and freight records
+  - name: fueling
+    description: Diesel fueling records
+  - name: products
+    description: Input products inventory
+  - name: stock-movements
+    description: Stock movement records
+  - name: dashboard
+    description: Dashboard summary data
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +43,694 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a new user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    put:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted
+
+  /machines:
+    get:
+      operationId: listMachines
+      tags: [machines]
+      summary: List all machines
+      responses:
+        "200":
+          description: List of machines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Machine"
+    post:
+      operationId: createMachine
+      tags: [machines]
+      summary: Create machine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMachineRequest"
+      responses:
+        "201":
+          description: Machine created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Machine"
+
+  /machines/{id}:
+    put:
+      operationId: updateMachine
+      tags: [machines]
+      summary: Update machine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMachineRequest"
+      responses:
+        "200":
+          description: Machine updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Machine"
+    delete:
+      operationId: deleteMachine
+      tags: [machines]
+      summary: Delete machine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Machine deleted
+
+  /trucks:
+    get:
+      operationId: listTrucks
+      tags: [trucks]
+      summary: List all trucks
+      responses:
+        "200":
+          description: List of trucks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Truck"
+    post:
+      operationId: createTruck
+      tags: [trucks]
+      summary: Create truck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTruckRequest"
+      responses:
+        "201":
+          description: Truck created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Truck"
+
+  /trucks/{id}:
+    put:
+      operationId: updateTruck
+      tags: [trucks]
+      summary: Update truck
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTruckRequest"
+      responses:
+        "200":
+          description: Truck updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Truck"
+    delete:
+      operationId: deleteTruck
+      tags: [trucks]
+      summary: Delete truck
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Truck deleted
+
+  /harvest:
+    get:
+      operationId: listHarvest
+      tags: [harvest]
+      summary: List harvest records
+      parameters:
+        - name: culture
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of harvest records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HarvestRecord"
+    post:
+      operationId: createHarvest
+      tags: [harvest]
+      summary: Create harvest record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHarvestRequest"
+      responses:
+        "201":
+          description: Harvest record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HarvestRecord"
+
+  /harvest/{id}:
+    put:
+      operationId: updateHarvest
+      tags: [harvest]
+      summary: Update harvest record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHarvestRequest"
+      responses:
+        "200":
+          description: Harvest record updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HarvestRecord"
+    delete:
+      operationId: deleteHarvest
+      tags: [harvest]
+      summary: Delete harvest record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Harvest record deleted
+
+  /transport:
+    get:
+      operationId: listTransport
+      tags: [transport]
+      summary: List transport records
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of transport records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TransportRecord"
+    post:
+      operationId: createTransport
+      tags: [transport]
+      summary: Create transport record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransportRequest"
+      responses:
+        "201":
+          description: Transport record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportRecord"
+
+  /transport/{id}:
+    put:
+      operationId: updateTransport
+      tags: [transport]
+      summary: Update transport record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransportRequest"
+      responses:
+        "200":
+          description: Transport record updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportRecord"
+    delete:
+      operationId: deleteTransport
+      tags: [transport]
+      summary: Delete transport record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transport record deleted
+
+  /fueling:
+    get:
+      operationId: listFueling
+      tags: [fueling]
+      summary: List fueling records
+      parameters:
+        - name: machineId
+          in: query
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of fueling records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FuelingRecord"
+    post:
+      operationId: createFueling
+      tags: [fueling]
+      summary: Create fueling record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFuelingRequest"
+      responses:
+        "201":
+          description: Fueling record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelingRecord"
+
+  /fueling/{id}:
+    put:
+      operationId: updateFueling
+      tags: [fueling]
+      summary: Update fueling record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFuelingRequest"
+      responses:
+        "200":
+          description: Fueling record updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelingRecord"
+    delete:
+      operationId: deleteFueling
+      tags: [fueling]
+      summary: Delete fueling record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Fueling record deleted
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all products/inputs
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product deleted
+
+  /stock-movements:
+    get:
+      operationId: listStockMovements
+      tags: [stock-movements]
+      summary: List stock movements
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [entrada, saida]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of stock movements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+    post:
+      operationId: createStockMovement
+      tags: [stock-movements]
+      summary: Create stock movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockMovementRequest"
+      responses:
+        "201":
+          description: Stock movement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockMovement"
+        "400":
+          description: Insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stock-movements/{id}:
+    delete:
+      operationId: deleteStockMovement
+      tags: [stock-movements]
+      summary: Delete stock movement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movement deleted
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +741,566 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        error:
+          type: string
+      required:
+        - message
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+      required:
+        - email
+        - password
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [admin, operador]
+          default: operador
+      required:
+        - name
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, operador]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [admin, operador]
+      required:
+        - name
+        - email
+        - password
+        - role
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, operador]
+        password:
+          type: string
+
+    Machine:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        model:
+          type: string
+        type:
+          type: string
+          enum: [trator, colheitadeira, caminhao, equipamento]
+        location:
+          type: string
+        status:
+          type: string
+          enum: [ativo, manutencao, inativo]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - status
+        - createdAt
+
+    CreateMachineRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        model:
+          type: string
+        type:
+          type: string
+          enum: [trator, colheitadeira, caminhao, equipamento]
+        location:
+          type: string
+        status:
+          type: string
+          enum: [ativo, manutencao, inativo]
+      required:
+        - name
+        - type
+        - status
+
+    Truck:
+      type: object
+      properties:
+        id:
+          type: integer
+        plate:
+          type: string
+        model:
+          type: string
+        capacity:
+          type: number
+        status:
+          type: string
+          enum: [ativo, manutencao, inativo]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - plate
+        - status
+        - createdAt
+
+    CreateTruckRequest:
+      type: object
+      properties:
+        plate:
+          type: string
+        model:
+          type: string
+        capacity:
+          type: number
+        status:
+          type: string
+          enum: [ativo, manutencao, inativo]
+      required:
+        - plate
+        - status
+
+    HarvestRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        culture:
+          type: string
+          enum: [soja, feijao, milho]
+        area:
+          type: string
+        driverName:
+          type: string
+        machineId:
+          type: integer
+        machineName:
+          type: string
+        quantitySacks:
+          type: number
+        areaHectares:
+          type: number
+        productivity:
+          type: number
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - date
+        - culture
+        - area
+        - driverName
+        - machineId
+        - quantitySacks
+        - areaHectares
+        - productivity
+        - createdAt
+
+    CreateHarvestRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        culture:
+          type: string
+          enum: [soja, feijao, milho]
+        area:
+          type: string
+        driverName:
+          type: string
+        machineId:
+          type: integer
+        quantitySacks:
+          type: number
+        areaHectares:
+          type: number
+        notes:
+          type: string
+      required:
+        - date
+        - culture
+        - area
+        - driverName
+        - machineId
+        - quantitySacks
+        - areaHectares
+
+    TransportRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        truckId:
+          type: integer
+        truckPlate:
+          type: string
+        driverName:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        cargoTons:
+          type: number
+        freightValue:
+          type: number
+        harvestId:
+          type: integer
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - date
+        - truckId
+        - driverName
+        - origin
+        - destination
+        - cargoTons
+        - createdAt
+
+    CreateTransportRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        truckId:
+          type: integer
+        driverName:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        cargoTons:
+          type: number
+        freightValue:
+          type: number
+        harvestId:
+          type: integer
+        notes:
+          type: string
+      required:
+        - date
+        - truckId
+        - driverName
+        - origin
+        - destination
+        - cargoTons
+
+    FuelingRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        machineId:
+          type: integer
+        machineName:
+          type: string
+        operatorName:
+          type: string
+        pump:
+          type: string
+        liters:
+          type: number
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - date
+        - machineId
+        - operatorName
+        - liters
+        - createdAt
+
+    CreateFuelingRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        machineId:
+          type: integer
+        operatorName:
+          type: string
+        pump:
+          type: string
+        liters:
+          type: number
+        notes:
+          type: string
+      required:
+        - date
+        - machineId
+        - operatorName
+        - liters
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        unit:
+          type: string
+          enum: [L, KG, UN, SC]
+        currentStock:
+          type: number
+        minStock:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - unit
+        - currentStock
+        - createdAt
+
+    CreateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        unit:
+          type: string
+          enum: [L, KG, UN, SC]
+        currentStock:
+          type: number
+        minStock:
+          type: number
+      required:
+        - name
+        - category
+        - unit
+        - currentStock
+
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        productName:
+          type: string
+        type:
+          type: string
+          enum: [entrada, saida]
+        quantity:
+          type: number
+        reason:
+          type: string
+        culture:
+          type: string
+        operatorName:
+          type: string
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - productId
+        - type
+        - quantity
+        - date
+        - createdAt
+
+    CreateStockMovementRequest:
+      type: object
+      properties:
+        productId:
+          type: integer
+        type:
+          type: string
+          enum: [entrada, saida]
+        quantity:
+          type: number
+        reason:
+          type: string
+        culture:
+          type: string
+        operatorName:
+          type: string
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+      required:
+        - productId
+        - type
+        - quantity
+        - date
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalHarvestSacks:
+          type: number
+        totalHarvestHectares:
+          type: number
+        totalTransportTons:
+          type: number
+        totalFuelingLiters:
+          type: number
+        activeMachines:
+          type: integer
+        activeTrucks:
+          type: integer
+        lowStockProducts:
+          type: integer
+        recentHarvests:
+          type: array
+          items:
+            $ref: "#/components/schemas/HarvestRecord"
+        recentTransports:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransportRecord"
+        harvestByCulture:
+          type: array
+          items:
+            type: object
+            properties:
+              culture:
+                type: string
+              totalSacks:
+                type: number
+              totalHectares:
+                type: number
+            required:
+              - culture
+              - totalSacks
+              - totalHectares
+        fuelingByMachine:
+          type: array
+          items:
+            type: object
+            properties:
+              machineName:
+                type: string
+              totalLiters:
+                type: number
+            required:
+              - machineName
+              - totalLiters
+      required:
+        - totalHarvestSacks
+        - totalHarvestHectares
+        - totalTransportTons
+        - totalFuelingLiters
+        - activeMachines
+        - activeTrucks
+        - lowStockProducts
+        - recentHarvests
+        - recentTransports
+        - harvestByCulture
+        - fuelingByMachine

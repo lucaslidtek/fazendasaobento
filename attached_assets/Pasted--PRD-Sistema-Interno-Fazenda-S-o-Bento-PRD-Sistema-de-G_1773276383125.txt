@@ -1,0 +1,356 @@
+📄 PRD — Sistema Interno Fazenda São Bento
+PRD — Sistema de Gestão Agrícola
+
+Produto: Sistema Interno Fazenda São Bento
+Tipo: ERP agrícola interno
+Objetivo: substituir planilhas operacionais da fazenda
+
+1. Visão Geral
+
+A Fazenda São Bento utiliza planilhas para controlar:
+
+produção agrícola
+
+colheita
+
+transporte
+
+máquinas
+
+combustível
+
+estoque de insumos
+
+Esse processo gera:
+
+retrabalho
+
+inconsistência de dados
+
+dificuldade de análise
+
+falta de histórico estruturado
+
+O sistema terá como objetivo centralizar todas essas operações em uma única plataforma, com foco em simplicidade e uso em campo.
+
+2. Objetivo do Sistema
+
+Criar um sistema interno que permita:
+
+registrar produção agrícola
+
+controlar caminhões e fretes
+
+registrar abastecimento de diesel
+
+controlar máquinas e equipamentos
+
+gerenciar estoque de insumos
+
+gerar relatórios operacionais da fazenda
+
+3. Contrato de Execução de Design (OBRIGATÓRIO)
+
+Toda IA ou time que implementar este PRD deve seguir estas regras.
+
+Identidade
+
+Atuar como Design Engineer de produto agrícola moderno.
+
+A interface deve parecer:
+
+sistema profissional
+
+confiável
+
+simples para uso no campo
+
+Nunca parecer:
+
+sistema genérico
+
+painel administrativo padrão
+
+Filosofia de design
+
+Crafted over Assembled
+
+interfaces intencionais
+
+espaçamento generoso
+
+hierarquia clara
+
+design limpo
+
+Micro-interações
+
+Todos os elementos clicáveis devem conter:
+
+hover
+
+focus
+
+transição
+
+transition-all duration-200 ease-out
+Hierarquia visual
+
+Interface deve priorizar:
+
+1️⃣ informação crítica
+2️⃣ operação rápida
+3️⃣ clareza de leitura
+
+4. Autenticação (Primeira Etapa do Sistema)
+
+Nenhuma funcionalidade pode ser acessada sem login.
+
+Tela de Login
+
+Elementos obrigatórios:
+
+logo da Fazenda São Bento
+
+botão Entrar com Google
+
+login com email e senha
+
+criar conta
+
+recuperar senha
+
+Perfis de usuário
+Admin
+
+(proprietário / gerente)
+
+Pode:
+
+ver todos os dados
+
+editar tudo
+
+gerar relatórios
+
+cadastrar usuários
+
+Operador
+
+Pode:
+
+registrar operações
+
+registrar abastecimento
+
+registrar colheita
+
+registrar transporte
+
+5. Módulos do Sistema
+
+O sistema será dividido em módulos.
+
+Módulo 1 — Colheita
+
+Baseado nas planilhas de produção soja / feijão / milho.
+
+Cadastro de colheita
+
+Campos:
+
+data
+
+cultura
+
+área
+
+motorista
+
+máquina
+
+quantidade (sacas)
+
+área colhida (ha)
+
+produtividade (sc/ha)
+
+Relatórios
+
+produção por cultura
+
+produção por área
+
+produção por operador
+
+produção por dia
+
+Módulo 2 — Transporte / Caminhões
+
+Baseado na planilha Caminhões.xlsx
+
+Registro de transporte
+
+Campos:
+
+data
+
+caminhão
+
+motorista
+
+origem
+
+destino
+
+carga (toneladas)
+
+Controle de fretes
+
+Campos:
+
+caminhão
+
+motorista
+
+carga transportada
+
+valor do frete
+
+Módulo 3 — Máquinas e Equipamentos
+
+Baseado na lista de equipamentos.
+
+Cadastro de:
+
+tratores
+
+colheitadeiras
+
+caminhões
+
+equipamentos agrícolas
+
+Campos:
+
+nome
+
+modelo
+
+tipo
+
+localização
+
+status
+
+Módulo 4 — Abastecimento (Diesel)
+
+Baseado na planilha de consumo.
+
+Registro de abastecimento:
+
+Campos:
+
+data
+
+máquina
+
+operador
+
+bomba
+
+litros abastecidos
+
+Relatórios
+
+consumo por máquina
+
+consumo por operador
+
+consumo mensal
+
+Módulo 5 — Estoque de Insumos
+
+Baseado no inventário.
+
+Cadastro de insumos:
+
+produto
+
+categoria
+
+unidade (L / KG)
+
+estoque atual
+
+Movimentações
+
+Entrada:
+
+compra
+
+reposição
+
+Saída:
+
+aplicação no campo
+
+Relatórios
+
+estoque atual
+
+histórico de uso
+
+consumo por cultura
+
+6. Regras de Negócio
+
+abastecimento deve estar vinculado a uma máquina
+
+colheita deve estar vinculada a uma cultura
+
+transporte deve estar vinculado a uma colheita
+
+estoque não pode ficar negativo
+
+7. Arquitetura
+
+Sistema dividido em:
+
+Frontend
+Backend
+Banco de dados
+
+Estrutura preparada para expansão.
+
+8. Entidades do Sistema
+
+Usuário
+Máquina
+Caminhão
+Colheita
+Transporte
+Abastecimento
+Produto
+Movimentação de estoque
+
+9. Documentos obrigatórios
+
+A implementação deve gerar:
+
+README.md
+Arquitetura.md
+Modelo-de-Dados.md
+Regras-de-Negocio.md
+Design-System.md
+10. Critérios de Sucesso
+
+O sistema será considerado bem sucedido quando:
+
+substituir totalmente as planilhas
+
+permitir registro rápido em campo
+
+gerar relatórios confiáveis
+
+reduzir erros operacionais
