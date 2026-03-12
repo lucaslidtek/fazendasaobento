@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListTransport, useCreateTransport, useDeleteTransport, getListTransportQueryKey, useListTrucks } from "@workspace/api-client-react";
+import { DEMO_TRANSPORTS, DEMO_TRUCKS } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -30,8 +31,10 @@ export default function Transporte() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: records, isLoading } = useListTransport();
-  const { data: trucks } = useListTrucks();
+  const { data: apiRecords, isLoading } = useListTransport();
+  const { data: apiTrucks } = useListTrucks();
+  const records = apiRecords ?? DEMO_TRANSPORTS;
+  const trucks = apiTrucks ?? DEMO_TRUCKS;
   
   const createMutation = useCreateTransport({
     mutation: {
@@ -144,7 +147,7 @@ export default function Transporte() {
       </div>
 
       <div className="bg-card rounded-2xl border overflow-hidden">
-        {isLoading ? (
+        {isLoading && !apiRecords ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
           <Table>

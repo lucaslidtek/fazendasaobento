@@ -8,6 +8,7 @@ import {
   getListProductsQueryKey,
   getListStockMovementsQueryKey 
 } from "@workspace/api-client-react";
+import { DEMO_PRODUCTS } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,8 +47,9 @@ export default function Estoque() {
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [isMovementOpen, setIsMovementOpen] = useState(false);
 
-  const { data: products, isLoading: isLoadingProducts } = useListProducts();
+  const { data: apiProducts, isLoading: isLoadingProducts } = useListProducts();
   const { data: movements, isLoading: isLoadingMovements } = useListStockMovements();
+  const products = apiProducts ?? DEMO_PRODUCTS;
   
   const createProductMut = useCreateProduct({
     mutation: {
@@ -197,7 +199,7 @@ export default function Estoque() {
 
         <TabsContent value="products">
           <div className="bg-card rounded-2xl border overflow-hidden">
-            {isLoadingProducts ? (
+            {isLoadingProducts && !apiProducts ? (
               <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
             ) : (
               <Table>

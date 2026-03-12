@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListHarvest, useCreateHarvest, useDeleteHarvest, getListHarvestQueryKey, useListMachines } from "@workspace/api-client-react";
+import { DEMO_HARVESTS, DEMO_MACHINES } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -44,8 +45,10 @@ export default function Colheita() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
-  const { data: records, isLoading } = useListHarvest();
-  const { data: machines } = useListMachines();
+  const { data: apiRecords, isLoading } = useListHarvest();
+  const { data: apiMachines } = useListMachines();
+  const records = apiRecords ?? DEMO_HARVESTS;
+  const machines = apiMachines ?? DEMO_MACHINES;
 
   const createMutation = useCreateHarvest({
     mutation: {
@@ -258,7 +261,7 @@ export default function Colheita() {
       </div>
 
       <div className="bg-card rounded-2xl border overflow-hidden">
-        {isLoading ? (
+        {isLoading && !apiRecords ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
           <Table>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListMachines, useCreateMachine, useDeleteMachine, getListMachinesQueryKey } from "@workspace/api-client-react";
+import { DEMO_MACHINES } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,7 +29,8 @@ export default function Maquinas() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: records, isLoading } = useListMachines();
+  const { data: apiRecords, isLoading } = useListMachines();
+  const records = apiRecords ?? DEMO_MACHINES;
   
   const createMutation = useCreateMachine({
     mutation: {
@@ -147,7 +149,7 @@ export default function Maquinas() {
       </div>
 
       <div className="bg-card rounded-2xl border overflow-hidden">
-        {isLoading ? (
+        {isLoading && !apiRecords ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
           <Table>

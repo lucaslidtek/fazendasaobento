@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useGetDashboardSummary } from "@workspace/api-client-react";
+import { DEMO_DASHBOARD } from "@/lib/demo-data";
 import { Loader2, Tractor, Wheat, Truck, Droplet, CircleAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -7,9 +8,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function Dashboard() {
-  const { data, isLoading } = useGetDashboardSummary();
+  const { data: apiData, isLoading } = useGetDashboardSummary();
+  const data = apiData ?? DEMO_DASHBOARD;
 
-  if (isLoading) {
+  if (isLoading && !apiData) {
     return (
       <AppLayout>
         <div className="h-[60vh] flex items-center justify-center">
@@ -18,8 +20,6 @@ export default function Dashboard() {
       </AppLayout>
     );
   }
-
-  if (!data) return null;
 
   const kpis = [
     { title: "Total Colhido (sc)", value: data.totalHarvestSacks.toLocaleString('pt-BR'), icon: Wheat, color: "text-amber-500", bg: "bg-amber-500/10" },
