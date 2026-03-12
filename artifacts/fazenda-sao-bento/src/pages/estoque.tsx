@@ -140,7 +140,7 @@ export default function Estoque() {
 
           <Dialog open={isMovementOpen} onOpenChange={setIsMovementOpen}>
             <DialogTrigger asChild>
-              <Button className="rounded-xl shadow-lg h-11 px-6">
+              <Button className="rounded-xl h-11 px-6">
                 <ArrowUpRight className="w-5 h-5 mr-2" />
                 Movimentar
               </Button>
@@ -196,7 +196,7 @@ export default function Estoque() {
         </TabsList>
 
         <TabsContent value="products">
-          <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+          <div className="bg-card rounded-2xl border overflow-hidden">
             {isLoadingProducts ? (
               <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
             ) : (
@@ -241,7 +241,7 @@ export default function Estoque() {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+          <div className="bg-card rounded-2xl border overflow-hidden">
             {isLoadingMovements ? (
               <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
             ) : (

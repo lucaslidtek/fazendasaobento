@@ -44,12 +44,12 @@ export default function Usuarios() {
           </h1>
           <p className="text-muted-foreground mt-1">Gerencie os usuários do sistema e suas permissões.</p>
         </div>
-        <Button asChild className="rounded-xl shadow-lg h-11 px-6">
+        <Button asChild className="rounded-xl h-11 px-6">
           <Link href="/register">Adicionar Usuário</Link>
         </Button>
       </div>
 
-      <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (

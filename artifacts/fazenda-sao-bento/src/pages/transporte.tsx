@@ -79,7 +79,7 @@ export default function Transporte() {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg hover:-translate-y-0.5 transition-transform h-11 px-6">
+            <Button className="h-11 px-5">
               <Plus className="w-5 h-5 mr-2" />
               Novo Transporte
             </Button>
@@ -132,7 +132,7 @@ export default function Transporte() {
 
                 <DialogFooter className="pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={createMutation.isPending}>
+                  <Button type="submit" className="" disabled={createMutation.isPending}>
                     {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Salvar Registro
                   </Button>
@@ -143,7 +143,7 @@ export default function Transporte() {
         </Dialog>
       </div>
 
-      <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (

@@ -81,7 +81,7 @@ export default function Maquinas() {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl shadow-lg hover:-translate-y-0.5 transition-transform h-11 px-6">
+            <Button className="h-11 px-5">
               <Plus className="w-5 h-5 mr-2" />
               Nova Máquina
             </Button>
@@ -146,7 +146,7 @@ export default function Maquinas() {
         </Dialog>
       </div>
 
-      <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (

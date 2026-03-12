@@ -35,7 +35,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full bg-background/50">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="h-16 flex items-center px-6 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+          <header className="h-14 flex items-center px-6 border-b border-border bg-background sticky top-0 z-10">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
           </header>
           <main className="flex-1 overflow-auto p-6 md:p-8">

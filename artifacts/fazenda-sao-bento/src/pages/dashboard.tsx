@@ -40,7 +40,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {kpis.map((kpi, i) => (
-            <Card key={i} className="border-none shadow-sm hover:shadow-md transition-shadow">
+            <Card key={i} className="card-interactive">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl ${kpi.bg}`}>
@@ -57,7 +57,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-none shadow-sm">
+          <Card className="">
             <CardHeader>
               <CardTitle className="text-lg">Colheita por Cultura (Sacas)</CardTitle>
             </CardHeader>
@@ -81,7 +81,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm">
+          <Card className="">
             <CardHeader>
               <CardTitle className="text-lg">Consumo de Diesel por Máquina (L)</CardTitle>
             </CardHeader>
@@ -103,7 +103,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-none shadow-sm">
+          <Card className="">
             <CardHeader>
               <CardTitle className="text-lg">Últimas Colheitas</CardTitle>
             </CardHeader>
@@ -129,7 +129,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm">
+          <Card className="">
             <CardHeader>
               <CardTitle className="text-lg">Últimos Transportes</CardTitle>
             </CardHeader>

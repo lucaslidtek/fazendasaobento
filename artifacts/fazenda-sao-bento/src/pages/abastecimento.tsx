@@ -77,7 +77,7 @@ export default function Abastecimento() {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl bg-slate-700 hover:bg-slate-800 shadow-lg hover:-translate-y-0.5 transition-transform h-11 px-6">
+            <Button className="h-11 px-5">
               <Plus className="w-5 h-5 mr-2" />
               Novo Abastecimento
             </Button>
@@ -121,7 +121,7 @@ export default function Abastecimento() {
 
                 <DialogFooter className="pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
-                  <Button type="submit" className="bg-slate-700 hover:bg-slate-800" disabled={createMutation.isPending}>
+                  <Button type="submit" className="" disabled={createMutation.isPending}>
                     {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Salvar Registro
                   </Button>
@@ -132,7 +132,7 @@ export default function Abastecimento() {
         </Dialog>
       </div>
 
-      <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (

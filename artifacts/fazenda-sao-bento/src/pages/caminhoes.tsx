@@ -89,7 +89,7 @@ export default function Caminhoes() {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg hover:-translate-y-0.5 transition-transform h-11 px-6">
+            <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 transition-transform h-11 px-6">
               <Plus className="w-5 h-5 mr-2" />
               Cadastrar Caminhão
             </Button>
@@ -136,7 +136,7 @@ export default function Caminhoes() {
         </Dialog>
       </div>
 
-      <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
