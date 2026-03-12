@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Wheat } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const registerSchema = z.object({
   name: z.string().min(3, "Nome muito curto"),
@@ -46,13 +46,22 @@ export default function Register() {
 
   return (
     <div className="min-h-screen w-full flex bg-background">
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      {/* Formulário à esquerda no registro */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md space-y-8"
         >
-          <div className="text-center lg:text-left">
+          {/* Logo visível em mobile */}
+          <div className="lg:hidden flex flex-col items-center gap-3 mb-2">
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Fazenda São Bento" className="w-24 h-24 object-contain" />
+            <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+              Fazenda São Bento
+            </h1>
+          </div>
+
+          <div>
             <h2 className="text-3xl font-bold tracking-tight text-foreground">Criar Conta</h2>
             <p className="text-muted-foreground mt-2 text-lg">Preencha os dados para se registrar.</p>
           </div>
@@ -139,21 +148,43 @@ export default function Register() {
         </motion.div>
       </div>
 
-      <div className="hidden lg:flex w-1/2 relative">
-        <div className="absolute inset-0 bg-gradient-to-l from-sidebar/90 to-sidebar/40 z-10 mix-blend-multiply" />
-        <img 
-          src={`${import.meta.env.BASE_URL}images/auth-bg.png`} 
-          alt="Fazenda" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute bottom-12 right-12 z-20 text-white max-w-lg text-right">
-          <div className="flex items-center justify-end gap-3 mb-6">
-            <h1 className="text-4xl font-bold font-display">Fazenda São Bento</h1>
-            <div className="bg-primary p-3 rounded-2xl">
-              <Wheat className="w-8 h-8 text-primary-foreground" />
-            </div>
-          </div>
-          <p className="text-xl text-white/80 font-medium">Junte-se à nossa equipe e otimize a produção.</p>
+      {/* Painel direito — identidade visual */}
+      <div className="hidden lg:flex w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-bl from-[hsl(103,57%,10%)] via-[hsl(103,52%,16%)] to-[hsl(103,48%,22%)]" />
+        <div className="absolute inset-0 opacity-5" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }} />
+
+        <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="mb-10"
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt="Fazenda São Bento"
+              className="w-52 h-52 object-contain drop-shadow-2xl"
+            />
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <h1 className="text-5xl font-bold text-white tracking-tight mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              Fazenda São Bento
+            </h1>
+            <p className="text-xl text-white/70 font-medium max-w-xs mx-auto leading-relaxed">
+              Junte-se à nossa equipe e otimize a produção.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 w-24 h-1 rounded-full"
+            style={{ backgroundColor: 'hsl(28, 83%, 52%)' }}
+          />
         </div>
       </div>
     </div>

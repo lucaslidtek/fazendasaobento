@@ -7,7 +7,8 @@ import {
   Fuel, 
   Package, 
   Users, 
-  LogOut 
+  LogOut,
+  Container
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,29 +45,29 @@ export function AppSidebar() {
   ];
 
   const adminItems = [
-    { title: "Caminhões", icon: Truck, path: "/caminhoes" },
+    { title: "Caminhões", icon: Container, path: "/caminhoes" },
     { title: "Usuários", icon: Users, path: "/usuarios" },
   ];
 
   return (
     <Sidebar className="border-r-0 shadow-xl">
       <SidebarContent className="bg-sidebar">
-        <div className="p-6 flex items-center gap-3">
-          <div className="bg-primary/20 p-2 rounded-xl">
-            <img 
-              src={`${import.meta.env.BASE_URL}images/logo.png`} 
-              alt="Logo" 
-              className="w-8 h-8 object-contain"
-            />
-          </div>
+        {/* Logo da fazenda */}
+        <div className="p-5 pb-4 flex items-center gap-3 border-b border-sidebar-border/30">
+          <img 
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="Fazenda São Bento"
+            className="w-12 h-12 object-contain flex-shrink-0"
+          />
           <div>
-            <h2 className="text-xl font-bold text-sidebar-foreground tracking-tight">Fazenda</h2>
-            <p className="text-sidebar-primary text-sm font-medium -mt-1">São Bento</p>
+            <h2 className="text-base font-bold text-sidebar-foreground tracking-tight leading-tight">Fazenda</h2>
+            <p className="text-sidebar-primary text-sm font-bold leading-tight">São Bento</p>
+            <p className="text-sidebar-foreground/40 text-[10px] font-medium leading-tight uppercase tracking-wider">Agronegócios</p>
           </div>
         </div>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase tracking-wider font-semibold text-xs">Módulos</SidebarGroupLabel>
+        <SidebarGroup className="pt-4">
+          <SidebarGroupLabel className="text-sidebar-foreground/40 uppercase tracking-wider font-semibold text-[10px] px-4 mb-1">Módulos</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -74,10 +75,10 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={location === item.path}
-                    className="hover-elevate transition-all duration-200 py-5"
+                    className="hover-elevate transition-all duration-200 py-5 mx-2 rounded-xl"
                   >
-                    <Link href={item.path} className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-sidebar-foreground">
-                      <item.icon className="w-5 h-5" />
+                    <Link href={item.path} className="flex items-center gap-3 text-sidebar-foreground/75 hover:text-sidebar-foreground">
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
                       <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -89,7 +90,7 @@ export function AppSidebar() {
 
         {user?.role === "admin" && (
           <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase tracking-wider font-semibold text-xs">Administração</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground/40 uppercase tracking-wider font-semibold text-[10px] px-4 mb-1">Administração</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminItems.map((item) => (
@@ -97,10 +98,10 @@ export function AppSidebar() {
                     <SidebarMenuButton 
                       asChild 
                       isActive={location === item.path}
-                      className="hover-elevate transition-all duration-200 py-5"
+                      className="hover-elevate transition-all duration-200 py-5 mx-2 rounded-xl"
                     >
-                      <Link href={item.path} className="flex items-center gap-3 text-sidebar-foreground/80 hover:text-sidebar-foreground">
-                        <item.icon className="w-5 h-5" />
+                      <Link href={item.path} className="flex items-center gap-3 text-sidebar-foreground/75 hover:text-sidebar-foreground">
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
                         <span className="font-medium">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -112,19 +113,19 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="bg-sidebar border-t border-sidebar-border p-4">
+      <SidebarFooter className="bg-sidebar border-t border-sidebar-border/30 p-4">
         <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-lg">
+          <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-lg flex-shrink-0">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-semibold text-sidebar-foreground truncate">{user?.name}</p>
-            <p className="text-xs text-sidebar-foreground/60 truncate capitalize">{user?.role}</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate capitalize">{user?.role}</p>
           </div>
         </div>
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 transition-colors font-medium text-sm"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors font-medium text-sm"
         >
           <LogOut className="w-4 h-4" />
           Sair do sistema

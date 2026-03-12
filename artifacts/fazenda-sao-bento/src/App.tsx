@@ -8,6 +8,7 @@ import "./lib/fetch-interceptor";
 
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import RecuperarSenha from "@/pages/recuperar-senha";
 import Dashboard from "@/pages/dashboard";
 import Colheita from "@/pages/colheita";
 import Transporte from "@/pages/transporte";
@@ -25,6 +26,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/recuperar-senha" component={RecuperarSenha} />
       
       <Route path="/" component={Dashboard} />
       <Route path="/colheita" component={Colheita} />

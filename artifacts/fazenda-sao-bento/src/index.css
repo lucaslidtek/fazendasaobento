@@ -66,6 +66,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ============================================================
+   PALETA DE CORES — FAZENDA SÃO BENTO
+   Extraída da logo oficial:
+   - Verde floresta escuro (texto "São"): ~#2C5012 → HSL(103, 57%, 19%)
+   - Verde médio (anel externo): ~#3E7018  → HSL(103, 52%, 27%)
+   - Laranja/âmbar ("Bento"): ~#E07210   → HSL(28, 83%, 47%)
+   - Amarelo-ouro (detalhes):  ~#F0A800   → HSL(42, 100%, 47%)
+   ============================================================ */
+
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -73,61 +82,73 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Earthy Green & Amber Theme - Light Mode */
-  --background: 60 20% 98%;
-  --foreground: 142 50% 10%;
-  
-  --border: 142 20% 85%;
-  --input: 142 20% 85%;
-  --ring: 142 71% 25%;
+  /* Background — creme levíssimo para não cansar os olhos no campo */
+  --background: 60 18% 97%;
+  --foreground: 103 55% 10%;
+
+  --border: 103 18% 84%;
+  --input: 103 18% 84%;
+  --ring: 103 57% 25%;
 
   --card: 0 0% 100%;
-  --card-foreground: 142 50% 10%;
-  --card-border: 142 20% 90%;
+  --card-foreground: 103 55% 10%;
+  --card-border: 103 15% 90%;
 
-  --sidebar: 142 76% 15%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 142 70% 10%;
-  --sidebar-primary: 45 93% 47%;
-  --sidebar-primary-foreground: 142 76% 15%;
-  --sidebar-accent: 142 60% 20%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 45 93% 47%;
+  /* Sidebar — verde floresta escuro da logo */
+  --sidebar: 103 57% 14%;
+  --sidebar-foreground: 60 20% 96%;
+  --sidebar-border: 103 55% 10%;
+  --sidebar-primary: 28 83% 52%;
+  --sidebar-primary-foreground: 103 57% 10%;
+  --sidebar-accent: 103 48% 20%;
+  --sidebar-accent-foreground: 60 20% 96%;
+  --sidebar-ring: 28 83% 52%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 142 50% 10%;
-  --popover-border: 142 20% 90%;
+  --popover-foreground: 103 55% 10%;
+  --popover-border: 103 15% 90%;
 
-  --primary: 142 71% 25%;
+  /* Primary — verde floresta da logo */
+  --primary: 103 52% 26%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 45 93% 47%;
-  --secondary-foreground: 142 76% 15%;
+  /* Secondary — laranja da logo (texto "Bento") */
+  --secondary: 28 83% 47%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 142 20% 92%;
-  --muted-foreground: 142 15% 45%;
+  --muted: 103 18% 92%;
+  --muted-foreground: 103 15% 44%;
 
-  --accent: 38 92% 50%;
-  --accent-foreground: 142 76% 15%;
+  /* Accent — âmbar dourado dos detalhes da logo */
+  --accent: 38 90% 48%;
+  --accent-foreground: 103 57% 10%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 84% 58%;
   --destructive-foreground: 0 0% 100%;
 
-  --chart-1: 142 71% 25%;
-  --chart-2: 45 93% 47%;
-  --chart-3: 180 20% 50%;
-  --chart-4: 25 80% 55%;
-  --chart-5: 200 40% 40%;
+  /* Chart colors baseados na paleta da logo */
+  --chart-1: 103 52% 26%;   /* verde floresta (soja) */
+  --chart-2: 28 83% 47%;    /* laranja (milho) */
+  --chart-3: 103 35% 48%;   /* verde médio (feijão) */
+  --chart-4: 38 90% 48%;    /* âmbar dourado */
+  --chart-5: 200 42% 40%;   /* azul-aço (diesel) */
 
   --radius: 0.75rem;
 
   --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
 @layer base {
