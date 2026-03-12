@@ -56,7 +56,8 @@ export default function Caminhoes() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: records, isLoading } = useListTrucks();
+  const { data: apiRecords, isLoading } = useListTrucks();
+  const records = apiRecords ?? [];
 
   const createMutation = useCreateTruck({
     mutation: {

@@ -22,7 +22,8 @@ export default function Usuarios() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: records, isLoading } = useListUsers();
+  const { data: apiRecords, isLoading } = useListUsers();
+  const records = apiRecords ?? [];
 
   const deleteMutation = useDeleteUser({
     mutation: {

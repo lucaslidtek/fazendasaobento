@@ -19,7 +19,15 @@ import Estoque from "@/pages/estoque";
 import Usuarios from "@/pages/usuarios";
 import NotFound from "@/pages/not-found";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,
+    },
+  },
+});
 
 function Router() {
   return (
