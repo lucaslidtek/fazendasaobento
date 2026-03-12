@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Ap8OKokaoEkGwCj96Clwp"
+uri = "file://artifacts/fazenda-sao-bento/DESIGN_SYSTEM.md"
+type = "text"
+title = "Design System — Fazenda São Bento v1.0"

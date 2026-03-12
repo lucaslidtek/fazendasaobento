@@ -88,3 +88,24 @@ All routes require JWT authentication (Bearer token in header).
 - `fueling` — Diesel fueling records
 - `products` — Input products inventory
 - `stock_movements` — Stock entry/exit movements
+
+## UX Design System (Março 2026)
+
+Full redesign completed. See `artifacts/fazenda-sao-bento/DESIGN_SYSTEM.md` for the complete specification.
+
+### Key Decisions
+
+**Mobile navigation:** Bottom tab bar (`MobileBottomNav.tsx`) with 4 primary tabs + "Mais" bottom sheet for secondary modules. Sidebar hidden on mobile.
+
+**Dual-view pattern:** Every operational page has:
+- `hidden sm:block` — desktop table view inside `bg-card rounded-2xl border`
+- `sm:hidden` — mobile card list with `touch-card` class for tap feedback
+- `sm:hidden` — FAB at `bottom-[5.5rem] right-4 z-40` opening a `Sheet side="bottom"`
+
+**Color tokens:** All semantic colors via CSS variables (`--success`, `--warning`, `--info` with `-subtle` and `-text` variants). Zero hardcoded Tailwind color classes in components.
+
+**Typography:** `font-display` (Outfit) for headings/brand, `font-sans` (DM Sans) for body, `font-mono` (JetBrains Mono) for numbers/plates.
+
+**Auth pages:** Split layout desktop (brand panel left + form right). Mobile: green gradient header + curved transition + form below. Consistent across login, register, recuperar-senha.
+
+**Touch targets:** Minimum `h-12` for mobile interactive elements, `h-11` for inputs.

@@ -7,11 +7,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Trash2, Truck, Loader2 } from "lucide-react";
+import { Plus, Trash2, Truck, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +27,62 @@ const schema = z.object({
   freightValue: z.coerce.number().optional(),
 });
 
+function FormContent({ form, trucks, onSubmit, isPending, onClose }: any) {
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="date" render={({ field }) => (
+            <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="truckId" render={({ field }) => (
+            <FormItem><FormLabel>Caminhão</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Placa/Modelo" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  {trucks?.map((t: any) => (
+                    <SelectItem key={t.id} value={t.id.toString()}>{t.plate} — {t.model}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            <FormMessage /></FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="driverName" render={({ field }) => (
+          <FormItem><FormLabel>Motorista</FormLabel><FormControl><Input placeholder="Nome completo" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="origin" render={({ field }) => (
+            <FormItem><FormLabel>Origem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="destination" render={({ field }) => (
+            <FormItem><FormLabel>Destino</FormLabel><FormControl><Input placeholder="Ex: Silo Bunge" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="cargoTons" render={({ field }) => (
+            <FormItem><FormLabel>Carga (Toneladas)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="freightValue" render={({ field }) => (
+            <FormItem><FormLabel>Frete (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="flex-1">
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Salvar
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 export default function Transporte() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -35,160 +92,122 @@ export default function Transporte() {
   const { data: apiTrucks } = useListTrucks();
   const records = apiRecords ?? DEMO_TRANSPORTS;
   const trucks = apiTrucks ?? DEMO_TRUCKS;
-  
+
   const createMutation = useCreateTransport({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListTransportQueryKey() });
-        toast({ title: "Sucesso", description: "Transporte registrado." });
+        toast({ title: "Transporte registrado." });
         setIsOpen(false);
         form.reset();
       },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message })
-    }
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
   });
 
   const deleteMutation = useDeleteTransport({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListTransportQueryKey() });
-        toast({ title: "Removido", description: "Registro excluído." });
-      }
-    }
+        toast({ title: "Registro excluído." });
+      },
+    },
   });
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split("T")[0],
       driverName: "",
       origin: "Fazenda São Bento",
       destination: "",
       cargoTons: 0,
-      freightValue: 0
-    }
+      freightValue: 0,
+    },
   });
+
+  const handleDelete = (id: number) => {
+    if (confirm("Tem certeza que deseja excluir?")) deleteMutation.mutate({ id });
+  };
+
+  const formProps = {
+    form,
+    trucks,
+    onSubmit: (d: any) => createMutation.mutate({ data: d }),
+    isPending: createMutation.isPending,
+    onClose: () => setIsOpen(false),
+  };
 
   return (
     <AppLayout>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Truck className="w-8 h-8 text-blue-600" />
+      <div className="flex justify-between items-center gap-4 mb-6">
+        <div className="hidden sm:block">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Truck className="w-7 h-7 text-[hsl(var(--info))]" />
             Transporte e Fretes
           </h1>
-          <p className="text-muted-foreground mt-1">Controle de escoamento da produção e cargas.</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Controle de escoamento da produção e cargas.
+          </p>
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="h-11 px-5">
-              <Plus className="w-5 h-5 mr-2" />
-              Novo Transporte
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] rounded-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Registrar Transporte</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((d) => createMutation.mutate({ data: d }))} className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="date" render={({ field }) => (
-                    <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="truckId" render={({ field }) => (
-                    <FormItem><FormLabel>Caminhão</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Placa/Modelo" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {trucks?.map(t => (
-                            <SelectItem key={t.id} value={t.id.toString()}>{t.plate} - {t.model}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    <FormMessage /></FormItem>
-                  )} />
-                </div>
-                
-                <FormField control={form.control} name="driverName" render={({ field }) => (
-                  <FormItem><FormLabel>Motorista</FormLabel><FormControl><Input placeholder="Nome completo" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="origin" render={({ field }) => (
-                    <FormItem><FormLabel>Origem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="destination" render={({ field }) => (
-                    <FormItem><FormLabel>Destino</FormLabel><FormControl><Input placeholder="Ex: Silo Bunge" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="cargoTons" render={({ field }) => (
-                    <FormItem><FormLabel>Carga (Toneladas)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="freightValue" render={({ field }) => (
-                    <FormItem><FormLabel>Valor Frete (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                </div>
-
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
-                  <Button type="submit" className="" disabled={createMutation.isPending}>
-                    {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Salvar Registro
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        <div className="hidden sm:block">
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-10 px-5">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Transporte
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl">Registrar Transporte</DialogTitle>
+              </DialogHeader>
+              <div className="mt-2">
+                <FormContent {...formProps} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="bg-card rounded-2xl border overflow-hidden">
+      {/* TABELA — desktop */}
+      <div className="hidden sm:block bg-card rounded-2xl border overflow-hidden">
         {isLoading && !apiRecords ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
           <Table>
-            <TableHeader className="bg-muted/50">
+            <TableHeader className="bg-muted/40">
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Caminhão</TableHead>
                 <TableHead>Motorista</TableHead>
-                <TableHead>Origem → Destino</TableHead>
+                <TableHead>Rota</TableHead>
                 <TableHead className="text-right">Carga (t)</TableHead>
                 <TableHead className="text-right">Frete</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="w-[52px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {records?.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum registro encontrado.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Nenhum registro encontrado.</TableCell></TableRow>
               )}
               {records?.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium">{format(new Date(r.date), 'dd/MM/yyyy')}</TableCell>
+                  <TableCell className="font-medium">{format(new Date(r.date), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
-                    <span className="font-mono bg-muted px-2 py-1 rounded text-xs">{r.truckPlate}</span>
+                    <span className="font-mono bg-muted px-2 py-0.5 rounded text-xs">{r.truckPlate}</span>
                   </TableCell>
                   <TableCell>{r.driverName}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.origin} <span className="mx-1 text-border">→</span> {r.destination}</TableCell>
-                  <TableCell className="text-right font-bold text-foreground">{r.cargoTons} t</TableCell>
-                  <TableCell className="text-right text-emerald-600 font-medium">
-                    {r.freightValue ? `R$ ${r.freightValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '-'}
+                  <TableCell className="text-muted-foreground">
+                    {r.origin} <span className="mx-1 text-border">→</span> {r.destination}
+                  </TableCell>
+                  <TableCell className="text-right font-bold">{r.cargoTons} t</TableCell>
+                  <TableCell className="text-right text-[hsl(var(--success-text))] font-medium">
+                    {r.freightValue ? `R$ ${r.freightValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                   </TableCell>
                   <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => {
-                        if (confirm("Tem certeza que deseja excluir?")) {
-                          deleteMutation.mutate({ id: r.id });
-                        }
-                      }}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </TableCell>
@@ -197,6 +216,72 @@ export default function Transporte() {
             </TableBody>
           </Table>
         )}
+      </div>
+
+      {/* CARDS — mobile */}
+      <div className="sm:hidden space-y-3">
+        {isLoading && !apiRecords && (
+          <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
+        )}
+        {!isLoading && records?.length === 0 && (
+          <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
+            Nenhum transporte registrado.
+          </div>
+        )}
+        {records?.map((r) => (
+          <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <span className="font-mono bg-muted px-2 py-0.5 rounded text-xs font-bold">
+                  {r.truckPlate}
+                </span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  {format(new Date(r.date), "dd/MM/yyyy")}
+                </span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-semibold text-foreground text-sm">{r.origin}</span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="font-semibold text-foreground text-sm">{r.destination}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">{r.driverName}</p>
+              <div className="text-right">
+                <p className="font-bold text-[hsl(var(--info))] text-base leading-tight">{r.cargoTons} t</p>
+                {r.freightValue ? (
+                  <p className="text-xs text-[hsl(var(--success-text))] font-semibold">
+                    R$ {r.freightValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FAB mobile */}
+      <div className="sm:hidden">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <button
+            onClick={() => setIsOpen(true)}
+            className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+          <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
+            <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
+            <SheetHeader className="text-left mb-4">
+              <SheetTitle className="text-lg">Registrar Transporte</SheetTitle>
+            </SheetHeader>
+            <FormContent {...formProps} />
+          </SheetContent>
+        </Sheet>
       </div>
     </AppLayout>
   );

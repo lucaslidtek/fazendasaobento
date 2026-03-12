@@ -1,14 +1,16 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useGetDashboardSummary } from "@workspace/api-client-react";
 import { DEMO_DASHBOARD } from "@/lib/demo-data";
-import { Loader2, Tractor, Wheat, Truck, Droplet, CircleAlert } from "lucide-react";
+import { Loader2, Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAuth } from "@/lib/auth";
 
 export default function Dashboard() {
   const { data: apiData, isLoading } = useGetDashboardSummary();
+  const { user } = useAuth();
   const data = apiData ?? DEMO_DASHBOARD;
 
   if (isLoading && !apiData) {
@@ -22,58 +24,153 @@ export default function Dashboard() {
   }
 
   const kpis = [
-    { title: "Total Colhido (sc)", value: data.totalHarvestSacks.toLocaleString('pt-BR'), icon: Wheat, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { title: "Área Colhida (ha)", value: data.totalHarvestHectares.toLocaleString('pt-BR'), icon: Wheat, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { title: "Transportado (ton)", value: data.totalTransportTons.toLocaleString('pt-BR'), icon: Truck, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { title: "Diesel Consumido (L)", value: data.totalFuelingLiters.toLocaleString('pt-BR'), icon: Droplet, color: "text-slate-500", bg: "bg-slate-500/10" },
-    { title: "Máquinas Ativas", value: data.activeMachines, icon: Tractor, color: "text-primary", bg: "bg-primary/10" },
-    { title: "Estoque Crítico", value: data.lowStockProducts, icon: CircleAlert, color: "text-destructive", bg: "bg-destructive/10" },
+    {
+      title: "Total Colhido",
+      value: data.totalHarvestSacks.toLocaleString("pt-BR"),
+      unit: "sacas",
+      icon: Wheat,
+      colorClass: "text-[hsl(var(--accent))]",
+      bgClass: "bg-[hsl(var(--accent)/0.12)]",
+    },
+    {
+      title: "Área Colhida",
+      value: data.totalHarvestHectares.toLocaleString("pt-BR"),
+      unit: "hectares",
+      icon: TrendingUp,
+      colorClass: "text-[hsl(var(--primary))]",
+      bgClass: "bg-[hsl(var(--primary)/0.1)]",
+    },
+    {
+      title: "Transportado",
+      value: data.totalTransportTons.toLocaleString("pt-BR"),
+      unit: "toneladas",
+      icon: Truck,
+      colorClass: "text-[hsl(var(--info))]",
+      bgClass: "bg-[hsl(var(--info)/0.1)]",
+    },
+    {
+      title: "Diesel Consumido",
+      value: data.totalFuelingLiters.toLocaleString("pt-BR"),
+      unit: "litros",
+      icon: Droplet,
+      colorClass: "text-[hsl(var(--muted-foreground))]",
+      bgClass: "bg-[hsl(var(--muted)/1)]",
+    },
+    {
+      title: "Máquinas Ativas",
+      value: String(data.activeMachines),
+      unit: "unidades",
+      icon: Tractor,
+      colorClass: "text-[hsl(var(--primary))]",
+      bgClass: "bg-[hsl(var(--primary)/0.1)]",
+    },
+    {
+      title: "Estoque Crítico",
+      value: String(data.lowStockProducts),
+      unit: "produtos",
+      icon: CircleAlert,
+      colorClass: "text-[hsl(var(--destructive))]",
+      bgClass: "bg-[hsl(var(--destructive)/0.1)]",
+    },
   ];
 
   return (
     <AppLayout>
-      <div className="space-y-8">
-        <div>
+      <div className="space-y-6 md:space-y-8">
+        {/* Cabeçalho — visível apenas no desktop */}
+        <div className="hidden md:block">
           <h1 className="text-3xl font-bold tracking-tight">Visão Geral</h1>
-          <p className="text-muted-foreground mt-1">Acompanhe os principais indicadores da fazenda.</p>
+          <p className="text-muted-foreground mt-1">
+            Acompanhe os principais indicadores da fazenda.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Saudação mobile */}
+        <div className="md:hidden">
+          <p className="text-sm text-muted-foreground font-medium">
+            Olá, {user?.name?.split(" ")[0]} 👋
+          </p>
+          <h2 className="text-xl font-bold text-foreground mt-0.5">
+            Resumo da fazenda
+          </h2>
+        </div>
+
+        {/* KPI Grid — 2 colunas no mobile, 3 no sm, 6 no xl */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
           {kpis.map((kpi, i) => (
-            <Card key={i} className="card-interactive">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${kpi.bg}`}>
-                    <kpi.icon className={`w-6 h-6 ${kpi.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">{kpi.title}</p>
-                    <h3 className="text-2xl font-bold text-foreground">{kpi.value}</h3>
-                  </div>
+            <Card key={i} className="card-interactive border-card-border">
+              <CardContent className="p-4 md:p-5">
+                <div className={`inline-flex p-2 rounded-xl mb-3 ${kpi.bgClass}`}>
+                  <kpi.icon className={`w-5 h-5 ${kpi.colorClass}`} />
                 </div>
+                <p className="text-xs font-semibold text-muted-foreground leading-tight mb-1">
+                  {kpi.title}
+                </p>
+                <p className="text-xl md:text-2xl font-bold text-foreground leading-none">
+                  {kpi.value}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">
+                  {kpi.unit}
+                </p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="">
-            <CardHeader>
-              <CardTitle className="text-lg">Colheita por Cultura (Sacas)</CardTitle>
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base md:text-lg">
+                Colheita por Cultura (Sacas)
+              </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[240px] md:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.harvestByCulture} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="culture" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} dy={10} style={{ textTransform: 'capitalize' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip 
-                    cursor={{ fill: 'hsl(var(--muted)/0.5)' }}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                <BarChart
+                  data={data.harvestByCulture}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 20 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    dataKey="culture"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    dy={10}
+                    style={{ textTransform: "capitalize" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                    width={40}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "hsl(var(--muted)/0.5)" }}
+                    contentStyle={{
+                      borderRadius: "10px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      fontSize: "13px",
+                    }}
                   />
                   <Bar dataKey="totalSacks" radius={[6, 6, 0, 0]}>
                     {data.harvestByCulture.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.culture === 'soja' ? 'hsl(var(--primary))' : entry.culture === 'milho' ? 'hsl(var(--secondary))' : 'hsl(var(--chart-3))'} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={
+                          entry.culture === "soja"
+                            ? "hsl(var(--primary))"
+                            : entry.culture === "milho"
+                            ? "hsl(var(--secondary))"
+                            : "hsl(var(--chart-3))"
+                        }
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -81,46 +178,97 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="">
-            <CardHeader>
-              <CardTitle className="text-lg">Consumo de Diesel por Máquina (L)</CardTitle>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base md:text-lg">
+                Consumo de Diesel por Máquina (L)
+              </CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px]">
+            <CardContent className="h-[240px] md:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.fuelingByMachine} layout="vertical" margin={{ top: 10, right: 30, left: 50, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis type="category" dataKey="machineName" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} dx={-10} />
-                  <Tooltip 
-                    cursor={{ fill: 'hsl(var(--muted)/0.5)' }}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                <BarChart
+                  data={data.fuelingByMachine}
+                  layout="vertical"
+                  margin={{ top: 10, right: 20, left: 60, bottom: 10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="hsl(var(--border))"
                   />
-                  <Bar dataKey="totalLiters" fill="hsl(var(--chart-5))" radius={[0, 6, 6, 0]} />
+                  <XAxis
+                    type="number"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="machineName"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "hsl(var(--foreground))", fontSize: 11 }}
+                    dx={-8}
+                    width={70}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "hsl(var(--muted)/0.5)" }}
+                    contentStyle={{
+                      borderRadius: "10px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      fontSize: "13px",
+                    }}
+                  />
+                  <Bar
+                    dataKey="totalLiters"
+                    fill="hsl(var(--chart-5))"
+                    radius={[0, 6, 6, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="">
-            <CardHeader>
-              <CardTitle className="text-lg">Últimas Colheitas</CardTitle>
+        {/* Listas recentes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg">
+                Últimas Colheitas
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-0">
+              <div className="space-y-2">
                 {data.recentHarvests.length === 0 ? (
-                  <p className="text-muted-foreground text-sm py-4 text-center">Nenhuma colheita recente.</p>
+                  <p className="text-muted-foreground text-sm py-6 text-center">
+                    Nenhuma colheita recente.
+                  </p>
                 ) : (
-                  data.recentHarvests.map(h => (
-                    <div key={h.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                      <div>
-                        <p className="font-semibold text-foreground capitalize">{h.culture} - {h.area}</p>
-                        <p className="text-xs text-muted-foreground">{format(new Date(h.date), "dd 'de' MMM, yyyy", { locale: ptBR })} • {h.machineName}</p>
+                  data.recentHarvests.map((h) => (
+                    <div
+                      key={h.id}
+                      className="flex items-center justify-between p-3 rounded-xl bg-muted/40 gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground capitalize text-sm truncate">
+                          {h.culture} — {h.area}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {format(new Date(h.date), "dd 'de' MMM, yyyy", {
+                            locale: ptBR,
+                          })}{" "}
+                          · {h.machineName}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">{h.quantitySacks} sc</p>
-                        <p className="text-xs text-muted-foreground">{h.productivity.toFixed(1)} sc/ha</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-primary text-sm">
+                          {h.quantitySacks} sc
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {h.productivity.toFixed(1)} sc/ha
+                        </p>
                       </div>
                     </div>
                   ))
@@ -129,24 +277,42 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="">
-            <CardHeader>
-              <CardTitle className="text-lg">Últimos Transportes</CardTitle>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg">
+                Últimos Transportes
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-0">
+              <div className="space-y-2">
                 {data.recentTransports.length === 0 ? (
-                  <p className="text-muted-foreground text-sm py-4 text-center">Nenhum transporte recente.</p>
+                  <p className="text-muted-foreground text-sm py-6 text-center">
+                    Nenhum transporte recente.
+                  </p>
                 ) : (
-                  data.recentTransports.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                      <div>
-                        <p className="font-semibold text-foreground">{t.destination}</p>
-                        <p className="text-xs text-muted-foreground">{format(new Date(t.date), "dd 'de' MMM, yyyy", { locale: ptBR })} • {t.truckPlate}</p>
+                  data.recentTransports.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between p-3 rounded-xl bg-muted/40 gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground text-sm truncate">
+                          {t.destination}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {format(new Date(t.date), "dd 'de' MMM, yyyy", {
+                            locale: ptBR,
+                          })}{" "}
+                          · {t.truckPlate}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-blue-600">{t.cargoTons} ton</p>
-                        <p className="text-xs text-muted-foreground">Origem: {t.origin}</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-[hsl(var(--info))] text-sm">
+                          {t.cargoTons} ton
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t.origin}
+                        </p>
                       </div>
                     </div>
                   ))

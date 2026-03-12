@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, ChevronDown } from "lucide-react";
+import { Loader2, ChevronDown, Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -37,6 +37,7 @@ function GoogleIcon() {
 export default function Login() {
   const { loginDemo } = useAuth();
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -57,15 +58,21 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full flex bg-background">
-      {/* Painel esquerdo — identidade visual */}
+      {/* Painel esquerdo — identidade visual (apenas desktop) */}
       <div className="hidden lg:flex w-[42%] relative overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(150deg, hsl(103,57%,11%) 0%, hsl(103,52%,17%) 60%, hsl(103,48%,23%) 100%)"
-        }} />
-        {/* Grade sutil */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")`
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(150deg, hsl(103,57%,11%) 0%, hsl(103,52%,17%) 60%, hsl(103,48%,23%) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
 
         <div className="relative z-10 flex flex-col items-center justify-center w-full px-12 text-center">
           <motion.img
@@ -81,7 +88,10 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <h1 className="text-[2.6rem] font-bold text-white tracking-tight leading-tight mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+            <h1
+              className="text-[2.6rem] font-bold text-white tracking-tight leading-tight mb-3"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               Fazenda São Bento
             </h1>
             <p className="text-lg text-white/60 font-medium max-w-[260px] mx-auto leading-relaxed">
@@ -90,7 +100,7 @@ export default function Login() {
           </motion.div>
           <motion.div
             className="mt-8 w-16 h-[3px] rounded-full"
-            style={{ backgroundColor: 'hsl(28, 83%, 52%)' }}
+            style={{ backgroundColor: "hsl(28, 83%, 52%)" }}
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{ delay: 0.45, duration: 0.4 }}
@@ -99,86 +109,140 @@ export default function Login() {
       </div>
 
       {/* Painel direito — formulário */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-[400px]"
+      <div className="flex-1 flex flex-col bg-background">
+        {/* Mobile: cabeçalho com gradiente */}
+        <div
+          className="lg:hidden relative overflow-hidden flex-shrink-0"
+          style={{
+            background:
+              "linear-gradient(160deg, hsl(103,57%,12%) 0%, hsl(103,52%,19%) 100%)",
+            minHeight: "220px",
+          }}
         >
-          {/* Logo mobile */}
-          <div className="lg:hidden flex flex-col items-center mb-8">
-            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Fazenda São Bento" className="w-20 h-20 object-contain mb-3" />
-            <p className="text-lg font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>Fazenda São Bento</p>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">Bem-vindo de volta</h2>
-            <p className="text-muted-foreground text-sm">Acesse o sistema de gestão da fazenda.</p>
-          </div>
-
-          <div className="space-y-3">
-            {/* Botão Google — principal */}
-            <button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 h-11 px-4 rounded-lg border border-border bg-card text-foreground text-sm font-medium transition-all hover:bg-muted/60 hover:border-border disabled:opacity-60 disabled:cursor-not-allowed"
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+          <div className="relative z-10 flex flex-col items-center justify-center py-10 px-6">
+            <motion.img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt="Fazenda São Bento"
+              className="w-20 h-20 object-contain drop-shadow-xl mb-4"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="text-center"
             >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              ) : (
-                <GoogleIcon />
-              )}
-              <span>{isLoading ? "Entrando..." : "Continuar com Google"}</span>
-            </button>
+              <h1
+                className="text-2xl font-bold text-white leading-tight tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Fazenda São Bento
+              </h1>
+              <p className="text-sm text-white/55 mt-1 font-medium">
+                Gestão agrícola inteligente
+              </p>
+            </motion.div>
+          </div>
+          {/* Curva inferior */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-background rounded-t-3xl" />
+        </div>
 
-            {/* Divisor */}
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground font-medium">ou</span>
-              <div className="flex-1 h-px bg-border" />
+        {/* Formulário */}
+        <div className="flex-1 flex items-start lg:items-center justify-center px-6 lg:px-8 pt-8 lg:pt-0 pb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="w-full max-w-[400px]"
+          >
+            <div className="mb-7">
+              <h2
+                className="text-2xl font-bold tracking-tight text-foreground mb-1"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Bem-vindo de volta
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Acesse o sistema de gestão da fazenda.
+              </p>
             </div>
 
-            {/* Toggle e-mail/senha */}
-            <button
-              type="button"
-              onClick={() => setShowEmailForm(v => !v)}
-              className="w-full flex items-center justify-center gap-2 h-11 px-4 rounded-lg border border-border bg-transparent text-sm font-medium text-muted-foreground transition-all hover:bg-muted/40 hover:text-foreground hover:border-border"
-            >
-              <span>Entrar com e-mail e senha</span>
-              <motion.span
-                animate={{ rotate: showEmailForm ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center"
+            <div className="space-y-3">
+              {/* Botão Google */}
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-3 h-12 px-4 rounded-xl border border-border bg-card text-foreground text-sm font-semibold transition-all hover:bg-muted/60 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <ChevronDown className="w-4 h-4" />
-              </motion.span>
-            </button>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <GoogleIcon />
+                )}
+                <span>{isLoading ? "Entrando..." : "Continuar com Google"}</span>
+              </button>
 
-            {/* Formulário e-mail/senha — expansível */}
-            <AnimatePresence>
-              {showEmailForm && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
+              {/* Divisor */}
+              <div className="flex items-center gap-3 py-0.5">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground font-medium">ou</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* Toggle e-mail/senha */}
+              <button
+                type="button"
+                onClick={() => setShowEmailForm((v) => !v)}
+                className="w-full flex items-center justify-center gap-2 h-12 px-4 rounded-xl border border-border bg-transparent text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/40 hover:text-foreground active:scale-[0.98]"
+              >
+                <span>Entrar com e-mail e senha</span>
+                <motion.span
+                  animate={{ rotate: showEmailForm ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center"
                 >
-                  <div className="pt-1 pb-1">
-                    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <ChevronDown className="w-4 h-4" />
+                </motion.span>
+              </button>
+
+              {/* Formulário expansível */}
+              <AnimatePresence>
+                {showEmailForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="rounded-xl border border-border bg-card p-4 space-y-4">
                       <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleEmailLogin)} className="space-y-3">
+                        <form
+                          onSubmit={form.handleSubmit(handleEmailLogin)}
+                          className="space-y-4"
+                        >
                           <FormField
                             control={form.control}
                             name="email"
                             render={({ field }) => (
                               <FormItem className="space-y-1.5">
-                                <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">E-mail</FormLabel>
+                                <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                                  E-mail
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="seu@email.com"
-                                    className="h-9 text-sm bg-background border-border focus-visible:ring-primary/30"
+                                    inputMode="email"
+                                    autoComplete="email"
+                                    className="h-11 text-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -192,42 +256,67 @@ export default function Login() {
                             render={({ field }) => (
                               <FormItem className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                  <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Senha</FormLabel>
-                                  <Link href="/recuperar-senha" className="text-xs text-primary hover:underline font-medium">
+                                  <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                                    Senha
+                                  </FormLabel>
+                                  <Link
+                                    href="/recuperar-senha"
+                                    className="text-xs text-primary hover:underline font-semibold"
+                                  >
                                     Esqueceu?
                                   </Link>
                                 </div>
                                 <FormControl>
-                                  <Input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    className="h-9 text-sm bg-background border-border focus-visible:ring-primary/30"
-                                    {...field}
-                                  />
+                                  <div className="relative">
+                                    <Input
+                                      type={showPassword ? "text" : "password"}
+                                      placeholder="••••••••"
+                                      autoComplete="current-password"
+                                      className="h-11 text-sm pr-11"
+                                      {...field}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPassword((v) => !v)}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                      {showPassword ? (
+                                        <EyeOff className="w-4 h-4" />
+                                      ) : (
+                                        <Eye className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                  </div>
                                 </FormControl>
                                 <FormMessage className="text-xs" />
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full h-9 text-sm font-semibold rounded-lg mt-1">
+                          <Button
+                            type="submit"
+                            className="w-full h-11 text-sm font-bold rounded-xl mt-1"
+                          >
                             Entrar
                           </Button>
                         </form>
                       </Form>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Ainda não tem acesso?{" "}
-            <Link href="/register" className="text-primary font-semibold hover:underline">
-              Solicitar cadastro
-            </Link>
-          </p>
-        </motion.div>
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Ainda não tem acesso?{" "}
+              <Link
+                href="/register"
+                className="text-primary font-bold hover:underline"
+              >
+                Solicitar cadastro
+              </Link>
+            </p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
