@@ -111,7 +111,8 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
 export default function Colheita() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   const [filterCulture, setFilterCulture] = useState<string>("todas");
@@ -128,7 +129,8 @@ export default function Colheita() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListHarvestQueryKey() });
         toast({ title: "Colheita registrada com sucesso." });
-        setIsOpen(false);
+        setIsDialogOpen(false);
+        setIsSheetOpen(false);
         form.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -190,7 +192,7 @@ export default function Colheita() {
     machines,
     onSubmit: (d: any) => createMutation.mutate({ data: d }),
     isPending: createMutation.isPending,
-    onClose: () => setIsOpen(false),
+    onClose: () => { setIsDialogOpen(false); setIsSheetOpen(false); },
   };
 
   return (
@@ -209,7 +211,7 @@ export default function Colheita() {
 
         {/* Botão nova colheita — desktop via Dialog, mobile via Sheet */}
         <div className="hidden sm:block">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <Plus className="w-4 h-4 mr-2" />
@@ -398,9 +400,9 @@ export default function Colheita() {
 
       {/* FAB mobile */}
       <div className="sm:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
