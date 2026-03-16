@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useListHarvest, useCreateHarvest, useDeleteHarvest, getListHarvestQueryKey, useListMachines } from "@workspace/api-client-react";
+import { useListHarvest, useCreateHarvest, useDeleteHarvest, useUpdateHarvest, getListHarvestQueryKey, useListMachines } from "@workspace/api-client-react";
 import { DEMO_HARVESTS, DEMO_MACHINES } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO, startOfDay, endOfDay } from "date-fns";
-import { Plus, Trash2, Wheat, Loader2, Search, X, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Wheat, Loader2, Search, X, Filter, ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -36,7 +37,7 @@ const CULTURE_COLORS: Record<string, string> = {
   feijao: "border-chart-3/40 text-chart-3 bg-chart-3/8",
 };
 
-function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
+function FormContent({ form, machines, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -46,7 +47,7 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
           )} />
           <FormField control={form.control} name="culture" render={({ field }) => (
             <FormItem><FormLabel>Cultura</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="soja">Soja</SelectItem>
@@ -64,7 +65,7 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
           )} />
           <FormField control={form.control} name="machineId" render={({ field }) => (
             <FormItem><FormLabel>Máquina</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+              <Select onValueChange={field.onChange} value={field.value?.toString()}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {machines?.filter((m: any) => m.type === "colheitadeira").map((m: any) => (
@@ -100,7 +101,7 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={isPending} className="flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Salvar
+            {isEditing ? "Salvar alterações" : "Registrar"}
           </Button>
         </div>
       </form>
@@ -113,6 +114,7 @@ export default function Colheita() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const [filterCulture, setFilterCulture] = useState<string>("todas");
@@ -129,8 +131,7 @@ export default function Colheita() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListHarvestQueryKey() });
         toast({ title: "Colheita registrada com sucesso." });
-        setIsDialogOpen(false);
-        setIsSheetOpen(false);
+        closeForm();
         form.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -143,6 +144,18 @@ export default function Colheita() {
         queryClient.invalidateQueries({ queryKey: getListHarvestQueryKey() });
         toast({ title: "Registro excluído." });
       },
+    },
+  });
+
+  const updateMutation = useUpdateHarvest({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListHarvestQueryKey() });
+        toast({ title: "Colheita atualizada com sucesso." });
+        closeForm();
+        form.reset();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
     },
   });
 
@@ -181,18 +194,52 @@ export default function Colheita() {
     setFilterDateTo("");
   };
 
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingRecord(null);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja excluir este registro?")) {
       deleteMutation.mutate({ id });
     }
   };
 
+  const handleEditOpen = (record: any, isMobile: boolean) => {
+    setEditingRecord(record);
+    form.reset({
+      date: record.date?.split("T")[0] ?? record.date,
+      culture: record.culture,
+      area: record.area,
+      driverName: record.driverName,
+      machineId: record.machineId,
+      quantitySacks: record.quantitySacks,
+      areaHectares: record.areaHectares,
+      notes: record.notes ?? "",
+    });
+    if (isMobile) {
+      setIsSheetOpen(true);
+    } else {
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleSubmit = (d: any) => {
+    if (editingRecord) {
+      updateMutation.mutate({ id: editingRecord.id, data: d });
+    } else {
+      createMutation.mutate({ data: d });
+    }
+  };
+
   const formProps = {
     form,
     machines,
-    onSubmit: (d: any) => createMutation.mutate({ data: d }),
-    isPending: createMutation.isPending,
-    onClose: () => { setIsDialogOpen(false); setIsSheetOpen(false); },
+    onSubmit: handleSubmit,
+    isPending: createMutation.isPending || updateMutation.isPending,
+    onClose: closeForm,
+    isEditing: !!editingRecord,
   };
 
   return (
@@ -211,7 +258,7 @@ export default function Colheita() {
 
         {/* Botão nova colheita — desktop via Dialog, mobile via Sheet */}
         <div className="hidden sm:block">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <Plus className="w-4 h-4 mr-2" />
@@ -220,7 +267,7 @@ export default function Colheita() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle className="text-xl">Registrar Colheita</DialogTitle>
+                <DialogTitle className="text-xl">{editingRecord ? "Editar Colheita" : "Registrar Colheita"}</DialogTitle>
               </DialogHeader>
               <div className="mt-2">
                 <FormContent {...formProps} />
@@ -312,7 +359,7 @@ export default function Colheita() {
                 <TableHead className="text-right">Produtividade</TableHead>
                 <TableHead>Operador</TableHead>
                 <TableHead>Máquina</TableHead>
-                <TableHead className="w-[52px]" />
+                <TableHead className="w-[52px]" aria-label="Ações" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -338,9 +385,24 @@ export default function Colheita() {
                   <TableCell className="text-muted-foreground">{r.driverName}</TableCell>
                   <TableCell className="text-muted-foreground">{r.machineName}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditOpen(r, false)} className="gap-2 cursor-pointer">
+                          <Pencil className="w-4 h-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -370,14 +432,24 @@ export default function Colheita() {
                   {format(new Date(r.date), "dd/MM/yyyy")}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(r.id)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
+                    <Pencil className="w-4 h-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <div className="flex items-center justify-between">
@@ -400,7 +472,7 @@ export default function Colheita() {
 
       {/* FAB mobile */}
       <div className="sm:hidden">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
             onClick={() => setIsSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
@@ -410,7 +482,7 @@ export default function Colheita() {
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
             <SheetHeader className="text-left mb-4">
-              <SheetTitle className="text-lg">Registrar Colheita</SheetTitle>
+              <SheetTitle className="text-lg">{editingRecord ? "Editar Colheita" : "Registrar Colheita"}</SheetTitle>
             </SheetHeader>
             <FormContent {...formProps} />
           </SheetContent>
