@@ -45,8 +45,13 @@ const movementSchema = z.object({
 export default function Estoque() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isProductOpen, setIsProductOpen] = useState(false);
-  const [isMovementOpen, setIsMovementOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isProductSheetOpen, setIsProductSheetOpen] = useState(false);
+  const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
+  const [isMovementSheetOpen, setIsMovementSheetOpen] = useState(false);
+
+  const closeProduct = () => { setIsProductDialogOpen(false); setIsProductSheetOpen(false); };
+  const closeMovement = () => { setIsMovementDialogOpen(false); setIsMovementSheetOpen(false); };
 
   const { data: apiProducts, isLoading: isLoadingProducts } = useListProducts();
   const { data: movements, isLoading: isLoadingMovements } = useListStockMovements();
@@ -57,7 +62,7 @@ export default function Estoque() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
         toast({ title: "Produto cadastrado." });
-        setIsProductOpen(false);
+        closeProduct();
         productForm.reset();
       },
     },
@@ -69,7 +74,7 @@ export default function Estoque() {
         queryClient.invalidateQueries({ queryKey: getListStockMovementsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
         toast({ title: "Movimentação registrada." });
-        setIsMovementOpen(false);
+        closeMovement();
         movementForm.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -119,7 +124,7 @@ export default function Estoque() {
           )} />
         </div>
         <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => setIsProductOpen(false)} className="flex-1">Cancelar</Button>
+          <Button type="button" variant="outline" onClick={closeProduct} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={createProductMut.isPending} className="flex-1">Salvar</Button>
         </div>
       </form>
@@ -162,7 +167,7 @@ export default function Estoque() {
           <FormItem><FormLabel>Motivo / Observação</FormLabel><FormControl><Input placeholder="Ex: NF 123 ou Talhão 2" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => setIsMovementOpen(false)} className="flex-1">Cancelar</Button>
+          <Button type="button" variant="outline" onClick={closeMovement} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={createMovementMut.isPending} className="flex-1">Confirmar</Button>
         </div>
       </form>
@@ -183,7 +188,7 @@ export default function Estoque() {
         </div>
 
         <div className="hidden sm:flex gap-3">
-          <Dialog open={isProductOpen} onOpenChange={setIsProductOpen}>
+          <Dialog open={isProductDialogOpen} onOpenChange={(open) => { if (!open) closeProduct(); else setIsProductDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button variant="outline" className="h-10 border-dashed">Cadastrar Produto</Button>
             </DialogTrigger>
@@ -193,7 +198,7 @@ export default function Estoque() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isMovementOpen} onOpenChange={setIsMovementOpen}>
+          <Dialog open={isMovementDialogOpen} onOpenChange={(open) => { if (!open) closeMovement(); else setIsMovementDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <ArrowUpRight className="w-4 h-4 mr-2" />
@@ -389,9 +394,9 @@ export default function Estoque() {
 
       {/* FABs mobile — dois botões */}
       <div className="sm:hidden">
-        <Sheet open={isMovementOpen} onOpenChange={setIsMovementOpen}>
+        <Sheet open={isMovementSheetOpen} onOpenChange={(open) => { if (!open) closeMovement(); else setIsMovementSheetOpen(true); }}>
           <button
-            onClick={() => setIsMovementOpen(true)}
+            onClick={() => setIsMovementSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <ArrowUpRight className="w-6 h-6" />
@@ -405,9 +410,9 @@ export default function Estoque() {
           </SheetContent>
         </Sheet>
 
-        <Sheet open={isProductOpen} onOpenChange={setIsProductOpen}>
+        <Sheet open={isProductSheetOpen} onOpenChange={(open) => { if (!open) closeProduct(); else setIsProductSheetOpen(true); }}>
           <button
-            onClick={() => setIsProductOpen(true)}
+            onClick={() => setIsProductSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-20 z-40 w-12 h-12 bg-card border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:bg-muted transition-all active:scale-95"
           >
             <Plus className="w-5 h-5" />
