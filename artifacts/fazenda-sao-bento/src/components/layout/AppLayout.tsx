@@ -1,4 +1,4 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +16,37 @@ const PAGE_TITLES: Record<string, string> = {
   "/caminhoes": "Caminhões",
   "/usuarios": "Usuários",
 };
+
+function MobileHeader({ title }: { title: string }) {
+  const { setOpenMobile } = useSidebar();
+
+  return (
+    <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-white sticky top-0 z-10 md:hidden">
+      <button
+        onClick={() => setOpenMobile(true)}
+        aria-label="Abrir menu"
+        className="p-1.5 -ml-1 rounded-lg text-foreground hover:bg-muted/60 transition-colors flex-shrink-0"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="2"  y1="5"  x2="18" y2="5"  />
+          <line x1="2"  y1="10" x2="18" y2="10" />
+          <line x1="2"  y1="15" x2="18" y2="15" />
+        </svg>
+      </button>
+
+      <div className="flex items-center gap-2 flex-1">
+        <img
+          src={`${import.meta.env.BASE_URL}logo.png`}
+          alt="São Bento"
+          className="w-6 h-6 object-contain"
+        />
+        <span className="font-bold text-base text-foreground tracking-tight">
+          {title}
+        </span>
+      </div>
+    </header>
+  );
+}
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -49,18 +80,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full bg-background/50">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="h-14 flex items-center px-4 md:px-6 border-b border-border bg-background sticky top-0 z-10">
-            <div className="flex md:hidden items-center gap-3 flex-1">
-              <img
-                src={`${import.meta.env.BASE_URL}logo.png`}
-                alt="São Bento"
-                className="w-7 h-7 object-contain"
-              />
-              <span className="font-bold text-base text-foreground tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-                {pageTitle}
-              </span>
-            </div>
-          </header>
+          <MobileHeader title={pageTitle} />
 
           <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
             <div className="max-w-7xl mx-auto">
