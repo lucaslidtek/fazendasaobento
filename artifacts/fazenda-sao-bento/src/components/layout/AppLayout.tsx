@@ -1,4 +1,4 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { useAuth } from "@/lib/auth";
@@ -50,9 +50,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="h-14 flex items-center px-4 md:px-6 border-b border-border bg-background sticky top-0 z-10">
-            <div className="hidden md:flex">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-            </div>
             <div className="flex md:hidden items-center gap-3 flex-1">
               <img
                 src={`${import.meta.env.BASE_URL}logo.png`}
