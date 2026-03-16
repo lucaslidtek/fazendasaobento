@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useListTrucks, useCreateTruck, useDeleteTruck, getListTrucksQueryKey } from "@workspace/api-client-react";
+import { useListTrucks, useCreateTruck, useDeleteTruck, useUpdateTruck, getListTrucksQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Truck, Loader2 } from "lucide-react";
+import { Plus, Truck, Loader2, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
@@ -43,6 +44,45 @@ const STATUS_DOT: Record<string, string> = {
   inativo: "bg-destructive",
 };
 
+function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField control={form.control} name="plate" render={({ field }) => (
+          <FormItem><FormLabel>Placa</FormLabel><FormControl><Input placeholder="ABC-1234" className="uppercase" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="model" render={({ field }) => (
+          <FormItem><FormLabel>Modelo / Marca</FormLabel><FormControl><Input placeholder="Scania R450" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="capacity" render={({ field }) => (
+            <FormItem><FormLabel>Capacidade (ton)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="status" render={({ field }) => (
+            <FormItem><FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="manutencao">Em Manutenção</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            <FormMessage /></FormItem>
+          )} />
+        </div>
+        <div className="flex gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="flex-1">
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isEditing ? "Salvar alterações" : "Cadastrar"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 export default function Caminhoes() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -54,7 +94,9 @@ export default function Caminhoes() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
 
   const { data: apiRecords, isLoading } = useListTrucks();
   const records = apiRecords ?? [];
@@ -64,7 +106,7 @@ export default function Caminhoes() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListTrucksQueryKey() });
         toast({ title: "Caminhão cadastrado." });
-        setIsOpen(false);
+        closeForm();
         form.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -80,51 +122,57 @@ export default function Caminhoes() {
     },
   });
 
+  const updateMutation = useUpdateTruck({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTrucksQueryKey() });
+        toast({ title: "Caminhão atualizado." });
+        closeForm();
+        form.reset();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { plate: "", model: "", capacity: 35, status: "ativo" },
   });
 
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingRecord(null);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja excluir?")) deleteMutation.mutate({ id });
   };
 
-  const FormContent = (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit((d) => createMutation.mutate({ data: d }))} className="space-y-4">
-        <FormField control={form.control} name="plate" render={({ field }) => (
-          <FormItem><FormLabel>Placa</FormLabel><FormControl><Input placeholder="ABC-1234" className="uppercase" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <FormField control={form.control} name="model" render={({ field }) => (
-          <FormItem><FormLabel>Modelo / Marca</FormLabel><FormControl><Input placeholder="Scania R450" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField control={form.control} name="capacity" render={({ field }) => (
-            <FormItem><FormLabel>Capacidade (ton)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control} name="status" render={({ field }) => (
-            <FormItem><FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                <SelectContent>
-                  <SelectItem value="ativo">Ativo</SelectItem>
-                  <SelectItem value="manutencao">Em Manutenção</SelectItem>
-                  <SelectItem value="inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            <FormMessage /></FormItem>
-          )} />
-        </div>
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={createMutation.isPending} className="flex-1">
-            {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Salvar
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
+  const handleEditOpen = (record: any, isMobile: boolean) => {
+    setEditingRecord(record);
+    form.reset({
+      plate: record.plate,
+      model: record.model ?? "",
+      capacity: record.capacity ?? 35,
+      status: record.status,
+    });
+    if (isMobile) setIsSheetOpen(true);
+    else setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (d: any) => {
+    if (editingRecord) updateMutation.mutate({ id: editingRecord.id, data: d });
+    else createMutation.mutate({ data: d });
+  };
+
+  const formProps = {
+    form,
+    onSubmit: handleSubmit,
+    isPending: createMutation.isPending || updateMutation.isPending,
+    onClose: closeForm,
+    isEditing: !!editingRecord,
+  };
 
   return (
     <AppLayout>
@@ -140,7 +188,7 @@ export default function Caminhoes() {
         </div>
 
         <div className="hidden sm:block">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <Plus className="w-4 h-4 mr-2" />
@@ -149,9 +197,11 @@ export default function Caminhoes() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[400px]">
               <DialogHeader>
-                <DialogTitle className="text-xl">Novo Caminhão</DialogTitle>
+                <DialogTitle className="text-xl">{editingRecord ? "Editar Caminhão" : "Novo Caminhão"}</DialogTitle>
               </DialogHeader>
-              <div className="mt-2">{FormContent}</div>
+              <div className="mt-2">
+                <FormContent {...formProps} />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -169,7 +219,7 @@ export default function Caminhoes() {
                 <TableHead>Modelo</TableHead>
                 <TableHead className="text-right">Capacidade</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[52px]" />
+                <TableHead className="w-[88px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -189,9 +239,24 @@ export default function Caminhoes() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -228,9 +293,23 @@ export default function Caminhoes() {
                   <p className="text-xs text-muted-foreground mt-0.5">Capacidade: {r.capacity} ton</p>
                 )}
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0">
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
+                    <Pencil className="w-4 h-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         ))}
@@ -238,9 +317,9 @@ export default function Caminhoes() {
 
       {/* FAB mobile */}
       <div className="sm:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
@@ -248,9 +327,9 @@ export default function Caminhoes() {
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
             <SheetHeader className="text-left mb-4">
-              <SheetTitle className="text-lg">Novo Caminhão</SheetTitle>
+              <SheetTitle className="text-lg">{editingRecord ? "Editar Caminhão" : "Novo Caminhão"}</SheetTitle>
             </SheetHeader>
-            {FormContent}
+            <FormContent {...formProps} />
           </SheetContent>
         </Sheet>
       </div>

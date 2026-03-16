@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useListTransport, useCreateTransport, useDeleteTransport, getListTransportQueryKey, useListTrucks } from "@workspace/api-client-react";
+import { useListTransport, useCreateTransport, useDeleteTransport, useUpdateTransport, getListTransportQueryKey, useListTrucks } from "@workspace/api-client-react";
 import { DEMO_TRANSPORTS, DEMO_TRUCKS } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Trash2, Truck, Loader2, ArrowRight } from "lucide-react";
+import { Plus, Truck, Loader2, ArrowRight, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
 const schema = z.object({
@@ -27,7 +28,7 @@ const schema = z.object({
   freightValue: z.coerce.number().optional(),
 });
 
-function FormContent({ form, trucks, onSubmit, isPending, onClose }: any) {
+function FormContent({ form, trucks, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -37,7 +38,7 @@ function FormContent({ form, trucks, onSubmit, isPending, onClose }: any) {
           )} />
           <FormField control={form.control} name="truckId" render={({ field }) => (
             <FormItem><FormLabel>Caminhão</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+              <Select onValueChange={field.onChange} value={field.value?.toString()}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Placa/Modelo" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {trucks?.map((t: any) => (
@@ -75,7 +76,7 @@ function FormContent({ form, trucks, onSubmit, isPending, onClose }: any) {
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={isPending} className="flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Salvar
+            {isEditing ? "Salvar alterações" : "Registrar"}
           </Button>
         </div>
       </form>
@@ -86,7 +87,9 @@ function FormContent({ form, trucks, onSubmit, isPending, onClose }: any) {
 export default function Transporte() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
 
   const { data: apiRecords, isLoading } = useListTransport();
   const { data: apiTrucks } = useListTrucks();
@@ -98,7 +101,7 @@ export default function Transporte() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListTransportQueryKey() });
         toast({ title: "Transporte registrado." });
-        setIsOpen(false);
+        closeForm();
         form.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -114,6 +117,18 @@ export default function Transporte() {
     },
   });
 
+  const updateMutation = useUpdateTransport({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTransportQueryKey() });
+        toast({ title: "Transporte atualizado." });
+        closeForm();
+        form.reset();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -126,16 +141,43 @@ export default function Transporte() {
     },
   });
 
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingRecord(null);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja excluir?")) deleteMutation.mutate({ id });
+  };
+
+  const handleEditOpen = (record: any, isMobile: boolean) => {
+    setEditingRecord(record);
+    form.reset({
+      date: record.date?.split("T")[0] ?? record.date,
+      truckId: record.truckId,
+      driverName: record.driverName,
+      origin: record.origin,
+      destination: record.destination,
+      cargoTons: record.cargoTons,
+      freightValue: record.freightValue ?? 0,
+    });
+    if (isMobile) setIsSheetOpen(true);
+    else setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (d: any) => {
+    if (editingRecord) updateMutation.mutate({ id: editingRecord.id, data: d });
+    else createMutation.mutate({ data: d });
   };
 
   const formProps = {
     form,
     trucks,
-    onSubmit: (d: any) => createMutation.mutate({ data: d }),
-    isPending: createMutation.isPending,
-    onClose: () => setIsOpen(false),
+    onSubmit: handleSubmit,
+    isPending: createMutation.isPending || updateMutation.isPending,
+    onClose: closeForm,
+    isEditing: !!editingRecord,
   };
 
   return (
@@ -152,7 +194,7 @@ export default function Transporte() {
         </div>
 
         <div className="hidden sm:block">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <Plus className="w-4 h-4 mr-2" />
@@ -161,7 +203,7 @@ export default function Transporte() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle className="text-xl">Registrar Transporte</DialogTitle>
+                <DialogTitle className="text-xl">{editingRecord ? "Editar Transporte" : "Registrar Transporte"}</DialogTitle>
               </DialogHeader>
               <div className="mt-2">
                 <FormContent {...formProps} />
@@ -185,7 +227,7 @@ export default function Transporte() {
                 <TableHead>Rota</TableHead>
                 <TableHead className="text-right">Carga (t)</TableHead>
                 <TableHead className="text-right">Frete</TableHead>
-                <TableHead className="w-[52px]" />
+                <TableHead className="w-[88px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -207,9 +249,24 @@ export default function Transporte() {
                     {r.freightValue ? `R$ ${r.freightValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -239,9 +296,23 @@ export default function Transporte() {
                   {format(new Date(r.date), "dd/MM/yyyy")}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0">
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
+                    <Pencil className="w-4 h-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <div className="flex items-center gap-2 mb-2">
@@ -267,9 +338,9 @@ export default function Transporte() {
 
       {/* FAB mobile */}
       <div className="sm:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
@@ -277,7 +348,7 @@ export default function Transporte() {
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
             <SheetHeader className="text-left mb-4">
-              <SheetTitle className="text-lg">Registrar Transporte</SheetTitle>
+              <SheetTitle className="text-lg">{editingRecord ? "Editar Transporte" : "Registrar Transporte"}</SheetTitle>
             </SheetHeader>
             <FormContent {...formProps} />
           </SheetContent>

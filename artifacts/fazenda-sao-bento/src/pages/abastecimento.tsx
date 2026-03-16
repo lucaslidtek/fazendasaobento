@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useListFueling, useCreateFueling, useDeleteFueling, getListFuelingQueryKey, useListMachines } from "@workspace/api-client-react";
+import { useListFueling, useCreateFueling, useDeleteFueling, useUpdateFueling, getListFuelingQueryKey, useListMachines } from "@workspace/api-client-react";
 import { DEMO_FUELINGS, DEMO_MACHINES } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Trash2, Fuel, Loader2, Droplets } from "lucide-react";
+import { Plus, Fuel, Loader2, Droplets, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
 const schema = z.object({
@@ -26,7 +27,7 @@ const schema = z.object({
   notes: z.string().optional(),
 });
 
-function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
+function FormContent({ form, machines, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -36,7 +37,7 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
           )} />
           <FormField control={form.control} name="machineId" render={({ field }) => (
             <FormItem><FormLabel>Máquina</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+              <Select onValueChange={field.onChange} value={field.value?.toString()}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {machines?.map((m: any) => (
@@ -65,7 +66,7 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={isPending} className="flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Salvar
+            {isEditing ? "Salvar alterações" : "Registrar"}
           </Button>
         </div>
       </form>
@@ -76,7 +77,9 @@ function FormContent({ form, machines, onSubmit, isPending, onClose }: any) {
 export default function Abastecimento() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
 
   const { data: apiRecords, isLoading } = useListFueling();
   const { data: apiMachines } = useListMachines();
@@ -88,7 +91,7 @@ export default function Abastecimento() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListFuelingQueryKey() });
         toast({ title: "Abastecimento registrado." });
-        setIsOpen(false);
+        closeForm();
         form.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -104,6 +107,18 @@ export default function Abastecimento() {
     },
   });
 
+  const updateMutation = useUpdateFueling({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListFuelingQueryKey() });
+        toast({ title: "Abastecimento atualizado." });
+        closeForm();
+        form.reset();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -115,16 +130,42 @@ export default function Abastecimento() {
     },
   });
 
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingRecord(null);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja excluir?")) deleteMutation.mutate({ id });
+  };
+
+  const handleEditOpen = (record: any, isMobile: boolean) => {
+    setEditingRecord(record);
+    form.reset({
+      date: record.date?.split("T")[0] ?? record.date,
+      machineId: record.machineId,
+      operatorName: record.operatorName,
+      pump: record.pump ?? "",
+      liters: record.liters,
+      notes: record.notes ?? "",
+    });
+    if (isMobile) setIsSheetOpen(true);
+    else setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (d: any) => {
+    if (editingRecord) updateMutation.mutate({ id: editingRecord.id, data: d });
+    else createMutation.mutate({ data: d });
   };
 
   const formProps = {
     form,
     machines,
-    onSubmit: (d: any) => createMutation.mutate({ data: d }),
-    isPending: createMutation.isPending,
-    onClose: () => setIsOpen(false),
+    onSubmit: handleSubmit,
+    isPending: createMutation.isPending || updateMutation.isPending,
+    onClose: closeForm,
+    isEditing: !!editingRecord,
   };
 
   return (
@@ -141,7 +182,7 @@ export default function Abastecimento() {
         </div>
 
         <div className="hidden sm:block">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <Plus className="w-4 h-4 mr-2" />
@@ -150,7 +191,7 @@ export default function Abastecimento() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle className="text-xl">Registrar Abastecimento</DialogTitle>
+                <DialogTitle className="text-xl">{editingRecord ? "Editar Abastecimento" : "Registrar Abastecimento"}</DialogTitle>
               </DialogHeader>
               <div className="mt-2">
                 <FormContent {...formProps} />
@@ -173,7 +214,7 @@ export default function Abastecimento() {
                 <TableHead>Operador</TableHead>
                 <TableHead>Bomba</TableHead>
                 <TableHead className="text-right">Volume (L)</TableHead>
-                <TableHead className="w-[52px]" />
+                <TableHead className="w-[88px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,9 +229,24 @@ export default function Abastecimento() {
                   <TableCell className="text-muted-foreground">{r.pump || "—"}</TableCell>
                   <TableCell className="text-right font-bold font-mono text-foreground">{r.liters} L</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -221,9 +277,23 @@ export default function Abastecimento() {
                 <p className="text-sm text-muted-foreground mt-0.5">{r.operatorName}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
+                      <Pencil className="w-4 h-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <div className="flex items-center gap-1.5 mt-1">
                   <Droplets className="w-4 h-4 text-[hsl(var(--info))]" />
                   <span className="font-bold text-lg text-foreground font-mono">{r.liters}</span>
@@ -237,9 +307,9 @@ export default function Abastecimento() {
 
       {/* FAB mobile */}
       <div className="sm:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
@@ -247,7 +317,7 @@ export default function Abastecimento() {
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
             <SheetHeader className="text-left mb-4">
-              <SheetTitle className="text-lg">Registrar Abastecimento</SheetTitle>
+              <SheetTitle className="text-lg">{editingRecord ? "Editar Abastecimento" : "Registrar Abastecimento"}</SheetTitle>
             </SheetHeader>
             <FormContent {...formProps} />
           </SheetContent>

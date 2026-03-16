@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useListMachines, useCreateMachine, useDeleteMachine, getListMachinesQueryKey } from "@workspace/api-client-react";
+import { useListMachines, useCreateMachine, useDeleteMachine, useUpdateMachine, getListMachinesQueryKey } from "@workspace/api-client-react";
 import { DEMO_MACHINES } from "@/lib/demo-data";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Tractor, Loader2, MapPin } from "lucide-react";
+import { Plus, Tractor, Loader2, MapPin, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -50,7 +51,7 @@ const TYPE_LABELS: Record<string, string> = {
   equipamento: "Equipamento",
 };
 
-function FormContent({ form, onSubmit, isPending, onClose }: any) {
+function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -64,7 +65,7 @@ function FormContent({ form, onSubmit, isPending, onClose }: any) {
           )} />
           <FormField control={form.control} name="type" render={({ field }) => (
             <FormItem><FormLabel>Tipo</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="trator">Trator</SelectItem>
@@ -83,7 +84,7 @@ function FormContent({ form, onSubmit, isPending, onClose }: any) {
           )} />
           <FormField control={form.control} name="status" render={({ field }) => (
             <FormItem><FormLabel>Status Operacional</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="ativo">Ativo</SelectItem>
@@ -99,7 +100,7 @@ function FormContent({ form, onSubmit, isPending, onClose }: any) {
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={isPending} className="flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Salvar
+            {isEditing ? "Salvar alterações" : "Cadastrar"}
           </Button>
         </div>
       </form>
@@ -110,7 +111,9 @@ function FormContent({ form, onSubmit, isPending, onClose }: any) {
 export default function Maquinas() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
 
   const { data: apiRecords, isLoading } = useListMachines();
   const records = apiRecords ?? DEMO_MACHINES;
@@ -120,7 +123,7 @@ export default function Maquinas() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListMachinesQueryKey() });
         toast({ title: "Máquina cadastrada." });
-        setIsOpen(false);
+        closeForm();
         form.reset();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -136,6 +139,18 @@ export default function Maquinas() {
     },
   });
 
+  const updateMutation = useUpdateMachine({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListMachinesQueryKey() });
+        toast({ title: "Máquina atualizada." });
+        closeForm();
+        form.reset();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -147,15 +162,40 @@ export default function Maquinas() {
     },
   });
 
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingRecord(null);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja excluir?")) deleteMutation.mutate({ id });
   };
 
+  const handleEditOpen = (record: any, isMobile: boolean) => {
+    setEditingRecord(record);
+    form.reset({
+      name: record.name,
+      model: record.model ?? "",
+      type: record.type,
+      location: record.location ?? "",
+      status: record.status,
+    });
+    if (isMobile) setIsSheetOpen(true);
+    else setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (d: any) => {
+    if (editingRecord) updateMutation.mutate({ id: editingRecord.id, data: d });
+    else createMutation.mutate({ data: d });
+  };
+
   const formProps = {
     form,
-    onSubmit: (d: any) => createMutation.mutate({ data: d }),
-    isPending: createMutation.isPending,
-    onClose: () => setIsOpen(false),
+    onSubmit: handleSubmit,
+    isPending: createMutation.isPending || updateMutation.isPending,
+    onClose: closeForm,
+    isEditing: !!editingRecord,
   };
 
   return (
@@ -172,7 +212,7 @@ export default function Maquinas() {
         </div>
 
         <div className="hidden sm:block">
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
                 <Plus className="w-4 h-4 mr-2" />
@@ -181,7 +221,7 @@ export default function Maquinas() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle className="text-xl">Cadastrar Máquina</DialogTitle>
+                <DialogTitle className="text-xl">{editingRecord ? "Editar Máquina" : "Cadastrar Máquina"}</DialogTitle>
               </DialogHeader>
               <div className="mt-2">
                 <FormContent {...formProps} />
@@ -204,7 +244,7 @@ export default function Maquinas() {
                 <TableHead>Tipo</TableHead>
                 <TableHead>Localização</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[52px]" />
+                <TableHead className="w-[88px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -223,9 +263,24 @@ export default function Maquinas() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -265,9 +320,23 @@ export default function Maquinas() {
                   </div>
                 )}
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0">
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
+                    <Pencil className="w-4 h-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         ))}
@@ -275,9 +344,9 @@ export default function Maquinas() {
 
       {/* FAB mobile */}
       <div className="sm:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => setIsSheetOpen(true)}
             className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
@@ -285,7 +354,7 @@ export default function Maquinas() {
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
             <SheetHeader className="text-left mb-4">
-              <SheetTitle className="text-lg">Cadastrar Máquina</SheetTitle>
+              <SheetTitle className="text-lg">{editingRecord ? "Editar Máquina" : "Cadastrar Máquina"}</SheetTitle>
             </SheetHeader>
             <FormContent {...formProps} />
           </SheetContent>
