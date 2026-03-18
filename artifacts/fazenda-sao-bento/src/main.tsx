@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import "./lib/fetch-interceptor";
 import App from "./App";
 import "./index.css";
 
