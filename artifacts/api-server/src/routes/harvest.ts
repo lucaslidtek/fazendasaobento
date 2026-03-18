@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/", authenticate, async (req, res) => {
   const { culture, startDate, endDate } = req.query;
-  const conditions = [];
+  const conditions: any[] = [];
   if (culture) conditions.push(eq(harvestTable.culture, culture as any));
   if (startDate) conditions.push(gte(harvestTable.date, startDate as string));
   if (endDate) conditions.push(lte(harvestTable.date, endDate as string));
@@ -44,7 +44,7 @@ router.post("/", authenticate, async (req, res) => {
   try {
     const body = CreateHarvestBody.parse(req.body);
     const [harvest] = await db.insert(harvestTable).values({
-      date: body.date,
+      date: body.date.toISOString().split('T')[0],
       culture: body.culture as any,
       area: body.area,
       driverName: body.driverName,
@@ -76,7 +76,7 @@ router.put("/:id", authenticate, async (req, res) => {
   try {
     const body = CreateHarvestBody.parse(req.body);
     const [harvest] = await db.update(harvestTable).set({
-      date: body.date,
+      date: body.date.toISOString().split('T')[0],
       culture: body.culture as any,
       area: body.area,
       driverName: body.driverName,

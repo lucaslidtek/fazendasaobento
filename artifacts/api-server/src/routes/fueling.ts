@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/", authenticate, async (req, res) => {
   const { machineId, startDate, endDate } = req.query;
-  const conditions = [];
+  const conditions: any[] = [];
   if (machineId) conditions.push(eq(fuelingTable.machineId, parseInt(machineId as string)));
   if (startDate) conditions.push(gte(fuelingTable.date, startDate as string));
   if (endDate) conditions.push(lte(fuelingTable.date, endDate as string));
@@ -37,7 +37,7 @@ router.post("/", authenticate, async (req, res) => {
   try {
     const body = CreateFuelingBody.parse(req.body);
     const [fueling] = await db.insert(fuelingTable).values({
-      date: body.date,
+      date: body.date.toISOString().split('T')[0],
       machineId: body.machineId,
       operatorName: body.operatorName,
       pump: body.pump ?? null,
@@ -56,7 +56,7 @@ router.put("/:id", authenticate, async (req, res) => {
   try {
     const body = CreateFuelingBody.parse(req.body);
     const [fueling] = await db.update(fuelingTable).set({
-      date: body.date,
+      date: body.date.toISOString().split('T')[0],
       machineId: body.machineId,
       operatorName: body.operatorName,
       pump: body.pump ?? null,

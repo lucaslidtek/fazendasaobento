@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/", authenticate, async (req, res) => {
   const { startDate, endDate } = req.query;
-  const conditions = [];
+  const conditions: any[] = [];
   if (startDate) conditions.push(gte(transportTable.date, startDate as string));
   if (endDate) conditions.push(lte(transportTable.date, endDate as string));
 
@@ -43,7 +43,7 @@ router.post("/", authenticate, async (req, res) => {
   try {
     const body = CreateTransportBody.parse(req.body);
     const [transport] = await db.insert(transportTable).values({
-      date: body.date,
+      date: body.date.toISOString().split('T')[0],
       truckId: body.truckId,
       driverName: body.driverName,
       origin: body.origin,
@@ -70,7 +70,7 @@ router.put("/:id", authenticate, async (req, res) => {
   try {
     const body = CreateTransportBody.parse(req.body);
     const [transport] = await db.update(transportTable).set({
-      date: body.date,
+      date: body.date.toISOString().split('T')[0],
       truckId: body.truckId,
       driverName: body.driverName,
       origin: body.origin,
