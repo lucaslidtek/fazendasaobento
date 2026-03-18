@@ -223,7 +223,7 @@ export default function Abastecimento() {
               )}
               {records?.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium">{format(new Date(r.date), "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="font-medium">{r.date ? format(new Date(r.date), "dd/MM/yyyy") : "—"}</TableCell>
                   <TableCell className="font-bold text-foreground">{r.machineName}</TableCell>
                   <TableCell>{r.operatorName}</TableCell>
                   <TableCell className="text-muted-foreground">{r.pump || "—"}</TableCell>
@@ -270,7 +270,7 @@ export default function Abastecimento() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground font-medium mb-1">
-                  {format(new Date(r.date), "dd/MM/yyyy")}
+                  {r.date ? format(new Date(r.date), "dd/MM/yyyy") : "—"}
                   {r.pump && ` · ${r.pump}`}
                 </p>
                 <p className="font-bold text-foreground text-base leading-tight truncate">{r.machineName}</p>

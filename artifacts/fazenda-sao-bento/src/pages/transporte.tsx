@@ -246,7 +246,7 @@ export default function Transporte() {
                   </TableCell>
                   <TableCell className="text-right font-bold">{r.cargoTons} t</TableCell>
                   <TableCell className="text-right text-[hsl(var(--success-text))] font-medium">
-                    {r.freightValue ? `R$ ${r.freightValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
+                    {r.freightValue ? `R$ ${(Number(r.freightValue) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
@@ -327,7 +327,7 @@ export default function Transporte() {
                 <p className="font-bold text-[hsl(var(--info))] text-base leading-tight">{r.cargoTons} t</p>
                 {r.freightValue ? (
                   <p className="text-xs text-[hsl(var(--success-text))] font-semibold">
-                    R$ {r.freightValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    R$ {(Number(r.freightValue) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 ) : null}
               </div>

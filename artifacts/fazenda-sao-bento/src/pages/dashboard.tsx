@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 export default function Dashboard() {
   const { data: apiData, isLoading } = useGetDashboardSummary();
   const { user } = useAuth();
-  const data = apiData ?? DEMO_DASHBOARD;
+  const data = (apiData && apiData.totalHarvestSacks !== undefined) ? apiData : DEMO_DASHBOARD;
 
   if (isLoading && !apiData) {
     return (
@@ -26,7 +26,7 @@ export default function Dashboard() {
   const kpis = [
     {
       title: "Total Colhido",
-      value: data.totalHarvestSacks.toLocaleString("pt-BR"),
+      value: (data.totalHarvestSacks ?? 0).toLocaleString("pt-BR"),
       unit: "sacas",
       icon: Wheat,
       colorClass: "text-[hsl(var(--accent))]",
@@ -34,7 +34,7 @@ export default function Dashboard() {
     },
     {
       title: "Área Colhida",
-      value: data.totalHarvestHectares.toLocaleString("pt-BR"),
+      value: (data.totalHarvestHectares ?? 0).toLocaleString("pt-BR"),
       unit: "hectares",
       icon: TrendingUp,
       colorClass: "text-[hsl(var(--primary))]",
@@ -42,7 +42,7 @@ export default function Dashboard() {
     },
     {
       title: "Transportado",
-      value: data.totalTransportTons.toLocaleString("pt-BR"),
+      value: (data.totalTransportTons ?? 0).toLocaleString("pt-BR"),
       unit: "toneladas",
       icon: Truck,
       colorClass: "text-[hsl(var(--info))]",
@@ -50,7 +50,7 @@ export default function Dashboard() {
     },
     {
       title: "Diesel Consumido",
-      value: data.totalFuelingLiters.toLocaleString("pt-BR"),
+      value: (data.totalFuelingLiters ?? 0).toLocaleString("pt-BR"),
       unit: "litros",
       icon: Droplet,
       colorClass: "text-[hsl(var(--muted-foreground))]",
@@ -128,7 +128,7 @@ export default function Dashboard() {
             <CardContent className="h-[240px] md:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={data.harvestByCulture}
+                  data={data.harvestByCulture ?? []}
                   margin={{ top: 10, right: 10, left: -10, bottom: 20 }}
                 >
                   <CartesianGrid
@@ -160,7 +160,7 @@ export default function Dashboard() {
                     }}
                   />
                   <Bar dataKey="totalSacks" radius={[6, 6, 0, 0]}>
-                    {data.harvestByCulture.map((entry, index) => (
+                    {(data.harvestByCulture ?? []).map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={
@@ -187,7 +187,7 @@ export default function Dashboard() {
             <CardContent className="h-[240px] md:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={data.fuelingByMachine}
+                  data={data.fuelingByMachine ?? []}
                   layout="vertical"
                   margin={{ top: 10, right: 20, left: 60, bottom: 10 }}
                 >
@@ -241,12 +241,12 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2">
-                {data.recentHarvests.length === 0 ? (
+                {(data.recentHarvests ?? []).length === 0 ? (
                   <p className="text-muted-foreground text-sm py-6 text-center">
                     Nenhuma colheita recente.
                   </p>
                 ) : (
-                  data.recentHarvests.map((h) => (
+                  (data.recentHarvests ?? []).map((h) => (
                     <div
                       key={h.id}
                       className="flex items-center justify-between p-3 rounded-xl bg-muted/40 gap-3"
@@ -285,12 +285,12 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2">
-                {data.recentTransports.length === 0 ? (
+                {(data.recentTransports ?? []).length === 0 ? (
                   <p className="text-muted-foreground text-sm py-6 text-center">
                     Nenhum transporte recente.
                   </p>
                 ) : (
-                  data.recentTransports.map((t) => (
+                  (data.recentTransports ?? []).map((t) => (
                     <div
                       key={t.id}
                       className="flex items-center justify-between p-3 rounded-xl bg-muted/40 gap-3"

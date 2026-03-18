@@ -331,7 +331,7 @@ export default function Estoque() {
                   )}
                   {movements?.map((m) => (
                     <TableRow key={m.id} className="hover:bg-muted/30">
-                      <TableCell className="font-medium">{format(new Date(m.date), "dd/MM/yyyy")}</TableCell>
+                      <TableCell className="font-medium">{m.date ? format(new Date(m.date), "dd/MM/yyyy") : "—"}</TableCell>
                       <TableCell>
                         {m.type === "entrada" ? (
                           <span className="flex items-center text-[hsl(var(--success-text))] text-sm font-semibold">
@@ -377,7 +377,7 @@ export default function Estoque() {
                           <ArrowUpRight className="w-3 h-3" /> Saída
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground">{format(new Date(m.date), "dd/MM/yyyy")}</span>
+                      <span className="text-xs text-muted-foreground">{m.date ? format(new Date(m.date), "dd/MM/yyyy") : "—"}</span>
                     </div>
                     <p className="font-bold text-foreground text-sm leading-tight truncate">{m.productName}</p>
                     {m.reason && <p className="text-xs text-muted-foreground mt-0.5">{m.reason}</p>}

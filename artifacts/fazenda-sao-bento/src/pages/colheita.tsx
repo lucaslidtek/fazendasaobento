@@ -381,7 +381,7 @@ export default function Colheita() {
                   <TableCell className="font-medium">{r.area}</TableCell>
                   <TableCell className="text-right">{r.areaHectares} ha</TableCell>
                   <TableCell className="text-right font-bold">{r.quantitySacks} sc</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">{r.productivity.toFixed(1)} sc/ha</TableCell>
+                  <TableCell className="text-right font-semibold text-primary">{(Number(r.productivity) || 0).toFixed(1)} sc/ha</TableCell>
                   <TableCell className="text-muted-foreground">{r.driverName}</TableCell>
                   <TableCell className="text-muted-foreground">{r.machineName}</TableCell>
                   <TableCell>
@@ -459,7 +459,7 @@ export default function Colheita() {
               </div>
               <div className="text-right">
                 <p className="font-bold text-primary text-lg leading-tight">{r.quantitySacks} sc</p>
-                <p className="text-xs text-muted-foreground">{r.productivity.toFixed(1)} sc/ha</p>
+                <p className="text-xs text-muted-foreground">{(Number(r.productivity) || 0).toFixed(1)} sc/ha</p>
               </div>
             </div>
 
