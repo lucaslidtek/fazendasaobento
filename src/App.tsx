@@ -37,6 +37,7 @@ function Router() {
       <Route path="/recuperar-senha" component={RecuperarSenha} />
       
       <Route path="/" component={Dashboard} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/colheita" component={Colheita} />
       <Route path="/transporte" component={Transporte} />
       <Route path="/maquinas" component={Maquinas} />
