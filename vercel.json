@@ -1,14 +1,9 @@
 {
   "version": 2,
-  "outputDirectory": "artifacts/fazenda-sao-bento/dist/public",
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "api/index.ts"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
     }
   ]
 }

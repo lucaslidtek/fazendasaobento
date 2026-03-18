@@ -1,58 +1,21 @@
 import { Router } from "express";
-import { db, productsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
-import { CreateProductBody } from "@workspace/api-zod";
 
 const router = Router();
 
+const MOCK_PRODUCTS = [
+  { id: 1, name: "Herbicida Glifosato 480", category: "Defensivo", unit: "L", currentStock: 1200, minStock: 500 },
+  { id: 2, name: "Fungicida Fox Xpro", category: "Defensivo", unit: "L", currentStock: 85, minStock: 200 },
+  { id: 3, name: "Inseticida Karate Zeon", category: "Defensivo", unit: "L", currentStock: 340, minStock: 150 },
+  { id: 4, name: "Adubo MAP 12-52-00", category: "Fertilizante", unit: "KG", currentStock: 42000, minStock: 10000 },
+];
+
 router.get("/", authenticate, async (_req, res) => {
-  const products = await db.select().from(productsTable).orderBy(productsTable.name);
-  res.json(products.map(p => ({
-    ...p,
-    currentStock: Number(p.currentStock),
-    minStock: p.minStock ? Number(p.minStock) : null,
-  })));
+  res.json(MOCK_PRODUCTS);
 });
 
 router.post("/", authenticate, async (req, res) => {
-  try {
-    const body = CreateProductBody.parse(req.body);
-    const [product] = await db.insert(productsTable).values({
-      name: body.name,
-      category: body.category,
-      unit: body.unit as any,
-      currentStock: String(body.currentStock),
-      minStock: body.minStock != null ? String(body.minStock) : null,
-    }).returning();
-    res.status(201).json({ ...product, currentStock: Number(product.currentStock), minStock: product.minStock ? Number(product.minStock) : null });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-router.put("/:id", authenticate, async (req, res) => {
-  const id = parseInt(req.params.id);
-  try {
-    const body = CreateProductBody.parse(req.body);
-    const [product] = await db.update(productsTable).set({
-      name: body.name,
-      category: body.category,
-      unit: body.unit as any,
-      currentStock: String(body.currentStock),
-      minStock: body.minStock != null ? String(body.minStock) : null,
-    }).where(eq(productsTable.id, id)).returning();
-    if (!product) { res.status(404).json({ message: "Produto não encontrado" }); return; }
-    res.json({ ...product, currentStock: Number(product.currentStock), minStock: product.minStock ? Number(product.minStock) : null });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-router.delete("/:id", authenticate, async (req, res) => {
-  const id = parseInt(req.params.id);
-  await db.delete(productsTable).where(eq(productsTable.id, id));
-  res.json({ message: "Produto removido" });
+  res.status(201).json({ ...req.body, id: Math.floor(Math.random() * 1000) });
 });
 
 export default router;

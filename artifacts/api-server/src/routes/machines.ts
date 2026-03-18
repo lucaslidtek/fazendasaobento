@@ -1,53 +1,29 @@
 import { Router } from "express";
-import { db, machinesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
-import { CreateMachineBody } from "@workspace/api-zod";
 
 const router = Router();
 
+const MOCK_MACHINES = [
+  { id: 1, name: "John Deere S790", type: "colheitadeira", model: "S790", status: "ativo" },
+  { id: 2, name: "New Holland TC5.90", type: "colheitadeira", model: "TC5.90", status: "ativo" },
+  { id: 3, name: "Massey Ferguson 7245", type: "trator", model: "7245", status: "ativo" },
+  { id: 4, name: "Case IH 9250", type: "colheitadeira", model: "9250", status: "ativo" },
+  { id: 6, name: "Valtra BM 110", type: "trator", model: "BM 110", status: "manutencao" },
+];
+
 router.get("/", authenticate, async (_req, res) => {
-  const machines = await db.select().from(machinesTable).orderBy(machinesTable.name);
-  res.json(machines);
+  res.json(MOCK_MACHINES);
 });
 
 router.post("/", authenticate, async (req, res) => {
-  try {
-    const body = CreateMachineBody.parse(req.body);
-    const [machine] = await db.insert(machinesTable).values({
-      name: body.name,
-      model: body.model ?? null,
-      type: body.type as any,
-      location: body.location ?? null,
-      status: body.status as any,
-    }).returning();
-    res.status(201).json(machine);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
+  res.status(201).json({ ...req.body, id: Math.floor(Math.random() * 1000) });
 });
 
 router.put("/:id", authenticate, async (req, res) => {
-  const id = parseInt(req.params.id);
-  try {
-    const body = CreateMachineBody.parse(req.body);
-    const [machine] = await db.update(machinesTable).set({
-      name: body.name,
-      model: body.model ?? null,
-      type: body.type as any,
-      location: body.location ?? null,
-      status: body.status as any,
-    }).where(eq(machinesTable.id, id)).returning();
-    if (!machine) { res.status(404).json({ message: "Máquina não encontrada" }); return; }
-    res.json(machine);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
+  res.json({ ...req.body, id: parseInt(req.params.id) });
 });
 
-router.delete("/:id", authenticate, async (req, res) => {
-  const id = parseInt(req.params.id);
-  await db.delete(machinesTable).where(eq(machinesTable.id, id));
+router.delete("/:id", authenticate, async (_req, res) => {
   res.json({ message: "Máquina removida" });
 });
 

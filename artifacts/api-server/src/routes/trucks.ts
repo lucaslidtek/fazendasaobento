@@ -1,52 +1,20 @@
 import { Router } from "express";
-import { db, trucksTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
-import { CreateTruckBody } from "@workspace/api-zod";
 
 const router = Router();
 
+const MOCK_TRUCKS = [
+  { id: 1, plate: "QRS-2024", model: "Volvo FH 540", capacity: 50, status: "ativo" },
+  { id: 2, plate: "DEF-5678", model: "Scania R450", capacity: 45, status: "ativo" },
+  { id: 3, plate: "GHI-9012", model: "Mercedes Actros", capacity: 48, status: "ativo" },
+];
+
 router.get("/", authenticate, async (_req, res) => {
-  const trucks = await db.select().from(trucksTable).orderBy(trucksTable.plate);
-  res.json(trucks);
+  res.json(MOCK_TRUCKS);
 });
 
 router.post("/", authenticate, async (req, res) => {
-  try {
-    const body = CreateTruckBody.parse(req.body);
-    const [truck] = await db.insert(trucksTable).values({
-      plate: body.plate,
-      model: body.model ?? null,
-      capacity: body.capacity ? String(body.capacity) : null,
-      status: body.status as any,
-    }).returning();
-    res.status(201).json({ ...truck, capacity: truck.capacity ? Number(truck.capacity) : null });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-router.put("/:id", authenticate, async (req, res) => {
-  const id = parseInt(req.params.id);
-  try {
-    const body = CreateTruckBody.parse(req.body);
-    const [truck] = await db.update(trucksTable).set({
-      plate: body.plate,
-      model: body.model ?? null,
-      capacity: body.capacity ? String(body.capacity) : null,
-      status: body.status as any,
-    }).where(eq(trucksTable.id, id)).returning();
-    if (!truck) { res.status(404).json({ message: "Caminhão não encontrado" }); return; }
-    res.json({ ...truck, capacity: truck.capacity ? Number(truck.capacity) : null });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-router.delete("/:id", authenticate, async (req, res) => {
-  const id = parseInt(req.params.id);
-  await db.delete(trucksTable).where(eq(trucksTable.id, id));
-  res.json({ message: "Caminhão removido" });
+  res.status(201).json({ ...req.body, id: Math.floor(Math.random() * 1000) });
 });
 
 export default router;
