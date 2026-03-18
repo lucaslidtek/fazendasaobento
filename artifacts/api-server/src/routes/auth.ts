@@ -1,61 +1,48 @@
 import { Router } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { authenticate, hashPassword, comparePassword, signToken } from "../lib/auth.js";
-import { LoginBody, RegisterBody } from "@workspace/api-zod";
+import { signToken } from "../lib/auth.js";
+import { LoginBody } from "@workspace/api-zod";
 
 const router = Router();
+
+// Usuário Mock para o Protótipo
+const MOCK_USER = {
+  id: 1,
+  name: "Administrador Demo",
+  email: "admin@fazenda.com",
+  role: "admin" as const,
+  createdAt: new Date().toISOString()
+};
 
 router.post("/login", async (req, res) => {
   try {
     const body = LoginBody.parse(req.body);
-    const users = await db.select().from(usersTable).where(eq(usersTable.email, body.email)).limit(1);
-    const user = users[0];
-    if (!user || !comparePassword(body.password, user.passwordHash)) {
-      res.status(401).json({ message: "Email ou senha inválidos" });
+    
+    // Aceita qualquer senha para o usuário demo
+    if (body.email === MOCK_USER.email) {
+      const token = signToken(MOCK_USER.id, MOCK_USER.role);
+      res.json({
+        user: MOCK_USER,
+        token,
+      });
       return;
     }
-    const token = signToken(user.id, user.role);
-    res.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt },
-      token,
-    });
+    
+    res.status(401).json({ message: "Email ou senha inválidos para o modo demonstração" });
   } catch (err: any) {
     res.status(400).json({ message: err.message || "Dados inválidos" });
   }
 });
 
-router.post("/register", async (req, res) => {
-  try {
-    const body = RegisterBody.parse(req.body);
-    const existing = await db.select().from(usersTable).where(eq(usersTable.email, body.email)).limit(1);
-    if (existing[0]) {
-      res.status(400).json({ message: "Email já cadastrado" });
-      return;
-    }
-    const [user] = await db.insert(usersTable).values({
-      name: body.name,
-      email: body.email,
-      passwordHash: hashPassword(body.password),
-      role: (body.role as "admin" | "operador") || "operador",
-    }).returning();
-    const token = signToken(user.id, user.role);
-    res.status(201).json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt },
-      token,
-    });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message || "Dados inválidos" });
-  }
+router.post("/register", async (_req, res) => {
+  res.status(400).json({ message: "Registro desativado no modo demonstração" });
 });
 
 router.post("/logout", (_req, res) => {
   res.json({ message: "Logout realizado" });
 });
 
-router.get("/me", authenticate, (req, res) => {
-  const user = (req as any).user;
-  res.json({ id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt });
+router.get("/me", (_req, res) => {
+  res.json(MOCK_USER);
 });
 
 export default router;
