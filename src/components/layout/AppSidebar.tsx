@@ -11,6 +11,10 @@ import {
   Container,
   PanelLeftClose,
   PanelLeftOpen,
+  Sprout,
+  CalendarDays,
+  Map,
+  MoreVertical,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +28,13 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 
@@ -60,8 +71,11 @@ export function AppSidebar() {
   ];
 
   const adminItems = [
-    { title: "Caminhões", icon: Container, path: "/caminhoes" },
-    { title: "Usuários",  icon: Users,     path: "/usuarios" },
+    { title: "Safras",    icon: CalendarDays, path: "/safras" },
+    { title: "Talhões",   icon: Map,          path: "/talhoes" },
+    { title: "Caminhões", icon: Container,    path: "/caminhoes" },
+    { title: "Culturas",  icon: Sprout,       path: "/culturas" },
+    { title: "Usuários",  icon: Users,        path: "/usuarios" },
   ];
 
   return (
@@ -73,7 +87,7 @@ export function AppSidebar() {
                         group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center
                         group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3 group-data-[collapsible=icon]:gap-2">
           <img
-            src={`${import.meta.env.BASE_URL}logo.png`}
+            src={`${(import.meta as any).env.BASE_URL}logo.png`}
             alt="Fazenda São Bento"
             className="w-9 h-9 object-contain flex-shrink-0"
           />
@@ -140,25 +154,45 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      {/* ── Footer: avatar + logout ── */}
-      <SidebarFooter className="bg-sidebar border-t border-sidebar-border/30 p-4 group-data-[collapsible=icon]:p-2">
-        <div className="flex items-center gap-3 mb-3 px-1
-                        group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:mb-2">
-          <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-sm flex-shrink-0">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
-          <div className="flex-1 overflow-hidden group-data-[collapsible=icon]:hidden">
-            <p className="text-sm font-semibold text-sidebar-foreground truncate">{user?.name}</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate capitalize">{user?.role}</p>
+      {/* ── Footer: avatar + dropdown ── */}
+      <SidebarFooter className="bg-sidebar border-t border-sidebar-border/30 p-3 group-data-[collapsible=icon]:p-2">
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+          <Link 
+            href="/perfil"
+            className="flex flex-1 items-center gap-3 px-2 py-2 hover:bg-sidebar-accent/50 rounded-lg transition-colors cursor-pointer group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center min-w-0"
+          >
+            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground font-bold text-sm flex-shrink-0">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+              <p className="text-sm font-semibold text-sidebar-foreground truncate">{user?.name}</p>
+              <p className="text-xs text-sidebar-foreground/50 truncate capitalize">{user?.role}</p>
+            </div>
+          </Link>
+          
+          <div className="group-data-[collapsible=icon]:hidden flex-shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors text-sidebar-foreground/60 hover:text-sidebar-foreground">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 mb-2">
+                <DropdownMenuItem asChild className="cursor-pointer gap-2">
+                   <Link href="/perfil" className="flex items-center w-full">
+                     <Users className="w-4 h-4" />
+                     <span>Ver perfil</span>
+                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Sair do sistema
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors font-medium text-sm"
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          <span className="group-data-[collapsible=icon]:hidden">Sair do sistema</span>
-        </button>
       </SidebarFooter>
     </Sidebar>
   );

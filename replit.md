@@ -100,7 +100,7 @@ Full redesign completed. See `artifacts/fazenda-sao-bento/DESIGN_SYSTEM.md` for 
 **Dual-view pattern:** Every operational page has:
 - `hidden sm:block` — desktop table view inside `bg-card rounded-2xl border`
 - `sm:hidden` — mobile card list with `touch-card` class for tap feedback
-- `sm:hidden` — FAB at `bottom-[5.5rem] right-4 z-40` opening a `Sheet side="bottom"`
+- `sm:hidden` — FAB at `bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40` opening a `Sheet side="bottom"`
 
 **Color tokens:** All semantic colors via CSS variables (`--success`, `--warning`, `--info` with `-subtle` and `-text` variants). Zero hardcoded Tailwind color classes in components.
 

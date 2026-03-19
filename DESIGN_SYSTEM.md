@@ -149,15 +149,16 @@ Importadas via Google Fonts e definidas em `index.css`:
 - Mobile: altura mínima `h-12` para touch targets adequados
 - Desktop: `h-10` é suficiente
 - Nunca usar `bg-blue-600` ou similares — usar `variant` ou `className` com variáveis CSS
+- Botões secondary/outline usam fundo branco (`bg-white`) e borda suave (`border-border/50`), sem sombra e não devem ser transparentes.
 
 ### 5.2 FAB (Floating Action Button)
 
-Substitui o botão "Adicionar" do header em mobile. Sempre posicionado `bottom-[5.5rem] right-4 z-40` para ficar acima da bottom nav.
+Substitui o botão "Adicionar" do header em mobile. Sempre posicionado `bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40` para ficar acima da bottom nav.
 
 ```tsx
 <button
   onClick={() => setIsOpen(true)}
-  className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+  className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
 >
   <Plus className="w-6 h-6" />
 </button>
@@ -219,8 +220,14 @@ A classe `touch-card` (definida em `index.css`) aplica `active:scale-[0.98]` e `
       </TableRow>
     </TableHeader>
     <TableBody>
-      <TableRow className="hover:bg-muted/30">
-        {/* ... */}
+      <TableRow className="hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => navigate(`/detalhes/1`)}>
+        {/*
+          IMPORTANTE: Não usar ícone "Olho" para Detalhes. A linha deve ser inteira clicável (cursor-pointer).
+          Colocar `onClick={(e) => e.stopPropagation()}` na `TableCell` de ações para não disparar navegação ao editar/excluir.
+        */}
+        <TableCell onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon"><MoreHorizontal/></Button>
+        </TableCell>
       </TableRow>
     </TableBody>
   </Table>
@@ -231,12 +238,12 @@ A classe `touch-card` (definida em `index.css`) aplica `active:scale-[0.98]` e `
 
 ```tsx
 /* Positivo / OK */
-<Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.3)]">
+<Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]">
   Normal
 </Badge>
 
 /* Aviso */
-<Badge variant="outline" className="bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)]">
+<Badge variant="outline" className="bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]">
   Manutenção
 </Badge>
 
@@ -246,6 +253,11 @@ A classe `touch-card` (definida em `index.css`) aplica `active:scale-[0.98]` e `
 /* Admin */
 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
   <ShieldAlert className="w-3 h-3 mr-1" /> Admin
+</Badge>
+
+/* Operador */
+<Badge variant="outline" className="bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]">
+  Operador
 </Badge>
 ```
 
@@ -305,9 +317,9 @@ Cada página operacional segue esta estrutura dual:
 ```
 src/pages/[modulo].tsx
 ├── <AppLayout>
-│   ├── Header (desktop): título + ícone + descrição + botão primário (Dialog)
+│   ├── Header (desktop e mobile): título com contagem (ex: "Colheita (6)") + descrição + botão primário (Dialog). O ícone do título deve ter a classe `hidden sm:block` para não aparecer no celular.
 │   ├── [hidden sm:block] Tabela desktop
-│   ├── [sm:hidden] Cards mobile
+│   ├── [sm:hidden] Cards mobile (sem string lateral de "X registros" repetida)
 │   └── [sm:hidden] FAB + Sheet (formulário mobile)
 ```
 
@@ -426,13 +438,29 @@ Antes de adicionar qualquer novo componente ou página, verifique:
 
 - [ ] Nenhuma cor Tailwind hardcoded (`text-blue-600`, `bg-emerald-500`) — usar variáveis CSS
 - [ ] Página tem versão mobile (cards `sm:hidden`) e desktop (tabela `hidden sm:block`)
-- [ ] Formulário mobile usa `Sheet` com `side="bottom"` e `rounded-t-3xl`
-- [ ] FAB posicionado em `bottom-[5.5rem]` para ficar acima da bottom nav
+- [ ] **Formulários Mobile (Bottom Sheets):** TODOS os formulários na visão mobile (tanto para adicionar quanto para editar itens), incluindo aqueles dentro de páginas de detalhes (ex: Detalhes de Máquina, Detalhes de Estoque, Meu Perfil), **OBRIGATORIAMENTE** devem abrir usando o componente `<Sheet>` com `side="bottom"` e `className="rounded-t-3xl"`. Nunca utilize `<Dialog>` para formulários em telas de celular.
+- [ ] Campos de formulário (Inputs, Selects, Textareas) devem ter estilo "flat" (sem sombras/`shadow-sm`), apenas com `border` leve (já padronizado nos componentes base).
+- [ ] Ações na listagem desktop **OBRIGATORIAMENTE** devem seguir a ordem `[Exportar] [Filtros] [Nova Entidade]` (exatamente nesta ordem, da esquerda para a direita). Os dois primeiros com `variant="outline"` e ícone à esquerda; o de adição com variante padrão (cor de fundo e texto branco) e ícone de `Plus`. Textos: "Exportar", "Filtros", "Nova [Colheita, etc]". Sem prefixo "(2)" no texto principal do botão.
+- [ ] **Ações na listagem Mobile:** Os botões auxiliares na visão de celular (Filtros e Exportar) devem ser renderizados utilizando o componente compartilhado `<MobileListControls />`. **ATENÇÃO:** A cor da borda de botões secundários e filtros (`variant="outline"`) **OBRIGATORIAMENTE** tem que ser exata e idêntica à borda dos cards de listagem de celular (usando `border-border`, sem qualquer opacidade/clareamento). O próprio arquivo `button.tsx` já foi ajustado para remover `border-border/50`, garantindo a cor unificada.
+- [ ] **Títulos de Listagem:** Devem sempre estar visíveis no mobile (o container `<div className="flex...">` ao redor do `h1` deve fluir sem o uso de `hidden sm:block`). O título deve incorporar a contagem dinamicamente (ex: `Título (6)`) e o ícone nativo ao lado do texto deve ter `hidden sm:block` para desaparecer nas telas pequenas. A contagem subindo para o header elimina a necessidade do hint inline "X registros" no topo da listagem de cards.
+- [ ] **Top Navbar Mobile (MobileHeader):** 
+  - Cor de fundo **OBRIGATORIAMENTE** igual à da Sidebar (`bg-sidebar`), sem borda divisória na base.
+  - Textos de título e botões de aba/hambúrguer devem usar tons claros da sidebar (`text-sidebar-foreground` e `text-sidebar-foreground/80`).
+- [ ] **Tab Bar Responsiva (MobileBottomNav):** 
+  - Deve SEMPRE ter fundo branco (`bg-white`) garantindo espaçamento base com `style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}`.
+  - A tab **Ativa** deve possuir um fundo (ex: `bg-primary/12`) com bordas arredondadas (ex: `rounded-2xl`) que engloba **TUDO** (tanto o ícone quanto o texto), parecendo um botão completo e largo em formato visual de pílula (`h-[3.5rem] w-full max-w-[4.5rem]`). Letras e ícone ativos ficam coloridos (`text-primary`).
+- [ ] O contêiner principal de rolagem (`AppLayout.tsx`) deve utilizar `pb-[calc(6rem+env(safe-area-inset-bottom))]` no mobile para que as listas terminem sempre acima da nova Tab Bar estendida.
+- [ ] Listagens padrão em todas as telas **DEVEM** usar a dupla: `<div className="hidden md:block"><Table/></div>` e `<div className="md:hidden space-y-4">...cards...</div>` para garantir responsividade perfeita no celular. Tabelas nunca devem ser espremidas na vertical sem adaptação.
+- [ ] FAB posicionado em `bottom-[calc(5.5rem+env(safe-area-inset-bottom))]` OBRIGATORIAMENTE para flutuar de forma responsiva acima da bottom nav. Os botões inline de listagem (como `Novo Abastecimento` ou `Novas Movimentações`) DEVEM ser escondidos no mobile (`hidden md:flex`) deixando o FAB como substituto exclusivo para adições pelo telefone.
+- [ ] Listas e Tabelas que levam a detalhamento de páginas têm as linhas (desktop) ou cards (mobile) 100% clicáveis (`cursor-pointer`). Não usar ícones isolados de "Visão"/"Olho". Usar `e.stopPropagation()` nas ações independentes (Editar/Excluir).
+- [ ] Abas de detalhes virtuais ou perfis que exibem listagens já existentes no ERP (ex: Histórico de Colheita, Transporte) DEVEM reaproveitar a exata mesma estrutura visual das telas de origem correspondentes (Tabela padrão no Desktop, Cards flutuantes responsivos no Mobile).
 - [ ] Inputs de formulário com `h-11` em mobile
 - [ ] Botões com `h-12 w-full` em forms mobile
 - [ ] Labels de formulário seguem: `text-xs font-bold text-muted-foreground uppercase tracking-wide`
 - [ ] Cards mobile com `bg-card rounded-2xl border p-4 touch-card`
-- [ ] Badges de status usando variáveis semânticas (`--success`, `--warning`, etc.)
+- [ ] Badges de status usando variáveis semânticas (`--success`, `--warning`, etc.) e bordas com opacidade suave na cor correspondente (ex: `border-[hsl(var(--success)/0.2)]`), evitando bordas puramente neutras/chamativas.
+- [ ] Entidades categóricas iterativas (como Culturas e Serviços) devem ser renderizadas como Badges usando `getCultureBadgeStyle` ou `getServiceBadgeStyle` de `colors.ts` para consistência visual.
+- [ ] Tags de histórico (compra, aplicação, etc.) seguem o padrão das badges de status (`bg-success-subtle / text-success-text` para positivos, `bg-destructive / text-destructive` para negativos) com bordas suaves referentes à respectiva cor.
 - [ ] Fontes tipográficas via variável: `font-display` para títulos, body padrão para texto
 - [ ] Ícones em tamanhos padronizados conforme tabela da seção 10
 

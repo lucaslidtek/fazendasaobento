@@ -5,7 +5,9 @@ import {
   DEMO_MACHINES, 
   DEMO_FUELINGS, 
   DEMO_PRODUCTS, 
-  DEMO_TRUCKS 
+  DEMO_TRUCKS,
+  DEMO_STOCK_MOVEMENTS,
+  DEMO_USERS
 } from "./demo-data";
 
 /**
@@ -40,8 +42,12 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       data = DEMO_FUELINGS;
     } else if (url.endsWith("/products")) {
       data = DEMO_PRODUCTS;
+    } else if (url.endsWith("/stock-movements")) {
+      data = DEMO_STOCK_MOVEMENTS;
     } else if (url.endsWith("/trucks")) {
       data = DEMO_TRUCKS;
+    } else if (url.includes("/users")) {
+      data = DEMO_USERS;
     } else if (url.endsWith("/auth/me")) {
       data = { id: 1, name: "Admin Demo", email: "admin@fazenda.com", role: "admin", createdAt: new Date().toISOString() };
     } else {

@@ -106,7 +106,7 @@ export default function RecuperarSenha() {
               </p>
             </div>
 
-            <div className="bg-[hsl(var(--warning-subtle))] border border-[hsl(var(--warning)/0.3)] rounded-2xl p-5 space-y-4">
+            <div className="bg-[hsl(var(--warning-subtle))] border border-transparent rounded-2xl p-5 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="bg-[hsl(var(--warning)/0.12)] rounded-xl p-2 flex-shrink-0">
                   <ShieldAlert className="w-5 h-5 text-[hsl(var(--warning-text))]" />

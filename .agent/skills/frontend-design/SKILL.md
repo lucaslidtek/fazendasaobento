@@ -159,6 +159,15 @@ All spacing and sizing in multiples of 8:
 | **Cards** | Consistent padding, breathable |
 | **Reading width** | 45-75 characters optimal |
 
+### Lists in Detail Views (MANDATORY CONSISTENCY)
+
+```
+Whenever a detail view (e.g. `/colheita/:id` or `/safras/:id`) contains lists of related data within tabs or sections, YOU MUST follow the established application pattern:
+├── **Desktop/Large screens:** Use a data table format (`Table`, `TableHeader`, `TableRow`, `TableCell`).
+├── **Mobile/Touch screens:** Use a card-based list format (`bg-card`, `touch-card`).
+└── 🚫 **WARNING:** Never invent a new list design for detail views. Always mirror the main listing screens (e.g., `src/pages/colheita.tsx`).
+```
+
 ---
 
 ## 4. Color Principles

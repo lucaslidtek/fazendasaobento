@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListTransport, useCreateTransport, useDeleteTransport, useUpdateTransport, getListTransportQueryKey, useListTrucks } from "@workspace/api-client-react";
 import { DEMO_TRANSPORTS, DEMO_TRUCKS } from "@/lib/demo-data";
@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Truck, Loader2, ArrowRight, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Plus, Truck, Loader2, ArrowRight, Pencil, Trash2, MoreHorizontal, Download, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MobileListControls } from "@/components/ui/MobileListControls";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
@@ -84,6 +86,8 @@ function FormContent({ form, trucks, onSubmit, isPending, onClose, isEditing }: 
   );
 }
 
+const ALL = "__all__";
+
 export default function Transporte() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -91,10 +95,91 @@ export default function Transporte() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
 
+  // Filtros
+  const [filterTruck, setFilterTruck] = useState(ALL);
+  const [filterDriver, setFilterDriver] = useState(ALL);
+  const [filterOrigin, setFilterOrigin] = useState(ALL);
+  const [filterDestination, setFilterDestination] = useState(ALL);
+  const [showFilters, setShowFilters] = useState(false);
+
   const { data: apiRecords, isLoading } = useListTransport();
   const { data: apiTrucks } = useListTrucks();
   const records = apiRecords ?? DEMO_TRANSPORTS;
   const trucks = apiTrucks ?? DEMO_TRUCKS;
+
+  // Opções únicas para os filtros
+  const uniqueTrucks = useMemo(() => {
+    const seen = new Set<string>();
+    return records?.filter(r => {
+      if (!r.truckPlate || seen.has(r.truckPlate)) return false;
+      seen.add(r.truckPlate);
+      return true;
+    }) ?? [];
+  }, [records]);
+
+  const uniqueDrivers = useMemo(() => {
+    return [...new Set(records?.map(r => r.driverName).filter(Boolean) ?? [])].sort();
+  }, [records]);
+
+  const uniqueOrigins = useMemo(() => {
+    return [...new Set(records?.map(r => r.origin).filter(Boolean) ?? [])].sort();
+  }, [records]);
+
+  const uniqueDestinations = useMemo(() => {
+    return [...new Set(records?.map(r => r.destination).filter(Boolean) ?? [])].sort();
+  }, [records]);
+
+  // Registros filtrados
+  const filteredRecords = useMemo(() => {
+    return records?.filter(r => {
+      if (filterTruck !== ALL && r.truckPlate !== filterTruck) return false;
+      if (filterDriver !== ALL && r.driverName !== filterDriver) return false;
+      if (filterOrigin !== ALL && r.origin !== filterOrigin) return false;
+      if (filterDestination !== ALL && r.destination !== filterDestination) return false;
+      return true;
+    }) ?? [];
+  }, [records, filterTruck, filterDriver, filterOrigin, filterDestination]);
+
+  const activeFilterCount = [
+    filterTruck !== ALL,
+    filterDriver !== ALL,
+    filterOrigin !== ALL,
+    filterDestination !== ALL,
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setFilterTruck(ALL);
+    setFilterDriver(ALL);
+    setFilterOrigin(ALL);
+    setFilterDestination(ALL);
+  };
+
+  // Exportação CSV
+  const handleExport = () => {
+    const headers = ["Data", "Caminhão", "Motorista", "Origem", "Destino", "Carga (t)", "Frete (R$)"];
+    const rows = filteredRecords.map(r => [
+      format(new Date(r.date), "dd/MM/yyyy"),
+      r.truckPlate ?? "",
+      r.driverName ?? "",
+      r.origin ?? "",
+      r.destination ?? "",
+      String(r.cargoTons ?? ""),
+      r.freightValue ? String(Number(r.freightValue).toFixed(2)) : "",
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";"))
+      .join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `transportes_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Relatório exportado com sucesso!" });
+  };
 
   const createMutation = useCreateTransport({
     mutation: {
@@ -130,7 +215,7 @@ export default function Transporte() {
   });
 
   const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       driverName: "",
@@ -182,18 +267,34 @@ export default function Transporte() {
 
   return (
     <AppLayout>
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div className="hidden sm:block">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Truck className="w-7 h-7 text-[hsl(var(--info))]" />
-            Transporte e Fretes
+            <Truck className="hidden sm:block w-7 h-7 text-[hsl(var(--info))]" />
+            Transporte e Fretes {filteredRecords && <span className="text-muted-foreground/60 text-xl md:text-2xl">({filteredRecords.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Controle de escoamento da produção e cargas.
           </p>
         </div>
 
-        <div className="hidden sm:block">
+        <div className="hidden sm:flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} className="h-10 px-4 gap-2">
+            <Download className="w-4 h-4" />
+            Exportar
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(v => !v)}
+            className="h-10 px-4 gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            Filtros
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{activeFilterCount}</Badge>
+            )}
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
@@ -213,6 +314,93 @@ export default function Transporte() {
         </div>
       </div>
 
+      {/* Painel de Filtros — desktop */}
+      {showFilters && (
+        <div className="hidden sm:block bg-card border rounded-2xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Filtros</span>
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+                <X className="w-3 h-3" />
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {/* Caminhão */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Caminhão</label>
+              <Select value={filterTruck} onValueChange={setFilterTruck}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueTrucks.map(r => (
+                    <SelectItem key={r.truckPlate} value={r.truckPlate!}>{r.truckPlate}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Operador/Motorista */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Motorista</label>
+              <Select value={filterDriver} onValueChange={setFilterDriver}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueDrivers.map(d => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Origem */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Origem</label>
+              <Select value={filterOrigin} onValueChange={setFilterOrigin}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todas</SelectItem>
+                  {uniqueOrigins.map(o => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Destino */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Destino</label>
+              <Select value={filterDestination} onValueChange={setFilterDestination}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueDestinations.map(d => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resumo da filtragem */}
+      {activeFilterCount > 0 && (
+        <div className="hidden sm:flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+          <span>Exibindo <strong className="text-foreground">{filteredRecords.length}</strong> de <strong className="text-foreground">{records?.length ?? 0}</strong> registros</span>
+        </div>
+      )}
+
       {/* TABELA — desktop */}
       <div className="hidden sm:block bg-card rounded-2xl border overflow-hidden">
         {isLoading && !apiRecords ? (
@@ -231,10 +419,10 @@ export default function Transporte() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records?.length === 0 && (
+              {filteredRecords?.length === 0 && (
                 <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Nenhum registro encontrado.</TableCell></TableRow>
               )}
-              {records?.map((r) => (
+              {filteredRecords?.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
                   <TableCell className="font-medium">{format(new Date(r.date), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
@@ -277,15 +465,79 @@ export default function Transporte() {
 
       {/* CARDS — mobile */}
       <div className="sm:hidden space-y-3">
+        {/* Controles mobile */}
+        <MobileListControls 
+          onFilterClick={() => setShowFilters(v => !v)} 
+          onExportClick={handleExport} 
+          activeFilterCount={activeFilterCount} 
+        />
+
+        {/* Painel de filtros mobile */}
+        {showFilters && (
+          <div className="bg-card border rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filtros</span>
+              {activeFilterCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 gap-1 text-xs text-muted-foreground">
+                  <X className="w-3 h-3" /> Limpar
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={filterTruck} onValueChange={setFilterTruck}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Caminhão" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueTrucks.map(r => (
+                    <SelectItem key={r.truckPlate} value={r.truckPlate!}>{r.truckPlate}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterDriver} onValueChange={setFilterDriver}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Motorista" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueDrivers.map(d => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterOrigin} onValueChange={setFilterOrigin}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Origem" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todas</SelectItem>
+                  {uniqueOrigins.map(o => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterDestination} onValueChange={setFilterDestination}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Destino" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueDestinations.map(d => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {activeFilterCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {filteredRecords.length} de {records?.length ?? 0} registros
+              </p>
+            )}
+          </div>
+        )}
+
         {isLoading && !apiRecords && (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         )}
-        {!isLoading && records?.length === 0 && (
+        {!isLoading && filteredRecords?.length === 0 && (
           <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
-            Nenhum transporte registrado.
+            Nenhum transporte encontrado.
           </div>
         )}
-        {records?.map((r) => (
+        {filteredRecords?.map((r) => (
           <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
@@ -341,7 +593,7 @@ export default function Transporte() {
         <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
             onClick={() => setIsSheetOpen(true)}
-            className="fixed bottom-[5.5rem] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus className="w-6 h-6" />
           </button>

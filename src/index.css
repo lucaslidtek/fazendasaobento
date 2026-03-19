@@ -85,12 +85,37 @@
   --accent-foreground: 103 57% 10%;
   --destructive: 0 84% 58%;
   --destructive-foreground: 0 0% 100%;
+  
+  --success: 103 57% 28%;
+  --success-subtle: 103 57% 94%;
+  --success-text: 103 52% 24%;
+  
+  --warning: 38 92% 50%;
+  --warning-subtle: 38 92% 95%;
+  --warning-text: 38 76% 34%;
+  
+  --info: 217 91% 60%;
+  --info-subtle: 217 91% 95%;
+  --info-text: 217 79% 40%;
+  
   --chart-1: 103 52% 26%;
   --chart-2: 28 83% 47%;
   --chart-3: 103 35% 48%;
   --chart-4: 38 90% 48%;
   --chart-5: 200 42% 40%;
   --radius: 0.75rem;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 103 55% 10%;
+
+  --sidebar: 102 58% 14%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 28 83% 47%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 102 58% 18%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 102 58% 18%;
+  --sidebar-ring: 102 58% 25%;
 }
 
 @layer base {
@@ -100,4 +125,17 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  @keyframes modal-in {
+    from { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes modal-out {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    to { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+  }
+  .animate-modal-in { animation: modal-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-modal-out { animation: modal-out 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 }

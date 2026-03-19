@@ -186,7 +186,7 @@ export const HarvestRecordCulture = {
 export interface HarvestRecord {
   id: number;
   date: string;
-  culture: HarvestRecordCulture;
+  cultures: string[];
   area: string;
   driverName: string;
   machineId: number;
@@ -209,7 +209,7 @@ export const CreateHarvestRequestCulture = {
 
 export interface CreateHarvestRequest {
   date: string;
-  culture: CreateHarvestRequestCulture;
+  cultures: string[];
   area: string;
   driverName: string;
   machineId: number;

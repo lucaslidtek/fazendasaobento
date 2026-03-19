@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/lib/auth";
+import { getCultureChartColor } from "@/lib/colors";
 
 export default function Dashboard() {
   const { data: apiData, isLoading } = useGetDashboardSummary();
@@ -163,13 +164,7 @@ export default function Dashboard() {
                     {(data.harvestByCulture ?? []).map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={
-                          entry.culture === "soja"
-                            ? "hsl(var(--primary))"
-                            : entry.culture === "milho"
-                            ? "hsl(var(--secondary))"
-                            : "hsl(var(--chart-3))"
-                        }
+                        fill={getCultureChartColor(entry.culture)}
                       />
                     ))}
                   </Bar>
@@ -253,7 +248,7 @@ export default function Dashboard() {
                     >
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground capitalize text-sm truncate">
-                          {h.culture} — {h.area}
+                          {h.cultures?.join(", ") ?? "—"} — {h.area}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
                           {format(new Date(h.date), "dd 'de' MMM, yyyy", {

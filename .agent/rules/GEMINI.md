@@ -254,6 +254,8 @@ When user's prompt is NOT in English:
 
 > 🔴 **For design work:** Open and READ the agent file. Rules are there.
 
+> 🔴 **CRITICAL FOR IMPLEMENTATIONS:** When creating or updating detail views (pages with tabs and related data), you MUST consult the "Lists in Detail Views" pattern in `frontend-design` to maintain consistency with the rest of the application (Tables for desktop, Cards for mobile). Do not invent new list styles.
+
 ---
 
 ## 📁 QUICK REFERENCE

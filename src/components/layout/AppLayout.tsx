@@ -21,11 +21,11 @@ function MobileHeader({ title }: { title: string }) {
   const { setOpenMobile } = useSidebar();
 
   return (
-    <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-white sticky top-0 z-10 md:hidden">
+    <header className="h-14 flex items-center gap-3 px-4 bg-sidebar sticky top-0 z-10 md:hidden">
       <button
         onClick={() => setOpenMobile(true)}
         aria-label="Abrir menu"
-        className="p-1.5 -ml-1 rounded-lg text-foreground hover:bg-muted/60 transition-colors flex-shrink-0"
+        className="p-1.5 -ml-1 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors flex-shrink-0"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="2"  y1="5"  x2="18" y2="5"  />
@@ -40,7 +40,7 @@ function MobileHeader({ title }: { title: string }) {
           alt="São Bento"
           className="w-6 h-6 object-contain"
         />
-        <span className="font-bold text-base text-foreground tracking-tight">
+        <span className="font-bold text-base text-sidebar-foreground tracking-tight">
           {title}
         </span>
       </div>
@@ -82,7 +82,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-1 overflow-hidden">
           <MobileHeader title={pageTitle} />
 
-          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
+          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6 lg:pb-8">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
