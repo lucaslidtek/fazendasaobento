@@ -90,10 +90,13 @@ export default function SafraDetalhes() {
     let totalArea = 0;
 
     harvests.forEach(h => {
-      const key = h.culture.toLowerCase();
-      if (!summary[key]) summary[key] = { culture: h.culture, totalArea: 0, totalSacks: 0 };
-      summary[key].totalArea += h.areaHectares;
-      summary[key].totalSacks += h.quantitySacks;
+      const cultureList = h.cultures ?? [];
+      cultureList.forEach(culture => {
+        const key = culture.toLowerCase();
+        if (!summary[key]) summary[key] = { culture, totalArea: 0, totalSacks: 0 };
+        summary[key].totalArea += h.areaHectares;
+        summary[key].totalSacks += h.quantitySacks;
+      });
       totalArea += h.areaHectares;
     });
 
