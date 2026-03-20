@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function ToggleButton() {
   const { toggleSidebar, state } = useSidebar();
@@ -69,6 +70,12 @@ export function AppSidebar() {
     { title: "Abastecimento", icon: Fuel,    path: "/abastecimento" },
     { title: "Estoque",       icon: Package, path: "/estoque" },
   ];
+
+  const isMobile = useIsMobile();
+  const bottomNavPaths = ["/", "/colheita", "/transporte", "/maquinas"];
+  const visibleMenuItems = isMobile 
+    ? menuItems.filter(item => !bottomNavPaths.includes(item.path))
+    : menuItems;
 
   const adminItems = [
     { title: "Safras",    icon: CalendarDays, path: "/safras" },
@@ -106,7 +113,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     asChild
