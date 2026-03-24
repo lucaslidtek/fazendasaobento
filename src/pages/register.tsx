@@ -171,7 +171,7 @@ export default function Register() {
                       <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
                         Perfil de Acesso
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="h-11">
                             <SelectValue placeholder="Selecione o perfil" />

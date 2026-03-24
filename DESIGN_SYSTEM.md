@@ -198,6 +198,27 @@ A classe `touch-card` (definida em `index.css`) aplica `active:scale-[0.98]` e `
   <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" /> {/* Drag handle */}
   <SheetHeader className="text-left mb-4">
     <SheetTitle className="text-lg">Título do Form</SheetTitle>
+
+### 5.5 View de Detalhes e Navegação
+
+Todas as telas de detalhe das entidades (ex.: Estoque, Caminhões, Talhões, Máquinas, Usuários) devem obrigatoriamente seguir a mesma hierarquia de navegação:
+
+**Mobile (< 768px):** O título do item detalhado e seu botão nativo de "Voltar" devem estar **na barra de navegação superior (Navbar)**, para maximizar o uso da tela e criar uma experiência mais nativa.
+Para isso, os seguintes adereços (`props`) devem ser passados para o `AppLayout`:
+
+```tsx
+<AppLayout title={item.nome} showBack={true} backTo="/lista">
+```
+
+**Desktop (>= 768px):** A tela deve exibir Breadcrumbs logo no topo, sinalizando visualmente os caminhos tomados. No mobile devese ocultar os breadcrumbs com a classe utilitária de display.
+
+```tsx
+<nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
+  <Link href="/lista">Lista</Link>
+  <ChevronRight />
+  <span>{item.nome}</span>
+</nav>
+```
   </SheetHeader>
   {/* Form content */}
 </SheetContent>
@@ -306,7 +327,8 @@ Arquivo: `src/components/layout/MobileBottomNav.tsx`
 ### 6.3 Header
 
 **Desktop:** título da fazenda + botão de toggle da sidebar + breadcrumbs de página  
-**Mobile:** logo pequena + nome da página atual (centrado) + sem trigger de sidebar
+**Mobile (Listagens):** logo pequena + nome da página atual (centrado) + hambúrguer menu  
+**Mobile (Detalhes de Entidade):** Em telas de detalhe (ex: detalhe de máquina, safra), usar `showBack={true}` e `backTo` no `<AppLayout>`. O hambúrguer menu vira um botão `< Voltar` (sem texto, apenas o ícone). O título deve mostrar o nome específico do item que está sendo visto, não o nome do módulo genérico. O breadcrumb da página de detalhes deve ficar oculto na versão celular (`hidden md:flex`).
 
 ---
 
@@ -443,6 +465,10 @@ Antes de adicionar qualquer novo componente ou página, verifique:
 - [ ] Ações na listagem desktop **OBRIGATORIAMENTE** devem seguir a ordem `[Exportar] [Filtros] [Nova Entidade]` (exatamente nesta ordem, da esquerda para a direita). Os dois primeiros com `variant="outline"` e ícone à esquerda; o de adição com variante padrão (cor de fundo e texto branco) e ícone de `Plus`. Textos: "Exportar", "Filtros", "Nova [Colheita, etc]". Sem prefixo "(2)" no texto principal do botão.
 - [ ] **Ações na listagem Mobile:** Os botões auxiliares na visão de celular (Filtros e Exportar) devem ser renderizados utilizando o componente compartilhado `<MobileListControls />`. **ATENÇÃO:** A cor da borda de botões secundários e filtros (`variant="outline"`) **OBRIGATORIAMENTE** tem que ser exata e idêntica à borda dos cards de listagem de celular (usando `border-border`, sem qualquer opacidade/clareamento). O próprio arquivo `button.tsx` já foi ajustado para remover `border-border/50`, garantindo a cor unificada.
 - [ ] **Títulos de Listagem:** Devem sempre estar visíveis no mobile (o container `<div className="flex...">` ao redor do `h1` deve fluir sem o uso de `hidden sm:block`). O título deve incorporar a contagem dinamicamente (ex: `Título (6)`) e o ícone nativo ao lado do texto deve ter `hidden sm:block` para desaparecer nas telas pequenas. A contagem subindo para o header elimina a necessidade do hint inline "X registros" no topo da listagem de cards.
+- [ ] **Formulários Responsivos:** Na visão de celular, formulários de adição e edição devem usar uma única coluna (1 item por linha). A responsividade deve usar algo como `grid-cols-1 sm:grid-cols-2` para se adaptar a 2 colunas em telas maiores apenas.
+- [ ] **Placeholders (UX Writing):** Todos os campos de formulário (Inputs, Selects, Textareas) devem conter placeholders bem escritos e descritivos para garantir consistência e previsibilidade (Ex: "Nome completo do operador", "Ex: 1500.00" ou "Ex: Fazenda São Bento" ao invés de textos vazios ou "Selecione").
+- [ ] **Data Inputs (UX):** Os inputs nativos de data (`<Input type="date">`) já possuem estilo global (`src/index.css`) que posiciona o ícone de calendário nativo à esquerda e aplica um padding correto. Não altere o comportamento flex de inputs de data.
+- [ ] **Select Dropdowns controlados:** Em formulários complexos usando React Hook Form, o componente `Select` do Shadcn **sempre** deve recebar a prop `value` controlada. Nunca utilize `defaultValue` para dados controlados (pois atrapalha a exibição de placeholders em "reset" do input). Para IDs que iniciam como `0` em números, force: `value={field.value ? field.value.toString() : undefined}` para permitir que o Select mostre o Placeholder inicial adequadamente.
 - [ ] **Top Navbar Mobile (MobileHeader):** 
   - Cor de fundo **OBRIGATORIAMENTE** igual à da Sidebar (`bg-sidebar`), sem borda divisória na base.
   - Textos de título e botões de aba/hambúrguer devem usar tons claros da sidebar (`text-sidebar-foreground` e `text-sidebar-foreground/80`).
@@ -452,7 +478,7 @@ Antes de adicionar qualquer novo componente ou página, verifique:
 - [ ] O contêiner principal de rolagem (`AppLayout.tsx`) deve utilizar `pb-[calc(6rem+env(safe-area-inset-bottom))]` no mobile para que as listas terminem sempre acima da nova Tab Bar estendida.
 - [ ] Listagens padrão em todas as telas **DEVEM** usar a dupla: `<div className="hidden md:block"><Table/></div>` e `<div className="md:hidden space-y-4">...cards...</div>` para garantir responsividade perfeita no celular. Tabelas nunca devem ser espremidas na vertical sem adaptação.
 - [ ] FAB posicionado em `bottom-[calc(5.5rem+env(safe-area-inset-bottom))]` OBRIGATORIAMENTE para flutuar de forma responsiva acima da bottom nav. Os botões inline de listagem (como `Novo Abastecimento` ou `Novas Movimentações`) DEVEM ser escondidos no mobile (`hidden md:flex`) deixando o FAB como substituto exclusivo para adições pelo telefone.
-- [ ] Listas e Tabelas que levam a detalhamento de páginas têm as linhas (desktop) ou cards (mobile) 100% clicáveis (`cursor-pointer`). Não usar ícones isolados de "Visão"/"Olho". Usar `e.stopPropagation()` nas ações independentes (Editar/Excluir).
+- [ ] Listas e Tabelas que levam a detalhamento de páginas ou expansão/edição de item têm as linhas (desktop) ou cards (mobile) 100% clicáveis (`cursor-pointer`). **Regra Obrigatória:** TODOS os itens das tabelas que abrem a partir de um clique na linha inteira na visão desktop DEVEM obrigatoriamente abrir também através do toque no card correspondente na visão de celular. Não usar ícones isolados de "Visão"/"Olho". Usar `e.stopPropagation()` nas ações independentes (Editar/Excluir, para não engatilhar a ação do card inteiro).
 - [ ] Abas de detalhes virtuais ou perfis que exibem listagens já existentes no ERP (ex: Histórico de Colheita, Transporte) DEVEM reaproveitar a exata mesma estrutura visual das telas de origem correspondentes (Tabela padrão no Desktop, Cards flutuantes responsivos no Mobile).
 - [ ] Inputs de formulário com `h-11` em mobile
 - [ ] Botões com `h-12 w-full` em forms mobile

@@ -17,22 +17,38 @@ const PAGE_TITLES: Record<string, string> = {
   "/usuarios": "Usuários",
 };
 
-function MobileHeader({ title }: { title: string }) {
+function MobileHeader({ title, showBack, backTo }: { title: string, showBack?: boolean, backTo?: string }) {
   const { setOpenMobile } = useSidebar();
+  const [, setLocation] = useLocation();
 
   return (
     <header className="h-14 flex items-center gap-3 px-4 bg-sidebar sticky top-0 z-10 md:hidden">
-      <button
-        onClick={() => setOpenMobile(true)}
-        aria-label="Abrir menu"
-        className="p-1.5 -ml-1 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors flex-shrink-0"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="2"  y1="5"  x2="18" y2="5"  />
-          <line x1="2"  y1="10" x2="18" y2="10" />
-          <line x1="2"  y1="15" x2="18" y2="15" />
-        </svg>
-      </button>
+      {showBack ? (
+        <button
+          onClick={() => {
+            if (backTo) setLocation(backTo);
+            else window.history.back();
+          }}
+          aria-label="Voltar"
+          className="p-1.5 -ml-1 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors flex-shrink-0"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpenMobile(true)}
+          aria-label="Abrir menu"
+          className="p-1.5 -ml-1 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors flex-shrink-0"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="2"  y1="5"  x2="18" y2="5"   />
+            <line x1="2"  y1="10" x2="18" y2="10"  />
+            <line x1="2"  y1="15" x2="18" y2="15"  />
+          </svg>
+        </button>
+      )}
 
       <div className="flex items-center gap-2 flex-1">
         <img
@@ -48,7 +64,17 @@ function MobileHeader({ title }: { title: string }) {
   );
 }
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+export function AppLayout({ 
+  children,
+  title,
+  showBack,
+  backTo
+}: { 
+  children: React.ReactNode,
+  title?: string,
+  showBack?: boolean,
+  backTo?: string
+}) {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
@@ -80,7 +106,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full bg-background/50">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <MobileHeader title={pageTitle} />
+          <MobileHeader title={title || pageTitle} showBack={showBack} backTo={backTo} />
 
           <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6 lg:pb-8">
             <div className="max-w-7xl mx-auto">

@@ -21,13 +21,13 @@ import { apiFetchCrops, apiCreateCrop, apiUpdateCrop, apiDeleteCrop } from "@/li
 
 // -----------------
 
-const schema = z.object({
+export const schema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
   description: z.string().optional(),
   status: z.enum(["ativo", "inativo"]),
 });
 
-type CropFormData = z.infer<typeof schema>;
+export type CropFormData = z.infer<typeof schema>;
 
 const STATUS_STYLES = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
@@ -39,7 +39,7 @@ const STATUS_LABELS: Record<string, string> = {
   inativo: "Inativo",
 };
 
-function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -52,7 +52,7 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
         <FormField control={form.control} name="status" render={({ field }) => (
           <FormItem><FormLabel>Status</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+              <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="inativo">Inativo</SelectItem>

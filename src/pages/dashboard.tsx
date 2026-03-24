@@ -1,6 +1,5 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useGetDashboardSummary } from "@workspace/api-client-react";
-import { DEMO_DASHBOARD } from "@/lib/demo-data";
+import { DEMO_HARVESTS, DEMO_TRANSPORTS, DEMO_FUELINGS, DEMO_MACHINES, DEMO_TRUCKS, DEMO_PRODUCTS } from "@/lib/demo-data";
 import { Loader2, Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -8,21 +7,68 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/lib/auth";
 import { getCultureChartColor } from "@/lib/colors";
+import { useFarm } from "@/contexts/FarmContext";
 
 export default function Dashboard() {
-  const { data: apiData, isLoading } = useGetDashboardSummary();
   const { user } = useAuth();
-  const data = (apiData && apiData.totalHarvestSacks !== undefined) ? apiData : DEMO_DASHBOARD;
+  const { selectedSafraId, selectedTalhaoId } = useFarm();
 
-  if (isLoading && !apiData) {
-    return (
-      <AppLayout>
-        <div className="h-[60vh] flex items-center justify-center">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        </div>
-      </AppLayout>
-    );
-  }
+  const harvests = DEMO_HARVESTS.filter(h => 
+    (!selectedSafraId || h.safraId === selectedSafraId) && 
+    (!selectedTalhaoId || h.talhaoId === selectedTalhaoId)
+  );
+  
+  const transports = DEMO_TRANSPORTS.filter((t: any) => 
+    (!selectedSafraId || t.safraId === selectedSafraId) && 
+    (!selectedTalhaoId || t.talhaoId === selectedTalhaoId)
+  );
+
+  const fuelings = DEMO_FUELINGS.filter((f: any) => 
+    (!selectedSafraId || f.safraId === selectedSafraId) && 
+    (!selectedTalhaoId || f.talhaoId === selectedTalhaoId)
+  );
+
+  const totalHarvestSacks = harvests.reduce((acc, h) => acc + (h.quantitySacks || 0), 0);
+  const totalHarvestHectares = harvests.reduce((acc, h) => acc + (h.areaHectares || 0), 0);
+  const totalTransportTons = transports.reduce((acc, t) => acc + (t.cargoTons || 0), 0);
+  const totalFuelingLiters = fuelings.reduce((acc, f) => acc + (f.liters || 0), 0);
+  
+  const activeMachines = DEMO_MACHINES.filter(m => m.status === 'ativo').length;
+  const activeTrucks = DEMO_TRUCKS.filter(t => t.status === 'ativo').length;
+  const lowStockProducts = DEMO_PRODUCTS.filter(p => p.currentStock <= (p.minStock || 0)).length;
+
+  const harvestByCultureMap = harvests.reduce((acc: any, h) => {
+    h.cultures?.forEach((c: string) => {
+      if (!acc[c]) acc[c] = { totalSacks: 0, totalHectares: 0 };
+      acc[c].totalSacks += h.quantitySacks || 0;
+      acc[c].totalHectares += h.areaHectares || 0;
+    });
+    return acc;
+  }, {});
+  const harvestByCulture = Object.entries(harvestByCultureMap).map(([culture, vals]: any) => ({ culture, ...vals }));
+
+  const fuelingByMachineMap = fuelings.reduce((acc: any, f) => {
+    if (!acc[f.machineName]) acc[f.machineName] = 0;
+    acc[f.machineName] += f.liters || 0;
+    return acc;
+  }, {});
+  const fuelingByMachine = Object.entries(fuelingByMachineMap).map(([machineName, totalLiters]) => ({ machineName, totalLiters }));
+
+  const data = {
+    totalHarvestSacks,
+    totalHarvestHectares,
+    totalTransportTons,
+    totalFuelingLiters,
+    activeMachines,
+    activeTrucks,
+    lowStockProducts,
+    harvestByCulture,
+    fuelingByMachine,
+    recentHarvests: harvests.slice(0, 5),
+    recentTransports: transports.slice(0, 5)
+  };
+
+  if (!data) return null;
 
   const kpis = [
     {

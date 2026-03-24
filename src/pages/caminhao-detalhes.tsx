@@ -15,8 +15,21 @@ import {
   TrendingUp,
   Map,
   Package,
-  ArrowRight
+  ArrowRight,
+  Pencil,
+  Trash2,
+  MoreHorizontal
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useDeleteTruck, useUpdateTruck, getListTrucksQueryKey } from "@workspace/api-client-react";
+import { FormContent, schema } from "./caminhoes";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -47,6 +60,10 @@ export default function CaminhaoDetalhes() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const truck = useMemo(() => {
     return DEMO_TRUCKS.find(t => t.id === Number(id));
@@ -80,6 +97,62 @@ export default function CaminhaoDetalhes() {
     };
   }, [truck, selectedMonth]);
 
+  const updateMutation = useUpdateTruck({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTrucksQueryKey() });
+        toast({ title: "Caminhão atualizado com sucesso." });
+        closeForm();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
+  const deleteMutation = useDeleteTruck({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTrucksQueryKey() });
+        toast({ title: "Caminhão excluído." });
+        setLocation("/caminhoes");
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: { plate: "", model: "", capacity: 0, status: "ativo" },
+  });
+
+  const openEdit = () => {
+    if (truck) {
+      form.reset({
+        plate: truck.plate,
+        model: truck.model || "",
+        capacity: truck.capacity || 0,
+        status: truck.status as any,
+      });
+      if (window.innerWidth < 640) setIsSheetOpen(true);
+      else setIsDialogOpen(true);
+    }
+  };
+
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    form.reset();
+  };
+
+  const onUpdate = (data: z.infer<typeof schema>) => {
+    updateMutation.mutate({ id: truck!.id, data });
+  };
+
+  const confirmDelete = () => {
+    if (confirm("Tem certeza que deseja excluir este caminhão?")) {
+      deleteMutation.mutate({ id: truck!.id });
+    }
+  };
+
   if (!truck) {
     return (
       <AppLayout>
@@ -92,9 +165,9 @@ export default function CaminhaoDetalhes() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout title={truck.plate} showBack={true} backTo="/caminhoes">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/caminhoes" className="hover:text-primary transition-colors">Caminhões</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{truck.plate}</span>
@@ -134,6 +207,25 @@ export default function CaminhaoDetalhes() {
               <SelectItem value="4">Maio</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button variant="outline" size="sm" onClick={openEdit} className="hidden md:flex">
+            <Pencil className="w-4 h-4 mr-2" /> Editar
+          </Button>
+          <Button variant="outline" size="sm" onClick={confirmDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="md:hidden flex-shrink-0">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={openEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
+              <DropdownMenuItem onClick={confirmDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -271,6 +363,20 @@ export default function CaminhaoDetalhes() {
         </TabsContent>
 
       </Tabs>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Caminhão</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={form} onSubmit={onUpdate} isPending={updateMutation.isPending} onClose={closeForm} isEditing={true} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Caminhão</DialogTitle></DialogHeader>
+          <FormContent form={form} onSubmit={onUpdate} isPending={updateMutation.isPending} onClose={closeForm} isEditing={true} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

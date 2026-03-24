@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
+import { FarmProvider } from "@/contexts/FarmContext";
 
 import "./lib/fetch-interceptor";
 
@@ -78,7 +79,9 @@ function App() {
       <TooltipProvider>
         <WouterRouter>
           <AuthProvider>
-            <Router />
+            <FarmProvider>
+              <Router />
+            </FarmProvider>
           </AuthProvider>
         </WouterRouter>
         <Toaster />

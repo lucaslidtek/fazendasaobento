@@ -20,27 +20,27 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 
-const schema = z.object({
+export const schema = z.object({
   name: z.string().min(3, "Nome muito curto"),
   email: z.string().email("E-mail inválido"),
   role: z.enum(["admin", "operador"]),
 });
 
-function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>Nome Completo</FormLabel>
-            <FormControl><Input placeholder="João da Silva" {...field} /></FormControl>
+            <FormControl><Input placeholder="Ex: João da Silva" {...field} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem>
             <FormLabel>E-mail (Login)</FormLabel>
-            <FormControl><Input placeholder="email@fazenda.com" type="email" {...field} /></FormControl>
+            <FormControl><Input placeholder="Ex: email@fazenda.com" type="email" {...field} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
@@ -49,7 +49,7 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
             <FormItem>
               <FormLabel>Perfil</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || "operador"}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o perfil" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="operador">Operador</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>

@@ -125,6 +125,27 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  /* Ajuste do ícone do calendário para a esquerda globalmente */
+  input[type="date"] {
+    position: relative;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    left: 8px;
+    cursor: pointer;
+    background-position: center;
+    background-size: contain;
+  }
+
+  input[type="date"]::-webkit-datetime-edit {
+    padding-left: 24px;
+  }
+  
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
 }
 
 @layer utilities {

@@ -3,7 +3,17 @@ import { useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DEMO_CROPS, DEMO_HARVESTS, DEMO_STOCK_MOVEMENTS, DEMO_PRODUCTS } from "@/lib/demo-data";
-import { Loader2, Sprout, ChevronRight, TrendingUp, Tractor, Box, Map, Package, Activity } from "lucide-react";
+import { Loader2, Sprout, ChevronRight, TrendingUp, Tractor, Box, Map, Package, Activity, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiUpdateCrop, apiDeleteCrop } from "@/lib/api-crops";
+import { FormContent, schema, type CropFormData } from "./culturas";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,8 +49,67 @@ export default function CulturaDetalhes() {
   const { data: cultura, isLoading, isError } = useQuery({
     queryKey: ["/cultura", culturaId],
     queryFn: () => fetchCulturaById(culturaId),
+    queryFn: () => fetchCulturaById(culturaId),
     enabled: !!culturaId,
   });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const updateMutation = useMutation({
+    mutationFn: apiUpdateCrop,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/cultura", culturaId] });
+      queryClient.invalidateQueries({ queryKey: ["/crops"] });
+      toast({ title: "Cultura atualizada." });
+      closeForm();
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: apiDeleteCrop,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/crops"] });
+      toast({ title: "Cultura excluída." });
+      window.location.href = "/culturas";
+    },
+  });
+
+  const form = useForm<CropFormData>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: { name: "", description: "", status: "ativo" },
+  });
+
+  const openEdit = () => {
+    if (cultura) {
+      form.reset({
+        name: cultura.name,
+        description: cultura.description ?? "",
+        status: cultura.status,
+      });
+      if (window.innerWidth < 640) setIsSheetOpen(true);
+      else setIsDialogOpen(true);
+    }
+  };
+
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    form.reset();
+  };
+
+  const onUpdate = (data: CropFormData) => {
+    updateMutation.mutate({ id: culturaId, data });
+  };
+
+  const confirmDelete = () => {
+    if (confirm("Tem certeza que deseja excluir esta cultura?")) {
+      deleteMutation.mutate(culturaId);
+    }
+  };
 
   const harvestStats = useMemo(() => {
     if (!cultura) return { totalSacks: 0, totalArea: 0, productivityAvg: 0, harvests: [] };
@@ -114,9 +183,9 @@ export default function CulturaDetalhes() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title={cultura.name} showBack={true} backTo="/culturas">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/culturas" className="hover:text-primary transition-colors">Culturas</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{cultura.name}</span>
@@ -141,6 +210,27 @@ export default function CulturaDetalhes() {
               </p>
             )}
           </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0">
+          <Button variant="outline" size="sm" onClick={openEdit} className="hidden md:flex">
+            <Pencil className="w-4 h-4 mr-2" /> Editar
+          </Button>
+          <Button variant="outline" size="sm" onClick={confirmDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="md:hidden flex-shrink-0">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={openEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
+              <DropdownMenuItem onClick={confirmDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -348,6 +438,20 @@ export default function CulturaDetalhes() {
         </TabsContent>
         
       </Tabs>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Cultura</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={form} onSubmit={onUpdate} isPending={updateMutation.isPending} onClose={closeForm} isEditing={true} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Cultura</DialogTitle></DialogHeader>
+          <FormContent form={form} onSubmit={onUpdate} isPending={updateMutation.isPending} onClose={closeForm} isEditing={true} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

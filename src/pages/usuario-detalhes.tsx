@@ -19,6 +19,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useUpdateUser, useDeleteUser, getListUsersQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { schema, FormContent } from "./usuarios";
 import { 
   DEMO_USERS, 
   DEMO_HARVESTS, 
@@ -35,7 +39,9 @@ import {
   Activity,
   ShieldAlert,
   Pencil,
-  Upload
+  Upload,
+  Trash2,
+  MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +65,65 @@ export default function UsuarioDetalhes() {
   const [isEditProfileSheetOpen, setIsEditProfileSheetOpen] = useState(false);
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
+  
+  const queryClient = useQueryClient();
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isUserSheetOpen, setIsUserSheetOpen] = useState(false);
+
+  const userForm = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: "", email: "", role: "operador" }
+  });
+
+  const updateMutation = useUpdateUser({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+        toast({ title: "Usuário atualizado com sucesso." });
+        closeUserForm();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    }
+  });
+
+  const deleteMutation = useDeleteUser({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+        toast({ title: "Usuário excluído com sucesso." });
+        setLocation("/usuarios");
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    }
+  });
+
+  const openUserEdit = () => {
+    if (user) {
+      userForm.reset({
+        name: user.name,
+        email: user.email,
+        role: user.role as "admin"|"operador"
+      });
+      if (window.innerWidth < 640) setIsUserSheetOpen(true);
+      else setIsUserDialogOpen(true);
+    }
+  };
+
+  const closeUserForm = () => {
+    setIsUserDialogOpen(false);
+    setIsUserSheetOpen(false);
+    userForm.reset();
+  };
+
+  const onUpdateUser = (data: z.infer<typeof schema>) => {
+    updateMutation.mutate({ id: user!.id, data });
+  };
+
+  const confirmUserDelete = () => {
+    if (confirm("Tem certeza que deseja revogar o acesso deste usuário?")) {
+      deleteMutation.mutate({ id: user!.id });
+    }
+  };
 
   const user = useMemo(() => {
     if (isProfileRoute) {
@@ -183,9 +248,9 @@ export default function UsuarioDetalhes() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout title={user.name} showBack={true} backTo="/usuarios">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         {!isProfileRoute && (
           <>
             <Link href="/usuarios" className="hover:text-primary transition-colors">Controle de Acessos</Link>
@@ -270,6 +335,30 @@ export default function UsuarioDetalhes() {
                 </Sheet>
               </div>
             </>
+          )}
+
+          {/* Show Edit/Delete Actions if the logged-in user is admin and viewing ANOTHER user */}
+          {currentUser && currentUser.role === "admin" && currentUser.id !== user.id && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={openUserEdit} className="hidden md:flex">
+                <Pencil className="w-4 h-4 mr-2" /> Editar Acesso
+              </Button>
+              <Button variant="outline" size="sm" onClick={confirmUserDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+                <Trash2 className="w-4 h-4 mr-2" /> Revogar
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="md:hidden flex-shrink-0">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={openUserEdit}><Pencil className="w-4 h-4 mr-2"/> Editar Acesso</DropdownMenuItem>
+                  <DropdownMenuItem onClick={confirmUserDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Revogar</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
       </div>
@@ -644,6 +733,20 @@ export default function UsuarioDetalhes() {
         </TabsContent>
 
       </Tabs>
+
+      <Sheet open={isUserSheetOpen} onOpenChange={setIsUserSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Acesso</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={userForm} onSubmit={onUpdateUser} isPending={updateMutation.isPending} onClose={closeUserForm} isEditing={true} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Acesso</DialogTitle></DialogHeader>
+          <FormContent form={userForm} onSubmit={onUpdateUser} isPending={updateMutation.isPending} onClose={closeUserForm} isEditing={true} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 
-const schema = z.object({
+export const schema = z.object({
   plate: z.string().min(7, "Placa inválida"),
   model: z.string().optional(),
   capacity: z.coerce.number().optional(),
@@ -44,7 +44,7 @@ const STATUS_DOT: Record<string, string> = {
   inativo: "bg-destructive",
 };
 
-function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -52,16 +52,16 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
           <FormItem><FormLabel>Placa</FormLabel><FormControl><Input placeholder="ABC-1234" className="uppercase" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="model" render={({ field }) => (
-          <FormItem><FormLabel>Modelo / Marca</FormLabel><FormControl><Input placeholder="Scania R450" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Modelo / Marca</FormLabel><FormControl><Input placeholder="Ex: Scania R450" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="capacity" render={({ field }) => (
-            <FormItem><FormLabel>Capacidade (ton)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Capacidade (ton)</FormLabel><FormControl><Input type="number" placeholder="Ex: 35.5" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="status" render={({ field }) => (
             <FormItem><FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="manutencao">Em Manutenção</SelectItem>
@@ -135,7 +135,7 @@ export default function Caminhoes() {
   });
 
   const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { plate: "", model: "", capacity: 35, status: "ativo" },
   });
 

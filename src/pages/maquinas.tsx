@@ -20,7 +20,7 @@ import { MobileListControls } from "@/components/ui/MobileListControls";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-const schema = z.object({
+export const schema = z.object({
   name: z.string().min(2, "Nome obrigatório"),
   model: z.string().optional(),
   type: z.enum(["trator", "colheitadeira", "caminhao", "equipamento"]),
@@ -54,7 +54,7 @@ const TYPE_LABELS: Record<string, string> = {
   equipamento: "Equipamento",
 };
 
-function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -62,20 +62,20 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
           <FormItem><FormLabel>Nome / Identificação</FormLabel><FormControl><Input placeholder="Ex: Trator JD-01" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="model" render={({ field }) => (
-            <FormItem><FormLabel>Modelo</FormLabel><FormControl><Input placeholder="John Deere 8R" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Modelo</FormLabel><FormControl><Input placeholder="Ex: John Deere 8R" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="purchase_cost" render={({ field }) => (
-            <FormItem><FormLabel>Custo de Compra (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0,00" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Custo de Compra (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="Ex: 500000.00" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="type" render={({ field }) => (
             <FormItem><FormLabel>Tipo de Máquina</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="trator">Trator</SelectItem>
                   <SelectItem value="colheitadeira">Colheitadeira</SelectItem>
@@ -88,7 +88,7 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
           <FormField control={form.control} name="status" render={({ field }) => (
             <FormItem><FormLabel>Status Operacional</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="manutencao">Em Manutenção</SelectItem>

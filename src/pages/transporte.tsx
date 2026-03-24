@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MobileListControls } from "@/components/ui/MobileListControls";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useFarm } from "@/contexts/FarmContext";
 
 const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
@@ -34,13 +35,13 @@ function FormContent({ form, trucks, onSubmit, isPending, onClose, isEditing }: 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="truckId" render={({ field }) => (
             <FormItem><FormLabel>Caminhão</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value?.toString()}>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Placa/Modelo" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {trucks?.map((t: any) => (
@@ -56,21 +57,21 @@ function FormContent({ form, trucks, onSubmit, isPending, onClose, isEditing }: 
           <FormItem><FormLabel>Motorista</FormLabel><FormControl><Input placeholder="Nome completo" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="origin" render={({ field }) => (
-            <FormItem><FormLabel>Origem</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Origem</FormLabel><FormControl><Input placeholder="Ex: Fazenda São Bento" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="destination" render={({ field }) => (
             <FormItem><FormLabel>Destino</FormLabel><FormControl><Input placeholder="Ex: Silo Bunge" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="cargoTons" render={({ field }) => (
-            <FormItem><FormLabel>Carga (Toneladas)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Carga (Toneladas)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 32.5" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="freightValue" render={({ field }) => (
-            <FormItem><FormLabel>Frete (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Frete (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="Ex: 1500.00" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
@@ -94,6 +95,8 @@ export default function Transporte() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
+
+  const { selectedSafraId, selectedTalhaoId } = useFarm();
 
   // Filtros
   const [filterTruck, setFilterTruck] = useState(ALL);
@@ -132,6 +135,9 @@ export default function Transporte() {
   // Registros filtrados
   const filteredRecords = useMemo(() => {
     return records?.filter(r => {
+      if (selectedSafraId && (r as any).safraId !== selectedSafraId) return false;
+      if (selectedTalhaoId && (r as any).talhaoId !== selectedTalhaoId) return false;
+
       if (filterTruck !== ALL && r.truckPlate !== filterTruck) return false;
       if (filterDriver !== ALL && r.driverName !== filterDriver) return false;
       if (filterOrigin !== ALL && r.origin !== filterOrigin) return false;
@@ -423,7 +429,7 @@ export default function Transporte() {
                 <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Nenhum registro encontrado.</TableCell></TableRow>
               )}
               {filteredRecords?.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/30">
+                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleEditOpen(r, false)}>
                   <TableCell className="font-medium">{format(new Date(r.date), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
                     <span className="font-mono bg-muted px-2 py-0.5 rounded text-xs">{r.truckPlate}</span>
@@ -538,7 +544,7 @@ export default function Transporte() {
           </div>
         )}
         {filteredRecords?.map((r) => (
-          <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card">
+          <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card cursor-pointer" onClick={() => handleEditOpen(r, true)}>
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
                 <span className="font-mono bg-muted px-2 py-0.5 rounded text-xs font-bold">

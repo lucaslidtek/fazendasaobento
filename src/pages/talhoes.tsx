@@ -41,7 +41,7 @@ const apiCreateTalhao = async (data: Omit<Talhao, "id" | "createdAt">) => {
   return newTalhao;
 };
 
-const apiUpdateTalhao = async ({ id, data }: { id: number; data: Partial<Talhao> }) => {
+export const apiUpdateTalhao = async ({ id, data }: { id: number; data: Partial<Talhao> }) => {
   await fakeDelay();
   const index = MOCK_TALHOES.findIndex(t => t.id === id);
   if (index === -1) throw new Error("Talhão não encontrado");
@@ -49,21 +49,22 @@ const apiUpdateTalhao = async ({ id, data }: { id: number; data: Partial<Talhao>
   return MOCK_TALHOES[index];
 };
 
-const apiDeleteTalhao = async (id: number) => {
+export const apiDeleteTalhao = async (id: number) => {
   await fakeDelay();
   MOCK_TALHOES = MOCK_TALHOES.filter(t => t.id !== id);
   return true;
 };
 // -----------------
 
-const schema = z.object({
+export const schema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
+  property: z.string().min(2, "Propriedade é obrigatória"),
   areaHectares: z.coerce.number().min(0.1, "Área deve ser maior que 0"),
-  cultureId: z.coerce.number().optional().or(z.literal("")),
+  cultureId: z.coerce.number().optional().or(z.literal("")).or(z.literal("none")),
   status: z.enum(["ativo", "inativo"]),
 });
 
-type TalhaoFormData = z.infer<typeof schema>;
+export type TalhaoFormData = z.infer<typeof schema>;
 
 const STATUS_STYLES = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
@@ -75,22 +76,38 @@ const STATUS_LABELS: Record<string, string> = {
   inativo: "Inativo",
 };
 
-function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing, uniqueProperties = [] }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem><FormLabel>Nome do Talhão</FormLabel><FormControl><Input placeholder="Ex: Talhão A1, Gleba Oeste" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
+        <FormField control={form.control} name="property" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Propriedade</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Input list="properties-list" placeholder="Ex: Fazenda São Bento" {...field} />
+                <datalist id="properties-list">
+                  {uniqueProperties.map((p: string) => (
+                    <option key={p} value={p} />
+                  ))}
+                </datalist>
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
         <FormField control={form.control} name="areaHectares" render={({ field }) => (
           <FormItem><FormLabel>Área (Hectares)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 20" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="cultureId" render={({ field }) => (
           <FormItem><FormLabel>Cultura Atual (Opcional)</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value?.toString() || ""}>
+            <Select onValueChange={field.onChange} value={field.value?.toString() || "none"}>
               <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma cultura" /></SelectTrigger></FormControl>
               <SelectContent>
-                <SelectItem value="">Nenhuma</SelectItem>
+                <SelectItem value="none">Nenhuma</SelectItem>
                 {DEMO_CROPS.map(c => (
                   <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                 ))}
@@ -101,7 +118,7 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
         <FormField control={form.control} name="status" render={({ field }) => (
           <FormItem><FormLabel>Status</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+              <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="inativo">Inativo</SelectItem>
@@ -172,8 +189,8 @@ export default function Talhoes() {
   });
 
   const form = useForm<TalhaoFormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { name: "", areaHectares: 0, cultureId: "", status: "ativo" },
+    resolver: zodResolver(schema) as any,
+    defaultValues: { name: "", property: "", areaHectares: 0, cultureId: "none", status: "ativo" },
   });
 
   const closeForm = () => {
@@ -190,8 +207,9 @@ export default function Talhoes() {
     setEditingRecord(record);
     form.reset({
       name: record.name,
+      property: record.property || "",
       areaHectares: record.areaHectares,
-      cultureId: record.cultureId || "",
+      cultureId: record.cultureId ? String(record.cultureId) as any : "none",
       status: record.status,
     });
     if (isMobile) setIsSheetOpen(true);
@@ -201,11 +219,13 @@ export default function Talhoes() {
   const handleSubmit = (d: TalhaoFormData) => {
     const dataToSave = {
       ...d,
-      cultureId: d.cultureId ? Number(d.cultureId) : undefined,
+      cultureId: d.cultureId && d.cultureId !== "none" ? Number(d.cultureId) : undefined,
     };
     if (editingRecord) updateMutation.mutate({ id: editingRecord.id, data: dataToSave });
     else createMutation.mutate(dataToSave as any);
   };
+
+  const uniqueProperties = Array.from(new Set(records?.map((r: any) => r.property).filter(Boolean)));
 
   const formProps = {
     form,
@@ -213,6 +233,7 @@ export default function Talhoes() {
     isPending: createMutation.isPending || updateMutation.isPending,
     onClose: closeForm,
     isEditing: !!editingRecord,
+    uniqueProperties,
   };
 
   const getCultureName = (cultureId?: number) => {
@@ -263,6 +284,7 @@ export default function Talhoes() {
             <TableHeader className="bg-muted/40">
               <TableRow>
                 <TableHead>Nome da Área</TableHead>
+                <TableHead>Propriedade</TableHead>
                 <TableHead>Área (ha)</TableHead>
                 <TableHead>Cultura Atual</TableHead>
                 <TableHead>Status</TableHead>
@@ -276,6 +298,7 @@ export default function Talhoes() {
               {records?.map((r: Talhao) => (
                 <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setLocation(`/talhoes/${r.id}`)}>
                   <TableCell className="font-bold">{r.name}</TableCell>
+                  <TableCell>{r.property || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{r.areaHectares} ha</TableCell>
                   <TableCell className="text-muted-foreground">{getCultureName(r.cultureId)}</TableCell>
                   <TableCell>
@@ -338,6 +361,7 @@ export default function Talhoes() {
                   </Badge>
                 </div>
                 <p className="font-bold text-base mt-2">{r.name}</p>
+                <p className="text-sm font-medium text-muted-foreground mt-0.5">{r.property || "—"}</p>
                 <p className="text-sm text-muted-foreground mt-0.5">Cultura: {getCultureName(r.cultureId)}</p>
               </div>
               <DropdownMenu>

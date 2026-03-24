@@ -22,6 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { MobileListControls } from "@/components/ui/MobileListControls";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useFarm } from "@/contexts/FarmContext";
 
 const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
@@ -40,7 +41,7 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
@@ -71,14 +72,14 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="area" render={({ field }) => (
             <FormItem><FormLabel>Talhão / Área</FormLabel><FormControl><Input placeholder="Ex: Talhão 5" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="machineId" render={({ field }) => (
             <FormItem><FormLabel>Máquina</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value?.toString()}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione a máquina" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {machines?.filter((m: any) => m.type === "colheitadeira").map((m: any) => (
                     <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
@@ -92,17 +93,17 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="areaHectares" render={({ field }) => (
-            <FormItem><FormLabel>Hectares (ha)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Hectares (ha)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 50.5" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="quantitySacks" render={({ field }) => (
-            <FormItem><FormLabel>Sacas</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Sacas</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
         <FormField control={form.control} name="driverName" render={({ field }) => (
-          <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Nome do operador" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Nome completo do operador" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
         <FormField control={form.control} name="notes" render={({ field }) => (
@@ -137,6 +138,8 @@ export default function Colheita() {
   const { data: apiRecords, isLoading } = useListHarvest();
   const { data: apiMachines } = useListMachines();
   const { data: crops } = useQuery({ queryKey: ["/crops"], queryFn: apiFetchCrops });
+  const { selectedSafraId, selectedTalhaoId } = useFarm();
+  
   const records = apiRecords ?? DEMO_HARVESTS;
   const machines = apiMachines ?? DEMO_MACHINES;
 
@@ -202,7 +205,10 @@ export default function Colheita() {
 
   const filteredRecords = useMemo(() => {
     if (!records) return [];
-    return records.filter((r) => {
+    return records.filter((r: any) => {
+      if (selectedSafraId && r.safraId !== selectedSafraId) return false;
+      if (selectedTalhaoId && r.talhaoId !== selectedTalhaoId) return false;
+
       if (filterCulture !== ALL && (!r.cultures || !r.cultures.includes(filterCulture))) return false;
       if (filterMachine !== ALL && r.machineName !== filterMachine) return false;
       if (filterDriver !== ALL && r.driverName !== filterDriver) return false;
@@ -467,7 +473,7 @@ export default function Colheita() {
                 </TableRow>
               )}
               {filteredRecords.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/30">
+                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleEditOpen(r, false)}>
                   <TableCell className="font-medium">{format(new Date(r.date), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
@@ -586,7 +592,7 @@ export default function Colheita() {
           </div>
         )}
         {filteredRecords.map((r) => (
-          <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card">
+          <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card cursor-pointer" onClick={() => handleEditOpen(r, true)}>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex gap-1 flex-wrap">

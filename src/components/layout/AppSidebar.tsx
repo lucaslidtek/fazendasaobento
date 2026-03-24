@@ -35,9 +35,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFarm } from "@/contexts/FarmContext";
 
 function ToggleButton() {
   const { toggleSidebar, state } = useSidebar();
@@ -57,6 +65,7 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { user, logout: localLogout } = useAuth();
   const { mutate: apiLogout } = useLogout();
+  const { safras, talhoes, selectedSafraId, setSelectedSafraId, selectedTalhaoId, setSelectedTalhaoId } = useFarm();
 
   const handleLogout = () => {
     apiLogout(undefined, { onSettled: () => localLogout() });
@@ -105,6 +114,43 @@ export function AppSidebar() {
           </div>
           <ToggleButton />
         </div>
+
+        {/* ── Context Selectors (Safra & Talhão) ── */}
+        <SidebarGroup className="pt-3 pb-0 group-data-[collapsible=icon]:hidden">
+          <div className="px-3 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider font-bold text-sidebar-foreground/80">Safra</label>
+              <Select value={selectedSafraId?.toString() || ""} onValueChange={(val) => {
+                setSelectedSafraId(Number(val));
+                setSelectedTalhaoId(null); // Reset talhão when safra changes
+              }}>
+                <SelectTrigger className="h-10 text-sm font-semibold bg-white text-sidebar border-none shadow-sm hover:bg-zinc-50 focus:ring-0 rounded-lg">
+                  <SelectValue placeholder="Selecione a safra" />
+                </SelectTrigger>
+                <SelectContent>
+                  {safras.map(s => (
+                    <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-[11px] uppercase tracking-wider font-bold text-sidebar-foreground/80">Área / Talhão</label>
+              <Select value={selectedTalhaoId?.toString() || "all"} onValueChange={(val) => setSelectedTalhaoId(val === "all" ? null : Number(val))}>
+                <SelectTrigger className="h-10 text-sm font-semibold bg-white text-sidebar border-none shadow-sm hover:bg-zinc-50 focus:ring-0 rounded-lg">
+                  <SelectValue placeholder="Visão Geral (Todos)" />
+                </SelectTrigger>
+                <SelectContent className="text-sidebar">
+                  <SelectItem value="all">Visão Geral (Todos)</SelectItem>
+                  {talhoes.filter((t: any) => t.safraId === selectedSafraId).map((t: any) => (
+                    <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </SidebarGroup>
 
         {/* ── Main nav ── */}
         <SidebarGroup className="pt-3">

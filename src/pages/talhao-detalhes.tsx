@@ -1,15 +1,23 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { apiUpdateTalhao, apiDeleteTalhao, FormContent, schema } from "./talhoes";
 import { DEMO_TALHOES, DEMO_CROPS, DEMO_HARVESTS, DEMO_STOCK_MOVEMENTS, DEMO_FUELINGS, DEMO_PRODUCTS } from "@/lib/demo-data";
-import { Loader2, Map as MapIcon, ChevronRight, Sprout, Tractor, Package, Fuel, Activity, Box } from "lucide-react";
+import { Loader2, Map as MapIcon, ChevronRight, Sprout, Tractor, Package, Fuel, Activity, Box, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const STATUS_STYLES: Record<string, string> = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
@@ -35,6 +43,76 @@ const fetchTalhaoById = async (id: number) => {
 export default function TalhaoDetalhes() {
   const [, params] = useRoute("/talhoes/:id");
   const talhaoId = parseInt(params?.id || "0", 10);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isTalhaoDialogOpen, setIsTalhaoDialogOpen] = useState(false);
+  const [isTalhaoSheetOpen, setIsTalhaoSheetOpen] = useState(false);
+
+  const talhaoForm = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: { name: "", property: "", areaHectares: 0, cultureId: "none", status: "ativo" },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: apiUpdateTalhao,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/talhao"] });
+      toast({ title: "Talhão atualizado com sucesso." });
+      closeTalhaoForm();
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: apiDeleteTalhao,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/talhao"] });
+      toast({ title: "Talhão excluído com sucesso." });
+      window.location.href = "/talhoes";
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+  });
+
+  const openTalhaoEdit = () => {
+    if (talhao) {
+      talhaoForm.reset({
+        name: talhao.name,
+        property: talhao.property,
+        areaHectares: talhao.areaHectares,
+        cultureId: (talhao.cultureId || "none") as any,
+        status: talhao.status as "ativo"|"inativo",
+      });
+      if (window.innerWidth < 640) setIsTalhaoSheetOpen(true);
+      else setIsTalhaoDialogOpen(true);
+    }
+  };
+
+  const closeTalhaoForm = () => {
+    setIsTalhaoDialogOpen(false);
+    setIsTalhaoSheetOpen(false);
+    talhaoForm.reset();
+  };
+
+  const onUpdateTalhao = (data: z.infer<typeof schema>) => {
+    const formattedData = {
+      ...data,
+      cultureId: (data.cultureId === undefined || data.cultureId === "" || data.cultureId === "none") 
+        ? undefined 
+        : Number(data.cultureId)
+    };
+    updateMutation.mutate({ id: talhao!.id, data: formattedData as any });
+  };
+
+  const confirmTalhaoDelete = () => {
+    if (confirm("Tem certeza que deseja excluir pste talhão?")) {
+      deleteMutation.mutate(talhao!.id);
+    }
+  };
+
+  const uniqueProperties = useMemo(() => {
+    return Array.from(new Set(DEMO_TALHOES.map(t => t.property)));
+  }, []);
 
   const { data: talhao, isLoading, isError } = useQuery({
     queryKey: ["/talhao", talhaoId],
@@ -128,9 +206,9 @@ export default function TalhaoDetalhes() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title={talhao.name} showBack={true} backTo="/talhoes">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/talhoes" className="hover:text-primary transition-colors">Talhões</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{talhao.name}</span>
@@ -153,6 +231,27 @@ export default function TalhaoDetalhes() {
               Área total: <span className="text-slate-900 font-bold">{talhao.areaHectares} ha</span>
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0">
+          <Button variant="outline" size="sm" onClick={openTalhaoEdit} className="hidden md:flex">
+            <Pencil className="w-4 h-4 mr-2" /> Editar
+          </Button>
+          <Button variant="outline" size="sm" onClick={confirmTalhaoDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="md:hidden flex-shrink-0">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={openTalhaoEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
+              <DropdownMenuItem onClick={confirmTalhaoDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -405,6 +504,20 @@ export default function TalhaoDetalhes() {
         </TabsContent>
         
       </Tabs>
+
+      <Sheet open={isTalhaoSheetOpen} onOpenChange={setIsTalhaoSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Talhão</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={talhaoForm} onSubmit={onUpdateTalhao} isPending={updateMutation.isPending} onClose={closeTalhaoForm} isEditing={true} uniqueProperties={uniqueProperties} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isTalhaoDialogOpen} onOpenChange={setIsTalhaoDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Talhão</DialogTitle></DialogHeader>
+          <FormContent form={talhaoForm} onSubmit={onUpdateTalhao} isPending={updateMutation.isPending} onClose={closeTalhaoForm} isEditing={true} uniqueProperties={uniqueProperties} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

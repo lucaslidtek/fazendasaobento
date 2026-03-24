@@ -18,13 +18,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 
+import { DEMO_SAFRAS } from "@/lib/demo-data";
+
 // --- MOCK API ---
-let MOCK_SAFRAS = [
-  { id: 4, name: "Safra 2025/2026", startDate: "2025-09-01", endDate: "2026-06-30", status: "ativo" },
-  { id: 1, name: "Safra 2023/2024", startDate: "2023-09-01", endDate: "2024-03-31", status: "ativo" },
-  { id: 2, name: "Safrinha 2024", startDate: "2024-02-01", endDate: "2024-08-31", status: "ativo" },
-  { id: 3, name: "Safra 2022/2023", startDate: "2022-09-01", endDate: "2023-03-31", status: "inativo" },
-];
+let MOCK_SAFRAS = [...DEMO_SAFRAS];
 
 let nextId = 5;
 
@@ -49,7 +46,7 @@ const apiCreateSafra = async (data: any) => {
   return newSafra;
 };
 
-const apiUpdateSafra = async ({ id, data }: { id: number; data: any }) => {
+export const apiUpdateSafra = async ({ id, data }: { id: number; data: any }) => {
   await fakeDelay();
   const index = MOCK_SAFRAS.findIndex(s => s.id === id);
   if (index === -1) throw new Error("Safra não encontrada");
@@ -57,21 +54,21 @@ const apiUpdateSafra = async ({ id, data }: { id: number; data: any }) => {
   return MOCK_SAFRAS[index];
 };
 
-const apiDeleteSafra = async (id: number) => {
+export const apiDeleteSafra = async (id: number) => {
   await fakeDelay();
   MOCK_SAFRAS = MOCK_SAFRAS.filter(s => s.id !== id);
   return true;
 };
 // -----------------
 
-const schema = z.object({
+export const schema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   status: z.enum(["ativo", "inativo"]),
 });
 
-type SafraFormData = z.infer<typeof schema>;
+export type SafraFormData = z.infer<typeof schema>;
 
 const STATUS_STYLES = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
@@ -83,14 +80,14 @@ const STATUS_LABELS: Record<string, string> = {
   inativo: "Inativo",
 };
 
-function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem><FormLabel>Nome da Safra</FormLabel><FormControl><Input placeholder="Ex: Safra Verão 24/25" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="startDate" render={({ field }) => (
             <FormItem><FormLabel>Data Início (opcional)</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
@@ -101,7 +98,7 @@ function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
         <FormField control={form.control} name="status" render={({ field }) => (
           <FormItem><FormLabel>Status</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+              <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="ativo">Ativo</SelectItem>
                 <SelectItem value="inativo">Inativo</SelectItem>

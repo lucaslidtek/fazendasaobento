@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { MobileListControls } from "@/components/ui/MobileListControls";
 import { Card, CardContent } from "@/components/ui/card";
 import { getServiceBadgeStyle } from "@/lib/colors";
+import { useFarm } from "@/contexts/FarmContext";
 
 const fuelingSchema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
@@ -48,14 +49,14 @@ function FormContent({ form, machines, users, onSubmit, isPending, onClose, isEd
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="machineId" render={({ field }) => (
             <FormItem><FormLabel>Máquina</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value?.toString()}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione a máquina" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {machines?.map((m: any) => (
                     <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
@@ -66,14 +67,14 @@ function FormContent({ form, machines, users, onSubmit, isPending, onClose, isEd
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="operatorName" render={({ field }) => (
-            <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Quem operou" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Nome completo do operador" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="responsavelId" render={({ field }) => (
             <FormItem><FormLabel>Responsável Lançamento</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value?.toString()}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o responsável" /></SelectTrigger></FormControl>
                 <SelectContent>
                   {users?.map((u: any) => (
                     <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>
@@ -84,7 +85,7 @@ function FormContent({ form, machines, users, onSubmit, isPending, onClose, isEd
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="talhao" render={({ field }) => (
             <FormItem><FormLabel>Talhão</FormLabel><FormControl><Input placeholder="Ex: Talhão A1" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
@@ -94,7 +95,7 @@ function FormContent({ form, machines, users, onSubmit, isPending, onClose, isEd
         </div>
 
         <FormField control={form.control} name="liters" render={({ field }) => (
-          <FormItem><FormLabel>Volume (Litros)</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Volume (Litros)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 150" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
         <FormField control={form.control} name="notes" render={({ field }) => (
@@ -117,14 +118,14 @@ function TransactionForm({ form, onSubmit, isPending, onClose, isEditing }: any)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="type" render={({ field }) => (
             <FormItem><FormLabel>Tipo</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo de transação" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="entrada">Entrada (Compra)</SelectItem>
                   <SelectItem value="saida">Saída (Ajuste/Extra)</SelectItem>
@@ -134,18 +135,18 @@ function TransactionForm({ form, onSubmit, isPending, onClose, isEditing }: any)
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="category" render={({ field }) => (
             <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Compra Posto" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="liters" render={({ field }) => (
-            <FormItem><FormLabel>Litragem</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Litragem</FormLabel><FormControl><Input type="number" placeholder="Ex: 5000" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="value" render={({ field }) => (
-            <FormItem><FormLabel>Valor Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Valor Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="Ex: 25000.00" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="nfNumber" render={({ field }) => (
             <FormItem><FormLabel>Nº Nota Fiscal</FormLabel><FormControl><Input placeholder="Ex: NF-12345" {...field} /></FormControl><FormMessage /></FormItem>
@@ -167,7 +168,7 @@ function TransactionForm({ form, onSubmit, isPending, onClose, isEditing }: any)
         </div>
 
         <FormField control={form.control} name="description" render={({ field }) => (
-          <FormItem><FormLabel>Descrição/Observações</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Descrição/Observações</FormLabel><FormControl><Input placeholder="Detalhes adicionais da movimentação" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
         <div className="flex gap-3 pt-4">
@@ -305,6 +306,8 @@ export default function Abastecimento() {
   const [viewingTransaction, setViewingTransaction] = useState<DieselTransaction | null>(null);
   const [activeTab, setActiveTab] = useState("fuelings");
 
+  const { selectedSafraId, selectedTalhaoId } = useFarm();
+
   // Filtros Abastecimentos
   const [filterMachine, setFilterMachine] = useState("__all__");
   const [filterOperator, setFilterOperator] = useState("__all__");
@@ -337,6 +340,9 @@ export default function Abastecimento() {
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
+      if (selectedSafraId && r.safraId !== selectedSafraId) return false;
+      if (selectedTalhaoId && r.talhaoId !== selectedTalhaoId) return false;
+
       if (filterMachine !== "__all__" && r.machineId !== Number(filterMachine)) return false;
       if (filterOperator !== "__all__" && r.operatorName !== filterOperator) return false;
       if (filterDate && r.date !== filterDate) return false;
@@ -351,6 +357,9 @@ export default function Abastecimento() {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
+      if (selectedSafraId && t.safraId !== selectedSafraId) return false;
+      if (selectedTalhaoId && t.talhaoId !== selectedTalhaoId) return false;
+
       if (filterTransactionType !== "__all__" && t.type !== filterTransactionType) return false;
       if (filterTransactionCategory !== "__all__" && t.category !== filterTransactionCategory) return false;
       if (filterTransactionDate && t.date !== filterTransactionDate) return false;
@@ -955,7 +964,7 @@ export default function Abastecimento() {
                 <div 
                   key={t.id} 
                   className="bg-card rounded-xl border p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
-                  onClick={() => { setViewingTransaction(t); setIsTransactionDetailOpen(true); }}
+                  onClick={() => handleEditTransactionOpen(t, true)}
                 >
                   <div className="flex justify-between items-start">
                     <div>

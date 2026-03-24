@@ -1,16 +1,23 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { apiFetchSafraById } from "./safras";
+import { apiFetchSafraById, apiUpdateSafra, apiDeleteSafra, FormContent, schema } from "./safras";
 import { DEMO_STOCK_MOVEMENTS, DEMO_PRODUCTS, DEMO_HARVESTS } from "@/lib/demo-data";
-import { Loader2, CalendarDays, Sprout, TrendingUp, DollarSign, Tractor, ChevronRight, MapPin, Box, Map, Package, Activity } from "lucide-react";
+import { Loader2, CalendarDays, Sprout, TrendingUp, DollarSign, Tractor, ChevronRight, MapPin, Box, Map, Package, Activity, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const STATUS_STYLES: Record<string, string> = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
@@ -25,6 +32,65 @@ const STATUS_LABELS: Record<string, string> = {
 export default function SafraDetalhes() {
   const [, params] = useRoute("/safras/:id");
   const safraId = parseInt(params?.id || "0", 10);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isSafraDialogOpen, setIsSafraDialogOpen] = useState(false);
+  const [isSafraSheetOpen, setIsSafraSheetOpen] = useState(false);
+
+  const safraForm = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: "", startDate: "", endDate: "", status: "ativo" },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: apiUpdateSafra,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/safra"] });
+      toast({ title: "Safra atualizada com sucesso." });
+      closeSafraForm();
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: apiDeleteSafra,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/safra"] });
+      toast({ title: "Safra excluída com sucesso." });
+      window.location.href = "/safras";
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+  });
+
+  const openSafraEdit = () => {
+    if (safra) {
+      safraForm.reset({
+        name: safra.name,
+        startDate: safra.startDate || "",
+        endDate: safra.endDate || "",
+        status: safra.status as "ativo"|"inativo",
+      });
+      if (window.innerWidth < 640) setIsSafraSheetOpen(true);
+      else setIsSafraDialogOpen(true);
+    }
+  };
+
+  const closeSafraForm = () => {
+    setIsSafraDialogOpen(false);
+    setIsSafraSheetOpen(false);
+    safraForm.reset();
+  };
+
+  const onUpdateSafra = (data: z.infer<typeof schema>) => {
+    updateMutation.mutate({ id: safra!.id, data });
+  };
+
+  const confirmSafraDelete = () => {
+    if (confirm("Tem certeza que deseja excluir esta safra?")) {
+      deleteMutation.mutate(safra!.id);
+    }
+  };
 
   const { data: safra, isLoading, isError } = useQuery({
     queryKey: ["/safra", safraId],
@@ -91,7 +157,7 @@ export default function SafraDetalhes() {
 
     harvests.forEach(h => {
       const cultureList = h.cultures ?? [];
-      cultureList.forEach(culture => {
+      cultureList.forEach((culture: string) => {
         const key = culture.toLowerCase();
         if (!summary[key]) summary[key] = { culture, totalArea: 0, totalSacks: 0 };
         summary[key].totalArea += h.areaHectares;
@@ -133,9 +199,9 @@ export default function SafraDetalhes() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title={safra.name} showBack={true} backTo="/safras">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/safras" className="hover:text-primary transition-colors">Safras</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{safra.name}</span>
@@ -162,6 +228,27 @@ export default function SafraDetalhes() {
               </span>
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0">
+          <Button variant="outline" size="sm" onClick={openSafraEdit} className="hidden md:flex">
+            <Pencil className="w-4 h-4 mr-2" /> Editar
+          </Button>
+          <Button variant="outline" size="sm" onClick={confirmSafraDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="md:hidden flex-shrink-0">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={openSafraEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
+              <DropdownMenuItem onClick={confirmSafraDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -379,6 +466,20 @@ export default function SafraDetalhes() {
         </TabsContent>
         
       </Tabs>
+
+      <Sheet open={isSafraSheetOpen} onOpenChange={setIsSafraSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Safra</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={safraForm} onSubmit={onUpdateSafra} isPending={updateMutation.isPending} onClose={closeSafraForm} isEditing={true} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isSafraDialogOpen} onOpenChange={setIsSafraDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Safra</DialogTitle></DialogHeader>
+          <FormContent form={safraForm} onSubmit={onUpdateSafra} isPending={updateMutation.isPending} onClose={closeSafraForm} isEditing={true} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

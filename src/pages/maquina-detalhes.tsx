@@ -29,8 +29,15 @@ import {
   MapPin,
   Wrench,
   DollarSign,
-  Plus
+  Plus,
+  Pencil,
+  Trash2,
+  MoreHorizontal
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FormContent, schema } from "./maquinas";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUpdateMachine, useDeleteMachine, getListMachinesQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { 
   BarChart, 
@@ -96,6 +103,68 @@ export default function MaquinaDetalhes() {
   const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = useState(false);
   const [isMaintenanceSheetOpen, setIsMaintenanceSheetOpen] = useState(false);
 
+  const [isMachineDialogOpen, setIsMachineDialogOpen] = useState(false);
+  const [isMachineSheetOpen, setIsMachineSheetOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const updateMutation = useUpdateMachine({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListMachinesQueryKey() });
+        toast({ title: "Máquina atualizada com sucesso." });
+        closeMachineForm();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
+  const deleteMutation = useDeleteMachine({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListMachinesQueryKey() });
+        toast({ title: "Máquina excluída." });
+        setLocation("/maquinas");
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
+  const machineForm = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: { name: "", model: "", type: "trator", location: "", status: "ativo", purchase_cost: 0 },
+  });
+
+  const openMachineEdit = () => {
+    if (machine) {
+      machineForm.reset({
+        name: machine.name,
+        model: machine.model,
+        type: machine.type as any,
+        location: machine.location,
+        status: machine.status as any,
+        purchase_cost: machine.purchase_cost as any,
+      });
+      if (window.innerWidth < 640) setIsMachineSheetOpen(true);
+      else setIsMachineDialogOpen(true);
+    }
+  };
+
+  const closeMachineForm = () => {
+    setIsMachineDialogOpen(false);
+    setIsMachineSheetOpen(false);
+    machineForm.reset();
+  };
+
+  const onUpdateMachine = (data: z.infer<typeof schema>) => {
+    updateMutation.mutate({ id: machine!.id, data });
+  };
+
+  const confirmMachineDelete = () => {
+    if (confirm("Tem certeza que deseja excluir esta máquina?")) {
+      deleteMutation.mutate({ id: machine!.id });
+    }
+  };
+
   const maintenanceForm = useForm<z.infer<typeof maintenanceSchema>>({
     resolver: zodResolver(maintenanceSchema),
     defaultValues: {
@@ -146,7 +215,7 @@ export default function MaquinaDetalhes() {
         <div className="grid grid-cols-2 gap-4">
           <FormField control={maintenanceForm.control} name="type" render={({ field }) => (
              <FormItem><FormLabel>Tipo</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent><SelectItem value="preventiva">Preventiva</SelectItem><SelectItem value="corretiva">Corretiva</SelectItem></SelectContent>
               </Select>
@@ -154,7 +223,7 @@ export default function MaquinaDetalhes() {
           )} />
           <FormField control={maintenanceForm.control} name="category" render={({ field }) => (
              <FormItem><FormLabel>Categoria principal</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="Peças">Peças</SelectItem>
@@ -259,9 +328,9 @@ export default function MaquinaDetalhes() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout title={machine.name} showBack={true} backTo="/maquinas">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/maquinas" className="hover:text-primary transition-colors">Máquinas</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{machine.name}</span>
@@ -732,8 +801,21 @@ export default function MaquinaDetalhes() {
             </div>
           )}
         </TabsContent>
-
       </Tabs>
+
+      <Sheet open={isMachineSheetOpen} onOpenChange={setIsMachineSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Máquina</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={machineForm} onSubmit={onUpdateMachine} isPending={updateMutation.isPending} onClose={closeMachineForm} isEditing={true} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isMachineDialogOpen} onOpenChange={setIsMachineDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Máquina</DialogTitle></DialogHeader>
+          <FormContent form={machineForm} onSubmit={onUpdateMachine} isPending={updateMutation.isPending} onClose={closeMachineForm} isEditing={true} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

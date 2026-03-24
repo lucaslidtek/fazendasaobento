@@ -22,13 +22,58 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-const productSchema = z.object({
+export const productSchema = z.object({
   name: z.string().min(2, "Nome obrigatório"),
   category: z.string().min(2, "Categoria obrigatória"),
   unit: z.enum(["L", "KG", "UN", "SC"]),
   currentStock: z.coerce.number().min(0),
   minStock: z.coerce.number().min(0).optional(),
 });
+
+export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField control={form.control as any} name="name" render={({ field }) => (
+          <FormItem><FormLabel>Nome do Produto</FormLabel><FormControl><Input placeholder="Ex: Óleo Diesel S10" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control as any} name="category" render={({ field }) => (
+            <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input placeholder="Ex: Combustível" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control as any} name="unit" render={({ field }) => (
+            <FormItem><FormLabel>Unidade</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione a unidade" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="KG">Quilogramas (KG)</SelectItem>
+                  <SelectItem value="L">Litros (L)</SelectItem>
+                  <SelectItem value="UN">Unidade (UN)</SelectItem>
+                  <SelectItem value="SC">Sacas (SC)</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control as any} name="currentStock" render={({ field }) => (
+            <FormItem><FormLabel>Estoque Inicial/Atual</FormLabel><FormControl><Input type="number" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control as any} name="minStock" render={({ field }) => (
+            <FormItem><FormLabel>Estoque Mínimo</FormLabel><FormControl><Input type="number" placeholder="Ex: 20" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+        <div className="flex gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="flex-1">
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isEditing ? "Salvar alterações" : "Cadastrar"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
 
 export default function Estoque() {
   const queryClient = useQueryClient();
@@ -58,45 +103,7 @@ export default function Estoque() {
     defaultValues: { name: "", category: "Sementes", unit: "KG", currentStock: 0, minStock: 0 },
   });
 
-  const ProductForm = (
-    <Form {...productForm}>
-      <form onSubmit={productForm.handleSubmit((d: any) => createProductMut.mutate({ data: d }))} className="space-y-4">
-        <FormField control={productForm.control as any} name="name" render={({ field }) => (
-          <FormItem><FormLabel>Nome do Produto</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField control={productForm.control as any} name="category" render={({ field }) => (
-            <FormItem><FormLabel>Categoria</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={productForm.control as any} name="unit" render={({ field }) => (
-            <FormItem><FormLabel>Unidade</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                <SelectContent>
-                  <SelectItem value="KG">Quilogramas (KG)</SelectItem>
-                  <SelectItem value="L">Litros (L)</SelectItem>
-                  <SelectItem value="UN">Unidade (UN)</SelectItem>
-                  <SelectItem value="SC">Sacas (SC)</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )} />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <FormField control={productForm.control as any} name="currentStock" render={({ field }) => (
-            <FormItem><FormLabel>Estoque Inicial</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={productForm.control as any} name="minStock" render={({ field }) => (
-            <FormItem><FormLabel>Estoque Mínimo</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={closeProduct} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={createProductMut.isPending} className="flex-1">Salvar</Button>
-        </div>
-      </form>
-    </Form>
-  );
+
 
   return (
     <AppLayout>
@@ -121,7 +128,15 @@ export default function Estoque() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[400px]">
               <DialogHeader><DialogTitle className="text-xl">Novo Produto</DialogTitle></DialogHeader>
-              <div className="mt-2">{ProductForm}</div>
+              <div className="mt-2">
+                <FormContent 
+                  form={productForm} 
+                  onSubmit={(d: any) => createProductMut.mutate({ data: d })} 
+                  isPending={createProductMut.isPending} 
+                  onClose={closeProduct} 
+                  isEditing={false} 
+                />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -239,7 +254,15 @@ export default function Estoque() {
             <SheetHeader className="text-left mb-4">
               <SheetTitle className="text-lg">Novo Produto</SheetTitle>
             </SheetHeader>
-            {ProductForm}
+            <div className="mt-2 text-left">
+              <FormContent 
+                form={productForm} 
+                onSubmit={(d: any) => createProductMut.mutate({ data: d })} 
+                isPending={createProductMut.isPending} 
+                onClose={closeProduct} 
+                isEditing={false} 
+              />
+            </div>
           </SheetContent>
         </Sheet>
       </div>

@@ -22,8 +22,15 @@ import {
   History,
   TrendingDown,
   TrendingUp,
-  Boxes
+  Boxes,
+  Pencil,
+  Trash2,
+  MoreHorizontal
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FormContent, productSchema } from "./estoque";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUpdateProduct, useDeleteProduct, getListProductsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,6 +50,10 @@ export default function EstoqueDetalhes() {
   
   const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
   const [isMovementSheetOpen, setIsMovementSheetOpen] = useState(false);
+
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isProductSheetOpen, setIsProductSheetOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const product = useMemo(() => {
     return DEMO_PRODUCTS.find(p => p.id === Number(id));
@@ -109,6 +120,63 @@ export default function EstoqueDetalhes() {
     return sortedGroups;
   }, [product, flatMovements]);
 
+  const updateMutation = useUpdateProduct({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast({ title: "Produto atualizado com sucesso." });
+        closeProductForm();
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
+  const deleteMutation = useDeleteProduct({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast({ title: "Produto excluído." });
+        setLocation("/estoque");
+      },
+      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
+    },
+  });
+
+  const productForm = useForm<z.infer<typeof productSchema>>({
+    resolver: zodResolver(productSchema) as any,
+    defaultValues: { name: "", category: "Sementes", unit: "KG", currentStock: 0, minStock: 0 },
+  });
+
+  const openProductEdit = () => {
+    if (product) {
+      productForm.reset({
+        name: product.name,
+        category: product.category,
+        unit: product.unit as any,
+        currentStock: product.currentStock,
+        minStock: product.minStock || 0,
+      });
+      if (window.innerWidth < 640) setIsProductSheetOpen(true);
+      else setIsProductDialogOpen(true);
+    }
+  };
+
+  const closeProductForm = () => {
+    setIsProductDialogOpen(false);
+    setIsProductSheetOpen(false);
+    productForm.reset();
+  };
+
+  const onUpdateProduct = (data: z.infer<typeof productSchema>) => {
+    updateMutation.mutate({ id: product!.id, data });
+  };
+
+  const confirmProductDelete = () => {
+    if (confirm("Tem certeza que deseja excluir este produto?")) {
+      deleteMutation.mutate({ id: product!.id });
+    }
+  };
+
   const movementForm = useForm<z.infer<typeof movementSchema>>({
     resolver: zodResolver(movementSchema) as any,
     defaultValues: { type: "saida", quantity: 0, date: new Date().toISOString().split("T")[0], reason: "", safra: "2025/2026", talhao: "" },
@@ -139,7 +207,7 @@ export default function EstoqueDetalhes() {
       <form onSubmit={movementForm.handleSubmit(onSubmit as any)} className="space-y-4">
         <FormField control={movementForm.control} name="type" render={({ field }) => (
           <FormItem><FormLabel>Tipo de Movimento</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value}>
               <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="entrada">Entrada (+)</SelectItem>
@@ -159,7 +227,7 @@ export default function EstoqueDetalhes() {
         <div className="grid grid-cols-2 gap-4">
           <FormField control={movementForm.control as any} name="safra" render={({ field }) => (
             <FormItem><FormLabel>Safra</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="2024/2025">2024/2025</SelectItem>
@@ -186,9 +254,9 @@ export default function EstoqueDetalhes() {
   );
 
   return (
-    <AppLayout>
+    <AppLayout title={product.name} showBack={true} backTo="/estoque">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/estoque" className="hover:text-primary transition-colors hover:underline">Estoque</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{product.name}</span>
@@ -221,10 +289,17 @@ export default function EstoqueDetalhes() {
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-4">
+        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0">
+          <Button variant="outline" size="sm" onClick={openProductEdit} className="hidden md:flex">
+            <Pencil className="w-4 h-4 mr-2" /> Editar
+          </Button>
+          <Button variant="outline" size="sm" onClick={confirmProductDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+          </Button>
+
           <Dialog open={isMovementDialogOpen} onOpenChange={setIsMovementDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
+              <Button className="h-9 px-4 hidden md:flex">
                 <ArrowUpRight className="w-4 h-4 mr-2" />
                 Nova Movimentação
               </Button>
@@ -234,6 +309,19 @@ export default function EstoqueDetalhes() {
               <div className="mt-2">{MovementFormContent}</div>
             </DialogContent>
           </Dialog>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="md:hidden flex-shrink-0">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsMovementSheetOpen(true)}><ArrowUpRight className="w-4 h-4 mr-2"/> Nova Movimentação</DropdownMenuItem>
+              <DropdownMenuItem onClick={openProductEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
+              <DropdownMenuItem onClick={confirmProductDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -382,6 +470,19 @@ export default function EstoqueDetalhes() {
         </Sheet>
       </div>
 
+      <Sheet open={isProductSheetOpen} onOpenChange={setIsProductSheetOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl sm:hidden">
+          <SheetHeader><SheetTitle>Editar Produto</SheetTitle></SheetHeader>
+          <div className="mt-4"><FormContent form={productForm} onSubmit={onUpdateProduct} isPending={updateMutation.isPending} onClose={closeProductForm} isEditing={true} /></div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] hidden sm:block">
+          <DialogHeader><DialogTitle>Editar Produto</DialogTitle></DialogHeader>
+          <FormContent form={productForm} onSubmit={onUpdateProduct} isPending={updateMutation.isPending} onClose={closeProductForm} isEditing={true} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
