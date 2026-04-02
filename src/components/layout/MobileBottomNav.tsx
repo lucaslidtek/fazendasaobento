@@ -1,12 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { Home, Wheat, Truck, Tractor, Fuel } from "lucide-react";
+import { Home, Wheat, Wallet, BarChart3, Tractor } from "lucide-react";
 
 const TAB_ITEMS = [
-  { title: "Início",     icon: Home,    path: "/" },
-  { title: "Colheita",   icon: Wheat,   path: "/colheita" },
-  { title: "Transporte", icon: Truck,   path: "/transporte" },
-  { title: "Máquinas",   icon: Tractor, path: "/maquinas" },
-  { title: "Diesel",     icon: Fuel,    path: "/abastecimento" },
+  { title: "Início",      icon: Home,      path: "/" },
+  { title: "Colheita",    icon: Wheat,     path: "/colheita" },
+  { title: "Financeiro",  icon: Wallet,    path: "/financeiro" },
+  { title: "Relatórios",  icon: BarChart3, path: "/relatorios" },
+  { title: "Máquinas",    icon: Tractor,   path: "/maquinas" },
 ];
 
 export function MobileBottomNav() {

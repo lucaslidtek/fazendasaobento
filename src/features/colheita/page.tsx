@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Wheat, Loader2, X, Filter, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, Wheat, Loader2, X, Filter, MoreHorizontal, Pencil, Trash2, Download, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +33,11 @@ const schema = z.object({
   quantitySacks: z.coerce.number().min(0.1, "Quantidade inválida"),
   areaHectares: z.coerce.number().min(0.1, "Área inválida"),
   notes: z.string().optional(),
+  truck: z.string().optional(),
+  weightGross: z.coerce.number().optional().or(z.literal("")),
+  weightNet: z.coerce.number().optional().or(z.literal("")),
+  moisture: z.coerce.number().optional().or(z.literal("")),
+  impurity: z.coerce.number().optional().or(z.literal("")),
 });
 
 
@@ -40,75 +45,107 @@ const schema = z.object({
 function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEditing }: any) {
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField control={form.control} name="date" render={({ field }) => (
-            <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control} name="cultures" render={() => (
-            <FormItem>
-              <FormLabel>Culturas</FormLabel>
-              <div className="flex gap-4 flex-wrap mt-2">
-                {crops?.map((crop: any) => (
-                  <FormField key={crop.id} control={form.control} name="cultures" render={({ field }) => (
-                    <FormItem key={crop.id} className="flex flex-row items-center space-x-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value?.includes(crop.name)}
-                          onCheckedChange={(checked) => {
-                            return checked
-                              ? field.onChange([...(field.value || []), crop.name])
-                              : field.onChange(field.value?.filter((v: string) => v !== crop.name))
-                          }}
-                        />
-                      </FormControl>
-                      <FormLabel className="font-normal text-sm cursor-pointer m-0 pb-0.5">{crop.name}</FormLabel>
-                    </FormItem>
-                  )} />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )} />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-2">
+        
+        <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200">
+          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2"><Wheat className="w-4 h-4 text-primary"/> Dados da Colheita</h3>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField control={form.control} name="date" render={({ field }) => (
+                <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="cultures" render={() => (
+                <FormItem>
+                  <FormLabel>Culturas</FormLabel>
+                  <div className="flex gap-4 flex-wrap mt-2">
+                    {crops?.map((crop: any) => (
+                      <FormField key={crop.id} control={form.control} name="cultures" render={({ field }) => (
+                        <FormItem key={crop.id} className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(crop.name)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...(field.value || []), crop.name])
+                                  : field.onChange(field.value?.filter((v: string) => v !== crop.name))
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal text-sm cursor-pointer m-0 pb-0.5">{crop.name}</FormLabel>
+                        </FormItem>
+                      )} />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField control={form.control} name="area" render={({ field }) => (
+                <FormItem><FormLabel>Talhão / Área</FormLabel><FormControl><Input placeholder="Ex: Talhão 5" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="machineId" render={({ field }) => (
+                <FormItem><FormLabel>Máquina</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione a máquina" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {machines?.filter((m: any) => m.type === "colheitadeira").map((m: any) => (
+                        <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
+                      ))}
+                      {machines?.filter((m: any) => m.type !== "colheitadeira").map((m: any) => (
+                        <SelectItem key={m.id} value={m.id.toString()}>{m.name} ({m.type})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                <FormMessage /></FormItem>
+              )} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField control={form.control} name="areaHectares" render={({ field }) => (
+                <FormItem><FormLabel>Hectares (ha)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 50.5" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="quantitySacks" render={({ field }) => (
+                <FormItem><FormLabel>Sacas</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+
+            <FormField control={form.control} name="driverName" render={({ field }) => (
+              <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Nome completo do operador" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+
+            <FormField control={form.control} name="notes" render={({ field }) => (
+              <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Input placeholder="Ex: Área com solo úmido" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField control={form.control} name="area" render={({ field }) => (
-            <FormItem><FormLabel>Talhão / Área</FormLabel><FormControl><Input placeholder="Ex: Talhão 5" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control} name="machineId" render={({ field }) => (
-            <FormItem><FormLabel>Máquina</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione a máquina" /></SelectTrigger></FormControl>
-                <SelectContent>
-                  {machines?.filter((m: any) => m.type === "colheitadeira").map((m: any) => (
-                    <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
-                  ))}
-                  {machines?.filter((m: any) => m.type !== "colheitadeira").map((m: any) => (
-                    <SelectItem key={m.id} value={m.id.toString()}>{m.name} ({m.type})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            <FormMessage /></FormItem>
-          )} />
+        <div className="bg-orange-50/30 p-4 rounded-xl border border-orange-100/50">
+          <h3 className="font-semibold text-orange-800 mb-4 flex items-center gap-2"><Truck className="w-4 h-4 text-orange-500"/> Logística e Transporte (Opcional)</h3>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField control={form.control} name="truck" render={({ field }) => (
+                <FormItem><FormLabel>Caminhão / Placa</FormLabel><FormControl><Input placeholder="Ex: ABC-1234" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="weightGross" render={({ field }) => (
+                <FormItem><FormLabel>Peso Bruto (kg)</FormLabel><FormControl><Input type="number" placeholder="Ex: 35000" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormField control={form.control} name="weightNet" render={({ field }) => (
+                <FormItem><FormLabel>Peso Líquido (kg)</FormLabel><FormControl><Input type="number" placeholder="Ex: 27000" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="moisture" render={({ field }) => (
+                <FormItem><FormLabel>Umidade (%)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 14.5" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="impurity" render={({ field }) => (
+                <FormItem><FormLabel>Impureza (%)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 1.2" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField control={form.control} name="areaHectares" render={({ field }) => (
-            <FormItem><FormLabel>Hectares (ha)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 50.5" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control} name="quantitySacks" render={({ field }) => (
-            <FormItem><FormLabel>Sacas</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
-
-        <FormField control={form.control} name="driverName" render={({ field }) => (
-          <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Nome completo do operador" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-
-        <FormField control={form.control} name="notes" render={({ field }) => (
-          <FormItem><FormLabel>Observações (opcional)</FormLabel><FormControl><Input placeholder="Ex: Área com solo úmido" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -200,6 +237,11 @@ export default function Colheita() {
       quantitySacks: 0,
       areaHectares: 0,
       notes: "",
+      truck: "",
+      weightGross: "",
+      weightNet: "",
+      moisture: "",
+      impurity: "",
     },
   });
 
@@ -281,6 +323,11 @@ export default function Colheita() {
       quantitySacks: record.quantitySacks,
       areaHectares: record.areaHectares,
       notes: record.notes ?? "",
+      truck: record.truck ?? "",
+      weightGross: record.weightGross ?? "",
+      weightNet: record.weightNet ?? "",
+      moisture: record.moisture ?? "",
+      impurity: record.impurity ?? "",
     });
     if (isMobile) {
       setIsSheetOpen(true);
@@ -459,7 +506,7 @@ export default function Colheita() {
                 <TableHead className="text-right">Hectares</TableHead>
                 <TableHead className="text-right">Sacas</TableHead>
                 <TableHead className="text-right">Produtividade</TableHead>
-                <TableHead>Operador</TableHead>
+                <TableHead>Transporte</TableHead>
                 <TableHead>Máquina</TableHead>
                 <TableHead className="w-[88px]" aria-label="Ações" />
               </TableRow>
@@ -488,7 +535,7 @@ export default function Colheita() {
                   <TableCell className="text-right">{r.areaHectares} ha</TableCell>
                   <TableCell className="text-right font-bold">{r.quantitySacks} sc</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{(Number(r.productivity) || 0).toFixed(1)} sc/ha</TableCell>
-                  <TableCell className="text-muted-foreground">{r.driverName}</TableCell>
+                  <TableCell className="text-muted-foreground">{r.truck ? <Badge variant="outline" className="font-mono text-[10px] bg-slate-50"><Truck className="w-3 h-3 mr-1 inline text-orange-500"/> {r.truck}</Badge> : "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{r.machineName}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
@@ -629,7 +676,7 @@ export default function Colheita() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-bold text-foreground text-base leading-tight">{r.area}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{r.machineName} · {r.driverName}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{r.machineName} {r.truck && `· Placa: ${r.truck}`}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-primary text-lg leading-tight">{r.quantitySacks} sc</p>

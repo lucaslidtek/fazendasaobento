@@ -11,8 +11,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RecuperarSenha from "@/pages/recuperar-senha";
 import Dashboard from "@/pages/dashboard";
-import Colheita from "@/pages/colheita";
-import Transporte from "@/pages/transporte";
+import Colheita from "@/features/colheita/page";
 import Maquinas from "@/pages/maquinas";
 import MaquinaDetalhes from "@/pages/maquina-detalhes";
 import Caminhoes from "@/pages/caminhoes";
@@ -26,8 +25,11 @@ import Usuarios from "@/pages/usuarios";
 import UsuarioDetalhes from "@/pages/usuario-detalhes";
 import Safras from "@/pages/safras";
 import SafraDetalhes from "@/pages/safra-detalhes";
-import Talhoes from "@/pages/talhoes";
-import TalhaoDetalhes from "@/pages/talhao-detalhes";
+import Talhoes from "@/features/talhoes/page";
+import TalhaoDetalhes from "@/features/talhoes/detalhes";
+import Financeiro from "@/features/financeiro/page";
+import Atividades from "@/features/atividades/page";
+import Relatorios from "@/features/relatorios/page";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -50,7 +52,6 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/colheita" component={Colheita} />
-      <Route path="/transporte" component={Transporte} />
       <Route path="/maquinas" component={Maquinas} />
       <Route path="/maquinas/:id" component={MaquinaDetalhes} />
       <Route path="/caminhoes" component={Caminhoes} />
@@ -66,6 +67,9 @@ function Router() {
       <Route path="/safras/:id" component={SafraDetalhes} />
       <Route path="/talhoes" component={Talhoes} />
       <Route path="/talhoes/:id" component={TalhaoDetalhes} />
+      <Route path="/financeiro" component={Financeiro} />
+      <Route path="/atividades" component={Atividades} />
+      <Route path="/relatorios" component={Relatorios} />
       <Route path="/perfil" component={UsuarioDetalhes} />
 
       <Route component={NotFound} />

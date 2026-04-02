@@ -1,0 +1,600 @@
+import { useState, useMemo } from "react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { 
+  DEMO_ACTIVITIES, 
+  DEMO_TALHOES, 
+  DEMO_MACHINES, 
+  DEMO_USERS,
+  DEMO_PRODUCTS,
+  type ActivityRecord 
+} from "@/lib/demo-data";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { 
+  Plus, 
+  Activity, 
+  Loader2, 
+  Filter, 
+  X, 
+  Pencil, 
+  Trash2, 
+  Download, 
+  MoreHorizontal, 
+  Sprout, 
+  Droplets, 
+  Hammer, 
+  MapPin, 
+  Tractor,
+  User as UserIcon,
+  Search,
+  ChevronRight,
+  ClipboardList
+} from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { MobileListControls } from "@/components/ui/MobileListControls";
+import { Card, CardContent } from "@/components/ui/card";
+import { useFarm } from "@/contexts/FarmContext";
+
+const schema = z.object({
+  date: z.string().min(1, "Data é obrigatória"),
+  type: z.enum(["Plantio", "Pulverização", "Adubação", "Incorporação", "Outro"]),
+  talhaoId: z.coerce.number().min(1, "Selecione um talhão"),
+  machineId: z.coerce.number().min(1, "Selecione uma máquina"),
+  operatorId: z.coerce.number().min(1, "Selecione um operador"),
+  areaHectares: z.coerce.number().min(0.1, "Área inválida"),
+  notes: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+// Helper para cores de badges de atividade
+const getActivityColor = (type: string) => {
+  switch (type) {
+    case "Plantio": return "bg-green-100 text-green-700 border-green-200";
+    case "Pulverização": return "bg-blue-100 text-blue-700 border-blue-200";
+    case "Adubação": return "bg-orange-100 text-orange-700 border-orange-200";
+    case "Incorporação": return "bg-amber-100 text-amber-700 border-amber-200";
+    default: return "bg-slate-100 text-slate-700 border-slate-200";
+  }
+};
+
+const getActivityIcon = (type: string) => {
+  switch (type) {
+    case "Plantio": return <Sprout className="w-3 h-3" />;
+    case "Pulverização": return <Droplets className="w-3 h-3" />;
+    case "Adubação": return <Hammer className="w-3 h-3" />;
+    default: return <Activity className="w-3 h-3" />;
+  }
+};
+
+function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onClose, isEditing }: any) {
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="date" render={({ field }) => (
+            <FormItem><FormLabel>Data da Atividade</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="type" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Operação</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="Plantio">Plantio</SelectItem>
+                  <SelectItem value="Pulverização">Pulverização</SelectItem>
+                  <SelectItem value="Adubação">Adubação</SelectItem>
+                  <SelectItem value="Incorporação">Incorporação</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="talhaoId" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Talhão</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o talhão" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  {talhoes.map((t: any) => (
+                    <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="areaHectares" render={({ field }) => (
+            <FormItem><FormLabel>Área Trabalhada (ha)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 20.5" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="machineId" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Máquina</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione a máquina" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  {machines.map((m: any) => (
+                    <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="operatorId" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Operador</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : undefined}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o operador" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  {users.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="notes" render={({ field }) => (
+          <FormItem><FormLabel>Observações / Insumos Utilizados</FormLabel><FormControl><Input placeholder="Ex: Glifosato 2L/ha, Semente Intacta..." {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+
+        <div className="flex gap-3 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-xl">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="flex-1 rounded-xl">
+            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isEditing ? "Salvar Alterações" : "Registrar Atividade"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export default function Atividades() {
+  const { toast } = useToast();
+  const { selectedSafraId, selectedTalhaoId, talhoes: farmTalhoes } = useFarm();
+  
+  const [records, setRecords] = useState<ActivityRecord[]>(DEMO_ACTIVITIES);
+  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<ActivityRecord | null>(null);
+  
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: {
+      date: new Date().toISOString().split("T")[0],
+      type: "Plantio",
+      talhaoId: selectedTalhaoId || 0,
+      machineId: 0,
+      operatorId: 0,
+      areaHectares: 0,
+      notes: "",
+    },
+  });
+
+  const filteredRecords = useMemo(() => {
+    return records.filter(r => {
+      if (selectedSafraId && r.safraId !== selectedSafraId) return false;
+      if (selectedTalhaoId && r.talhaoId !== selectedTalhaoId) return false;
+
+      if (filterType !== "all" && r.type !== filterType) return false;
+      
+      if (search) {
+        const s = search.toLowerCase();
+        return (
+          r.talhaoName.toLowerCase().includes(s) || 
+          r.operatorName.toLowerCase().includes(s) || 
+          r.machineName.toLowerCase().includes(s) ||
+          r.type.toLowerCase().includes(s)
+        );
+      }
+      return true;
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [records, filterType, search, selectedSafraId, selectedTalhaoId]);
+
+  const stats = useMemo(() => {
+    const totalArea = filteredRecords.reduce((acc, r) => acc + r.areaHectares, 0);
+    const count = filteredRecords.length;
+    return { totalArea, count };
+  }, [filteredRecords]);
+
+  const closeForm = () => {
+    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingRecord(null);
+    form.reset();
+  };
+
+  const handleEdit = (record: ActivityRecord, isMobile: boolean) => {
+    setEditingRecord(record);
+    form.reset({
+      date: record.date.split("T")[0],
+      type: record.type,
+      talhaoId: record.talhaoId,
+      machineId: record.machineId,
+      operatorId: record.operatorId,
+      areaHectares: record.areaHectares,
+      notes: record.notes || "",
+    });
+    if (isMobile) setIsSheetOpen(true);
+    else setIsDialogOpen(true);
+  };
+
+  const onSubmit = (values: FormValues) => {
+    const talhao = DEMO_TALHOES.find(t => t.id === Number(values.talhaoId));
+    const machine = DEMO_MACHINES.find(m => m.id === Number(values.machineId));
+    const user = DEMO_USERS.find(u => u.id === Number(values.operatorId));
+    
+    if (editingRecord) {
+      setRecords(records.map(r => r.id === editingRecord.id ? { 
+        ...r, 
+        ...values, 
+        talhaoName: talhao?.name || r.talhaoName,
+        machineName: machine?.name || r.machineName,
+        operatorName: user?.name || r.operatorName
+      } : r));
+      toast({ title: "Atividade atualizada!" });
+    } else {
+      const newRecord: ActivityRecord = {
+        id: Math.max(...records.map(r => r.id), 0) + 1,
+        ...values,
+        talhaoName: talhao?.name || "Desconhecido",
+        machineName: machine?.name || "Desconhecida",
+        operatorName: user?.name || "Desconhecido",
+        safraId: selectedSafraId || 4,
+        products: [], // Para futura implementação de lista dinâmica
+        createdAt: new Date().toISOString(),
+      };
+      setRecords([newRecord, ...records]);
+      toast({ title: "Atividade registrada com sucesso!" });
+    }
+    closeForm();
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Deseja mesmo excluir este registro de atividade?")) {
+      setRecords(records.filter(r => r.id !== id));
+      toast({ title: "Atividade excluída." });
+    }
+  };
+
+  return (
+    <AppLayout>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+              <Activity className="hidden sm:block w-7 h-7 text-primary" />
+              Atividades de Campo
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Registro de operações agrícolas e monitoramento de talhões.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="hidden sm:flex h-10 px-4 gap-2 rounded-xl">
+              <Download className="w-4 h-4" /> Exportar
+            </Button>
+            
+            <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeForm()}>
+              <DialogTrigger asChild>
+                <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl shadow-lg shadow-primary/20">
+                  <Plus className="w-4 h-4" /> Nova Atividade
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[550px] rounded-3xl">
+                <DialogHeader>
+                  <DialogTitle>{editingRecord ? "Editar Atividade" : "Novo Registro de Atividade"}</DialogTitle>
+                </DialogHeader>
+                <FormContent 
+                  form={form} 
+                  talhoes={DEMO_TALHOES} 
+                  machines={DEMO_MACHINES} 
+                  users={DEMO_USERS}
+                  onSubmit={onSubmit}
+                  onClose={closeForm}
+                  isEditing={!!editingRecord}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Estatísticas Rápidas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="rounded-2xl border-none shadow-sm bg-primary/5">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <ClipboardList className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-primary/60 uppercase tracking-wider">Total de Atividades</p>
+                <p className="text-xl font-black text-primary">{stats.count} Registros</p>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase">Na safra selecionada</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-none shadow-sm bg-slate-50">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-600">
+                <Sprout className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Área Trabalhada</p>
+                <p className="text-xl font-black text-slate-800">{stats.totalArea.toLocaleString()} Hectares</p>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase">Soma das atividades filtradas</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="px-3 py-1 bg-white shadow-sm border-muted-foreground/10 text-muted-foreground font-bold uppercase text-[10px]">
+            Recentes
+          </Badge>
+          <span className="text-xs text-muted-foreground font-medium">Histórico de operações</span>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar por talhão, operador..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-10 rounded-xl bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary"
+            />
+          </div>
+          <Button 
+            variant={showFilters ? "secondary" : "outline"} 
+            size="icon" 
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-10 w-10 rounded-xl shrink-0"
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {showFilters && (
+        <Card className="mb-4 rounded-2xl border-muted bg-slate-50/50 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Tipo de Atividade</label>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="h-9 bg-white border-none shadow-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as operações</SelectItem>
+                  <SelectItem value="Plantio">Plantio</SelectItem>
+                  <SelectItem value="Pulverização">Pulverização</SelectItem>
+                  <SelectItem value="Adubação">Adubação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Desktop Table */}
+      <div className="hidden sm:block bg-card rounded-2xl border border-muted shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-muted/30">
+            <TableRow>
+              <TableHead className="w-[100px]">Data</TableHead>
+              <TableHead>Operação</TableHead>
+              <TableHead>Talhão</TableHead>
+              <TableHead>Máquina / Operador</TableHead>
+              <TableHead>Área</TableHead>
+              <TableHead className="w-[80px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredRecords.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
+                  Nenhuma atividade registrada para os filtros selecionados.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredRecords.map((r) => (
+                <TableRow key={r.id} className="group hover:bg-muted/20 cursor-pointer" onClick={() => handleEdit(r, false)}>
+                  <TableCell className="font-medium text-muted-foreground text-xs">
+                    {format(new Date(r.date), "dd/MM/yy")}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase flex items-center gap-1 border ${getActivityColor(r.type)}`} variant="outline">
+                        {getActivityIcon(r.type)}
+                        {r.type}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3 h-3 text-muted-foreground" />
+                      <span className="font-bold text-slate-800">{r.talhaoName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                        <Tractor className="w-3 h-3 text-muted-foreground" />
+                        {r.machineName}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold">
+                        <UserIcon className="w-2.5 h-2.5" />
+                        {r.operatorName}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-black font-mono text-primary">
+                    {r.areaHectares} ha
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuItem onClick={() => handleEdit(r, false)} className="gap-2 focus:bg-muted">
+                            <Pencil className="w-4 h-4" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 text-destructive focus:text-destructive focus:bg-red-50">
+                            <Trash2 className="w-4 h-4" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="sm:hidden space-y-3">
+        <MobileListControls 
+          onFilterClick={() => setShowFilters(!showFilters)} 
+          onExportClick={() => {}}
+          activeFilterCount={filterType !== 'all' ? 1 : 0}
+        />
+        
+        {filteredRecords.map((r) => (
+          <div 
+            key={r.id} 
+            className="p-4 bg-card rounded-2xl border border-muted shadow-sm touch-card active:scale-[0.98] transition-transform"
+            onClick={() => handleEdit(r, true)}
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <Badge className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase border ${getActivityColor(r.type)}`} variant="outline">
+                  {r.type}
+                </Badge>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">{format(new Date(r.date), "dd/MM/yyyy")}</span>
+              </div>
+              <p className="font-black text-primary text-sm">{r.areaHectares} ha</p>
+            </div>
+            
+            <p className="font-bold text-slate-800 text-base mb-1">{r.talhaoName}</p>
+            
+            <div className="flex justify-between items-end pt-3 border-t border-dashed border-muted/60 mt-2">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
+                  <Tractor className="w-3 h-3" />
+                  {r.machineName}
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold">
+                  <UserIcon className="w-2.5 h-2.5" />
+                  {r.operatorName}
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FAB Mobile */}
+      <div className="sm:hidden">
+        <Sheet open={isSheetOpen} onOpenChange={(open) => !open && closeForm()}>
+          <SheetTrigger asChild>
+            <button
+              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-xl flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 h-[92vh] max-h-[92vh] overflow-y-auto">
+            <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
+            <SheetHeader className="text-left mb-4">
+              <SheetTitle className="text-xl font-bold">{editingRecord ? "Editar Atividade" : "Nova Atividade de Campo"}</SheetTitle>
+            </SheetHeader>
+            <FormContent 
+              form={form} 
+              talhoes={DEMO_TALHOES} 
+              machines={DEMO_MACHINES} 
+              users={DEMO_USERS}
+              onSubmit={onSubmit}
+              onClose={closeForm}
+              isEditing={!!editingRecord}
+            />
+          </SheetContent>
+        </Sheet>
+      </div>
+    </AppLayout>
+  );
+}

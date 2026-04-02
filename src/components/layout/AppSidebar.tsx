@@ -2,7 +2,6 @@ import { Link, useLocation } from "wouter";
 import {
   Home,
   Wheat,
-  Truck,
   Tractor,
   Fuel,
   Package,
@@ -15,6 +14,9 @@ import {
   CalendarDays,
   Map,
   MoreVertical,
+  Wallet,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -72,16 +74,18 @@ export function AppSidebar() {
   };
 
   const menuItems = [
-    { title: "Dashboard",     icon: Home,    path: "/" },
-    { title: "Colheita",      icon: Wheat,   path: "/colheita" },
-    { title: "Transporte",    icon: Truck,   path: "/transporte" },
-    { title: "Máquinas",      icon: Tractor, path: "/maquinas" },
-    { title: "Abastecimento", icon: Fuel,    path: "/abastecimento" },
-    { title: "Estoque",       icon: Package, path: "/estoque" },
+    { title: "Dashboard",     icon: Home,      path: "/" },
+    { title: "Colheita",      icon: Wheat,     path: "/colheita" },
+    { title: "Máquinas",      icon: Tractor,   path: "/maquinas" },
+    { title: "Abastecimento", icon: Fuel,      path: "/abastecimento" },
+    { title: "Estoque",       icon: Package,   path: "/estoque" },
+    { title: "Financeiro",    icon: Wallet,    path: "/financeiro" },
+    { title: "Atividades",    icon: Activity,  path: "/atividades" },
+    { title: "Relatórios",    icon: BarChart3, path: "/relatorios" },
   ];
 
   const isMobile = useIsMobile();
-  const bottomNavPaths = ["/", "/colheita", "/transporte", "/maquinas"];
+  const bottomNavPaths = ["/", "/colheita", "/financeiro", "/relatorios", "/maquinas"];
   const visibleMenuItems = isMobile 
     ? menuItems.filter(item => !bottomNavPaths.includes(item.path))
     : menuItems;

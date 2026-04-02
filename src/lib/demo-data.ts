@@ -88,6 +88,46 @@ export interface DieselTransaction {
   talhaoId?: number;
 }
 
+export interface BankAccount {
+  id: number;
+  name: string;
+  icon: string; // "bb" | "cef" | "santander" | "sicoob" | "card" | "store" | "cash"
+}
+
+export interface FinancialRecord {
+  id: number;
+  date: string;
+  type: "receita" | "despesa";
+  category: string; // "Vendas", "Insumos", "Máquinas", "Administrativo", "Outros"
+  description: string;
+  value: number;
+  status: "pago" | "aberto";
+  bankAccountId: number;
+  bankAccountName: string;
+  safraId?: number;
+  talhaoId?: number;
+  supplier?: string;
+  nfNumber?: string;
+  createdAt: string;
+}
+
+export interface ActivityRecord {
+  id: number;
+  date: string;
+  type: "Plantio" | "Pulverização" | "Adubação" | "Incorporação" | "Outro";
+  talhaoId: number;
+  talhaoName: string;
+  safraId: number;
+  machineId: number;
+  machineName: string;
+  operatorId: number;
+  operatorName: string;
+  products: { productId: number; name: string; quantity: number; unit: string }[];
+  areaHectares: number;
+  notes?: string;
+  createdAt: string;
+}
+
 export const DEMO_SAFRAS: Safra[] = [
   { id: 4, name: "Safra 2025/2026", startDate: "2025-09-01", endDate: "2026-06-30", status: "ativo" },
   { id: 1, name: "Safra 2023/2024", startDate: "2023-09-01", endDate: "2024-03-31", status: "ativo" },
@@ -221,6 +261,22 @@ export const DEMO_CROPS = [
   { id: 3, name: "Trigo", description: "Trigo de Inverno", status: "ativo" },
 ];
 
+export interface TalhaoCultura {
+  talhaoId: number;
+  safraId: number;
+  cultureId: number;
+}
+
+export const DEMO_TALHAO_CULTURAS: TalhaoCultura[] = [
+  { talhaoId: 1, safraId: 4, cultureId: 1 },
+  { talhaoId: 2, safraId: 4, cultureId: 1 },
+  { talhaoId: 3, safraId: 4, cultureId: 1 },
+  { talhaoId: 4, safraId: 4, cultureId: 2 },
+  { talhaoId: 5, safraId: 4, cultureId: 2 },
+  { talhaoId: 6, safraId: 4, cultureId: 1 },
+  { talhaoId: 7, safraId: 4, cultureId: 1 },
+];
+
 export const DEMO_TALHOES: Talhao[] = [
   { id: 1, name: "Talhão A1", property: "Fazenda São Bento", areaHectares: 20, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
   { id: 2, name: "Talhão A2", property: "Fazenda São Bento", areaHectares: 18, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
@@ -270,4 +326,81 @@ export const DEMO_MACHINE_MAINTENANCES: MachineMaintenance[] = [
   { id: 2, date: "2026-02-20", machineId: 1, description: "Substituição correia do elevador", cost: 1200, type: "corretiva", category: "Peças", createdAt: "2026-02-20T14:30:00Z" },
   { id: 3, date: "2026-03-02", machineId: 2, description: "Revisão de 500 horas", cost: 4800, type: "preventiva", category: "Serviço", providerName: "Concessionária Local", createdAt: "2026-03-02T08:00:00Z" },
   { id: 4, date: "2026-03-08", machineId: 9, description: "Troca de 2 pneus dianteiros", cost: 5600, type: "corretiva", category: "Pneus", providerName: "Borracharia do Trevo", createdAt: "2026-03-08T11:00:00Z" },
+];
+
+export const DEMO_BANK_ACCOUNTS: BankAccount[] = [
+  { id: 1, name: "Banco do Brasil (Ana Carla)", icon: "bb" },
+  { id: 2, name: "Banco do Brasil (Filipe)", icon: "bb" },
+  { id: 3, name: "Caixa Econômica Federal (Filipe)", icon: "cef" },
+  { id: 4, name: "Cartão de Crédito Filipe", icon: "card" },
+  { id: 5, name: "Cruzóleo", icon: "store" },
+  { id: 6, name: "Santander", icon: "santander" },
+  { id: 7, name: "Sicoob (Ana Carla)", icon: "sicoob" },
+  { id: 8, name: "Sicoob (Filipe)", icon: "sicoob" },
+  { id: 9, name: "Dinheiro", icon: "cash" },
+];
+
+export const DEMO_FINANCIAL_RECORDS: FinancialRecord[] = [
+  { id: 1, date: "2026-03-15", type: "receita", category: "Vendas", description: "Venda antecipada Soja Safra 25/26", value: 450000, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil (Ana Carla)", safraId: 4, createdAt: "2026-03-15T10:00:00Z" },
+  { id: 2, date: "2026-03-10", type: "despesa", category: "Insumos", description: "Sementes Soja M8349 (50 sacos)", value: 25000, status: "pago", bankAccountId: 8, bankAccountName: "Sicoob (Filipe)", safraId: 4, supplier: "Agro Sementes S.A.", nfNumber: "NF-99881", createdAt: "2026-03-10T14:30:00Z" },
+  { id: 3, date: "2026-03-05", type: "despesa", category: "Máquinas", description: "Manutenção Preventiva Colheitadeira JD S790", value: 3500, status: "pago", bankAccountId: 7, bankAccountName: "Sicoob (Ana Carla)", safraId: 4, talhaoId: 1, supplier: "JD Oficina", createdAt: "2026-03-05T08:00:00Z" },
+  { id: 4, date: "2026-02-28", type: "receita", category: "Outros", description: "Rendimento Aplicação", value: 850.45, status: "pago", bankAccountId: 2, bankAccountName: "Banco do Brasil (Filipe)", createdAt: "2026-02-28T18:00:00Z" },
+  { id: 5, date: "2026-03-18", type: "despesa", category: "Administrativo", description: "Energia Elétrica Sede Fazenda", value: 1240.20, status: "aberto", bankAccountId: 9, bankAccountName: "Dinheiro", createdAt: "2026-03-18T10:00:00Z" },
+  { id: 6, date: "2026-03-20", type: "despesa", category: "Combustível", description: "Compra Diesel para Tanque (10.000L)", value: 48000, status: "aberto", bankAccountId: 1, bankAccountName: "Banco do Brasil (Ana Carla)", safraId: 4, supplier: "Posto Cruzóleo", createdAt: "2026-03-20T09:00:00Z" },
+];
+
+export const DEMO_ACTIVITIES: ActivityRecord[] = [
+  { 
+    id: 1, 
+    date: "2026-03-12", 
+    type: "Pulverização", 
+    talhaoId: 1, 
+    talhaoName: "Talhão A1", 
+    safraId: 4, 
+    machineId: 3, 
+    machineName: "Massey Ferguson 7245", 
+    operatorId: 2, 
+    operatorName: "Paulo Andrade",
+    products: [
+      { productId: 1, name: "Herbicida Glifosato 480", quantity: 2, unit: "L/ha" }
+    ],
+    areaHectares: 20,
+    notes: "Aplicação preventiva",
+    createdAt: "2026-03-12T08:00:00Z" 
+  },
+  { 
+    id: 2, 
+    date: "2026-03-05", 
+    type: "Plantio", 
+    talhaoId: 4, 
+    talhaoName: "Talhão B1", 
+    safraId: 4, 
+    machineId: 5, 
+    machineName: "Stara Estrela 32", 
+    operatorId: 1, 
+    operatorName: "Carlos Mendes",
+    products: [
+      { productId: 6, name: "Semente Soja M8349", quantity: 60, unit: "KG/ha" },
+      { productId: 4, name: "Adubo MAP 12-52-00", quantity: 150, unit: "KG/ha" }
+    ],
+    areaHectares: 22,
+    createdAt: "2026-03-05T07:00:00Z" 
+  },
+  { 
+    id: 3, 
+    date: "2026-03-10", 
+    type: "Adubação", 
+    talhaoId: 7, 
+    talhaoName: "Talhão C2", 
+    safraId: 4, 
+    machineId: 7, 
+    machineName: "John Deere 5090E", 
+    operatorId: 3, 
+    operatorName: "José Silva",
+    products: [
+      { productId: 5, name: "Ureia 45%", quantity: 100, unit: "KG/ha" }
+    ],
+    areaHectares: 24,
+    createdAt: "2026-03-10T09:00:00Z" 
+  }
 ];

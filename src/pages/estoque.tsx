@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Package, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,7 +20,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 
 export const productSchema = z.object({
   name: z.string().min(2, "Nome obrigatório"),
@@ -58,9 +57,6 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control as any} name="currentStock" render={({ field }) => (
             <FormItem><FormLabel>Estoque Inicial/Atual</FormLabel><FormControl><Input type="number" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control as any} name="minStock" render={({ field }) => (
-            <FormItem><FormLabel>Estoque Mínimo</FormLabel><FormControl><Input type="number" placeholder="Ex: 20" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <div className="flex gap-3 pt-2">
@@ -100,7 +96,7 @@ export default function Estoque() {
 
   const productForm = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema) as any,
-    defaultValues: { name: "", category: "Sementes", unit: "KG", currentStock: 0, minStock: 0 },
+    defaultValues: { name: "", category: "Sementes", unit: "KG", currentStock: 0 },
   });
 
 
@@ -154,16 +150,13 @@ export default function Estoque() {
                   <TableHead>Produto</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead className="text-right">Estoque Atual</TableHead>
-                  <TableHead className="text-right">Mínimo</TableHead>
-                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {products?.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Nenhum produto cadastrado.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="text-center py-10 text-muted-foreground">Nenhum produto cadastrado.</TableCell></TableRow>
                 )}
                 {products?.map((p) => {
-                  const isCritical = p.minStock !== undefined && p.currentStock <= p.minStock;
                   return (
                     <TableRow 
                       key={p.id} 
@@ -172,20 +165,8 @@ export default function Estoque() {
                     >
                       <TableCell className="font-bold text-foreground">{p.name}</TableCell>
                       <TableCell className="text-muted-foreground">{p.category}</TableCell>
-                      <TableCell className={`text-right font-mono font-bold ${isCritical ? "text-destructive" : "text-foreground"}`}>
+                      <TableCell className="text-right font-mono font-bold text-foreground">
                         {p.currentStock} {p.unit}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">{p.minStock || 0} {p.unit}</TableCell>
-                      <TableCell>
-                        {isCritical ? (
-                          <Badge variant="destructive" className="flex w-fit items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" /> Crítico
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]">
-                            Normal
-                          </Badge>
-                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -204,7 +185,6 @@ export default function Estoque() {
             <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">Nenhum produto cadastrado.</div>
           )}
           {products?.map((p) => {
-            const isCritical = p.minStock !== undefined && p.currentStock <= p.minStock;
             return (
               <div 
                 key={p.id} 
@@ -216,21 +196,9 @@ export default function Estoque() {
                     <p className="text-xs text-muted-foreground font-medium mb-0.5">{p.category}</p>
                     <p className="font-bold text-foreground text-base leading-tight">{p.name}</p>
                   </div>
-                  {isCritical ? (
-                    <Badge variant="destructive" className="flex items-center gap-1 flex-shrink-0">
-                      <AlertTriangle className="w-3 h-3" /> Crítico
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] flex-shrink-0">
-                      Normal
-                    </Badge>
-                  )}
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border/60">
-                  <span className="text-xs text-muted-foreground">
-                    Mín: {p.minStock || 0} {p.unit}
-                  </span>
-                  <span className={`font-mono font-bold text-lg leading-none ${isCritical ? "text-destructive" : "text-primary"}`}>
+                <div className="flex items-center justify-end pt-2 border-t border-border/60">
+                  <span className="font-mono font-bold text-lg leading-none text-primary">
                     {p.currentStock} <span className="text-xs text-muted-foreground font-semibold">{p.unit}</span>
                   </span>
                 </div>

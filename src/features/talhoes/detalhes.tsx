@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { apiUpdateTalhao, apiDeleteTalhao, FormContent, schema } from "./talhoes";
-import { DEMO_TALHOES, DEMO_CROPS, DEMO_HARVESTS, DEMO_STOCK_MOVEMENTS, DEMO_FUELINGS, DEMO_PRODUCTS } from "@/lib/demo-data";
+import { apiUpdateTalhao, apiDeleteTalhao, FormContent, schema } from "./page";
+import { DEMO_TALHOES, DEMO_CROPS, DEMO_HARVESTS, DEMO_STOCK_MOVEMENTS, DEMO_FUELINGS, DEMO_PRODUCTS, DEMO_TALHAO_CULTURAS } from "@/lib/demo-data";
+import { useFarm } from "@/contexts/FarmContext";
 import { Loader2, Map as MapIcon, ChevronRight, Sprout, Tractor, Package, Fuel, Activity, Box, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +44,7 @@ const fetchTalhaoById = async (id: number) => {
 export default function TalhaoDetalhes() {
   const [, params] = useRoute("/talhoes/:id");
   const talhaoId = parseInt(params?.id || "0", 10);
+  const { selectedSafraId } = useFarm();
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -76,11 +78,12 @@ export default function TalhaoDetalhes() {
 
   const openTalhaoEdit = () => {
     if (talhao) {
+      const mapping = selectedSafraId ? DEMO_TALHAO_CULTURAS.find(c => c.talhaoId === talhao.id && c.safraId === selectedSafraId) : null;
       talhaoForm.reset({
         name: talhao.name,
         property: talhao.property,
         areaHectares: talhao.areaHectares,
-        cultureId: (talhao.cultureId || "none") as any,
+        cultureId: mapping ? String(mapping.cultureId) as any : "none",
         status: talhao.status as "ativo"|"inativo",
       });
       if (window.innerWidth < 640) setIsTalhaoSheetOpen(true);
@@ -121,9 +124,11 @@ export default function TalhaoDetalhes() {
   });
 
   const culture = useMemo(() => {
-    if (!talhao?.cultureId) return null;
-    return DEMO_CROPS.find(c => c.id === talhao.cultureId) || null;
-  }, [talhao]);
+    if (!talhao || !selectedSafraId) return null;
+    const mapping = DEMO_TALHAO_CULTURAS.find(c => c.talhaoId === talhao.id && c.safraId === selectedSafraId);
+    if (!mapping) return null;
+    return DEMO_CROPS.find(c => c.id === mapping.cultureId) || null;
+  }, [talhao, selectedSafraId]);
 
   const harvestStats = useMemo(() => {
     if (!talhao) return { totalSacks: 0, productivityAvg: 0, harvests: [] };

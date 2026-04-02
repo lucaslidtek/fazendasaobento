@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { DEMO_TALHOES, DEMO_CROPS, Talhao } from "@/lib/demo-data";
+import { DEMO_TALHOES, DEMO_CROPS, Talhao, DEMO_TALHAO_CULTURAS } from "@/lib/demo-data";
+import { useFarm } from "@/contexts/FarmContext";
 
 // --- MOCK API ---
 let MOCK_TALHOES = [...DEMO_TALHOES];
@@ -140,6 +141,7 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing, uni
 
 export default function Talhoes() {
   const { user } = useAuth();
+  const { selectedSafraId } = useFarm();
   const [, setLocation] = useLocation();
 
   if (user?.role !== "admin") {
@@ -205,11 +207,12 @@ export default function Talhoes() {
 
   const handleEditOpen = (record: Talhao, isMobile: boolean) => {
     setEditingRecord(record);
+    const mapping = selectedSafraId ? DEMO_TALHAO_CULTURAS.find(c => c.talhaoId === record.id && c.safraId === selectedSafraId) : null;
     form.reset({
       name: record.name,
       property: record.property || "",
       areaHectares: record.areaHectares,
-      cultureId: record.cultureId ? String(record.cultureId) as any : "none",
+      cultureId: mapping ? String(mapping.cultureId) as any : "none",
       status: record.status,
     });
     if (isMobile) setIsSheetOpen(true);
@@ -236,9 +239,11 @@ export default function Talhoes() {
     uniqueProperties,
   };
 
-  const getCultureName = (cultureId?: number) => {
-    if (!cultureId) return "—";
-    const culture = DEMO_CROPS.find(c => c.id === cultureId);
+  const getCultureName = (talhaoId: number) => {
+    if (!selectedSafraId) return "—";
+    const mapping = DEMO_TALHAO_CULTURAS.find(c => c.talhaoId === talhaoId && c.safraId === selectedSafraId);
+    if (!mapping) return "—";
+    const culture = DEMO_CROPS.find(c => c.id === mapping.cultureId);
     return culture ? culture.name : "—";
   };
 
@@ -300,7 +305,7 @@ export default function Talhoes() {
                   <TableCell className="font-bold">{r.name}</TableCell>
                   <TableCell>{r.property || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{r.areaHectares} ha</TableCell>
-                  <TableCell className="text-muted-foreground">{getCultureName(r.cultureId)}</TableCell>
+                  <TableCell className="text-muted-foreground">{getCultureName(r.id)}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={STATUS_STYLES[r.status as keyof typeof STATUS_STYLES] ?? ""}>
                       {STATUS_LABELS[r.status] ?? r.status}
@@ -362,7 +367,7 @@ export default function Talhoes() {
                 </div>
                 <p className="font-bold text-base mt-2">{r.name}</p>
                 <p className="text-sm font-medium text-muted-foreground mt-0.5">{r.property || "—"}</p>
-                <p className="text-sm text-muted-foreground mt-0.5">Cultura: {getCultureName(r.cultureId)}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Cultura: {getCultureName(r.id)}</p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
