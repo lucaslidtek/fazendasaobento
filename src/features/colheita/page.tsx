@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Wheat, Loader2, X, Filter, MoreHorizontal, Pencil, Trash2, Download, Truck } from "lucide-react";
+import { Plus, Wheat, Loader2, X, Filter, MoreHorizontal, Pencil, Trash2, Download, Truck, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,12 +28,13 @@ const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
   cultures: z.array(z.string()).min(1, "Selecione pelo menos uma cultura"),
   area: z.string().min(1, "Área é obrigatória"),
-  driverName: z.string().min(1, "Nome do operador é obrigatório"),
+  driverName: z.string().min(1, "Nome do motorista é obrigatório"),
   machineId: z.coerce.number().min(1, "Selecione uma máquina"),
   quantitySacks: z.coerce.number().min(0.1, "Quantidade inválida"),
   areaHectares: z.coerce.number().min(0.1, "Área inválida"),
   notes: z.string().optional(),
   truck: z.string().optional(),
+  destination: z.string().optional(),
   weightGross: z.coerce.number().optional().or(z.literal("")),
   weightNet: z.coerce.number().optional().or(z.literal("")),
   moisture: z.coerce.number().optional().or(z.literal("")),
@@ -47,8 +48,8 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-2">
         
-        <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2"><Wheat className="w-4 h-4 text-primary"/> Dados da Colheita</h3>
+        <div className="bg-muted/30 p-4 rounded-xl border border-border">
+          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Wheat className="w-4 h-4 text-primary"/> Dados da Colheita</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField control={form.control} name="date" render={({ field }) => (
@@ -112,7 +113,7 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
             </div>
 
             <FormField control={form.control} name="driverName" render={({ field }) => (
-              <FormItem><FormLabel>Operador</FormLabel><FormControl><Input placeholder="Nome completo do operador" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Motorista</FormLabel><FormControl><Input placeholder="Nome completo do motorista" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
 
             <FormField control={form.control} name="notes" render={({ field }) => (
@@ -121,13 +122,19 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
           </div>
         </div>
 
-        <div className="bg-orange-50/30 p-4 rounded-xl border border-orange-100/50">
-          <h3 className="font-semibold text-orange-800 mb-4 flex items-center gap-2"><Truck className="w-4 h-4 text-orange-500"/> Logística e Transporte (Opcional)</h3>
+        <div className="bg-[hsl(var(--warning-subtle))] p-4 rounded-xl border border-[hsl(var(--warning)/0.2)]">
+          <h3 className="font-semibold text-[hsl(var(--warning-text))] mb-4 flex items-center gap-2"><Truck className="w-4 h-4 text-[hsl(var(--warning-text))]"/> Logística e Transporte (Opcional)</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField control={form.control} name="truck" render={({ field }) => (
                 <FormItem><FormLabel>Caminhão / Placa</FormLabel><FormControl><Input placeholder="Ex: ABC-1234" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              <FormField control={form.control} name="destination" render={({ field }) => (
+                <FormItem><FormLabel>Destino / Silo</FormLabel><FormControl><Input placeholder="Ex: Silo Central" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField control={form.control} name="weightGross" render={({ field }) => (
                 <FormItem><FormLabel>Peso Bruto (kg)</FormLabel><FormControl><Input type="number" placeholder="Ex: 35000" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
@@ -169,7 +176,8 @@ export default function Colheita() {
   const [filterCulture, setFilterCulture] = useState(ALL);
   const [filterMachine, setFilterMachine] = useState(ALL);
   const [filterDriver, setFilterDriver] = useState(ALL);
-  const [filterArea, setFilterArea] = useState(ALL);
+  const [filterArea, setFilterArea] = useState<string>(ALL);
+  const [filterTruck, setFilterTruck] = useState<string>(ALL);
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: apiRecords, isLoading } = useListHarvest();
@@ -181,17 +189,10 @@ export default function Colheita() {
   const machines = apiMachines ?? DEMO_MACHINES;
 
   // Opções únicas
-  const uniqueMachines = useMemo(() => {
-    return [...new Set(records?.map(r => r.machineName).filter(Boolean) ?? [])].sort();
-  }, [records]);
-
-  const uniqueDrivers = useMemo(() => {
-    return [...new Set(records?.map(r => r.driverName).filter(Boolean) ?? [])].sort();
-  }, [records]);
-
-  const uniqueAreas = useMemo(() => {
-    return [...new Set(records?.map(r => r.area).filter(Boolean) ?? [])].sort();
-  }, [records]);
+  const uniqueMachines = useMemo(() => [...new Set(records?.map(r => r.machineName))].filter(Boolean).sort(), [records]);
+  const uniqueDrivers = useMemo(() => [...new Set(records?.map(r => r.driverName))].filter(Boolean).sort(), [records]);
+  const uniqueTrucks = useMemo(() => [...new Set(records?.map(r => r.truck))].filter(Boolean).sort(), [records]);
+  const uniqueAreas = useMemo(() => [...new Set(records?.map(r => r.area))].filter(Boolean).sort(), [records]);
 
   const createMutation = useCreateHarvest({
     mutation: {
@@ -238,6 +239,7 @@ export default function Colheita() {
       areaHectares: 0,
       notes: "",
       truck: "",
+      destination: "",
       weightGross: "",
       weightNet: "",
       moisture: "",
@@ -253,42 +255,51 @@ export default function Colheita() {
 
       if (filterCulture !== ALL && (!r.cultures || !r.cultures.includes(filterCulture))) return false;
       if (filterMachine !== ALL && r.machineName !== filterMachine) return false;
-      if (filterDriver !== ALL && r.driverName !== filterDriver) return false;
-      if (filterArea !== ALL && r.area !== filterArea) return false;
-      return true;
+      const matchesDriver = filterDriver === ALL || r.driverName === filterDriver;
+      const matchesArea = filterArea === ALL || r.area === filterArea;
+      const matchesTruck = filterTruck === ALL || r.truck === filterTruck;
+      
+      return matchesDriver && matchesArea && matchesTruck;
     });
-  }, [records, filterCulture, filterMachine, filterDriver, filterArea]);
+  }, [records, filterCulture, filterMachine, filterDriver, filterArea, filterTruck]);
 
   const activeFilterCount = [
-    filterCulture !== ALL,
-    filterMachine !== ALL,
-    filterDriver !== ALL,
-    filterArea !== ALL,
+    (filterCulture !== ALL ? 1 : 0) +
+    (filterMachine !== ALL ? 1 : 0) +
+    (filterDriver !== ALL ? 1 : 0) +
+    (filterTruck !== ALL ? 1 : 0) +
+    (filterArea !== ALL ? 1 : 0)
   ].filter(Boolean).length;
 
   const clearFilters = () => {
     setFilterCulture(ALL);
     setFilterMachine(ALL);
     setFilterDriver(ALL);
+    setFilterTruck(ALL);
     setFilterArea(ALL);
   };
 
   const handleExport = () => {
-    const headers = ["Data", "Culturas", "Máquina", "Operador", "Área", "Quantidade (sc)", "Produtividade (sc/ha)", "Hectares"];
     const rows = filteredRecords.map(r => [
       format(new Date(r.date), "dd/MM/yyyy"),
-      r.cultures?.join(", ") ?? "",
-      r.machineName ?? "",
-      r.driverName ?? "",
-      r.area ?? "",
-      String(r.quantitySacks ?? ""),
-      String(r.productivity ?? ""),
-      String(r.areaHectares ?? ""),
+      r.cultures?.join(", "),
+      r.area,
+      r.driverName,
+      r.truck || "",
+      r.destination || "",
+      r.weightGross || "",
+      r.weightNet || "",
+      r.moisture || "",
+      r.impurity || "",
+      r.quantitySacks,
+      r.productivity,
+      r.machineName
     ]);
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";"))
-      .join("\n");
+    const csvContent = [
+      ["Data", "Culturas", "Area", "Motorista", "Caminhao", "Destino", "Peso Bruto", "Peso Liquido", "Umidade", "Impureza", "Sacas", "Produtividade", "Maquina"].join(","),
+      ...rows.map(e => e.join(","))
+    ].join("\n");
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -324,10 +335,11 @@ export default function Colheita() {
       areaHectares: record.areaHectares,
       notes: record.notes ?? "",
       truck: record.truck ?? "",
+      destination: record.destination ?? "",
       weightGross: record.weightGross ?? "",
       weightNet: record.weightNet ?? "",
       moisture: record.moisture ?? "",
-      impurity: record.impurity ?? "",
+      impurity: record.impurity ?? ""
     });
     if (isMobile) {
       setIsSheetOpen(true);
@@ -370,9 +382,13 @@ export default function Colheita() {
 
         {/* Botão nova colheita — desktop via Dialog, mobile via Sheet */}
         <div className="hidden sm:flex items-center gap-2">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
+          </Button>
           <Button variant="outline" onClick={handleExport} className="h-10 px-4 gap-2">
             <Download className="w-4 h-4" />
-            Exportar
+            Exportar CSV
           </Button>
           <Button
             variant="outline"
@@ -417,7 +433,7 @@ export default function Colheita() {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {/* Cultura */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Cultura</label>
@@ -450,9 +466,9 @@ export default function Colheita() {
               </Select>
             </div>
 
-            {/* Operador/Motorista */}
+            {/* Motorista */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Operador</label>
+              <label className="text-xs font-medium text-muted-foreground">Motorista</label>
               <Select value={filterDriver} onValueChange={setFilterDriver}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Todos" />
@@ -461,6 +477,22 @@ export default function Colheita() {
                   <SelectItem value={ALL}>Todos</SelectItem>
                   {uniqueDrivers.map(d => (
                     <SelectItem key={d!} value={d!}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Caminhão */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Caminhão</label>
+              <Select value={filterTruck} onValueChange={setFilterTruck}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueTrucks.map(t => (
+                    <SelectItem key={t!} value={t!}>{t}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -503,10 +535,11 @@ export default function Colheita() {
                 <TableHead>Data</TableHead>
                 <TableHead>Cultura</TableHead>
                 <TableHead>Área / Talhão</TableHead>
-                <TableHead className="text-right">Hectares</TableHead>
+                <TableHead className="text-right">Peso Bruto</TableHead>
+                <TableHead className="text-right">Peso Líquido</TableHead>
                 <TableHead className="text-right">Sacas</TableHead>
                 <TableHead className="text-right">Produtividade</TableHead>
-                <TableHead>Transporte</TableHead>
+                <TableHead>Logística</TableHead>
                 <TableHead>Máquina</TableHead>
                 <TableHead className="w-[88px]" aria-label="Ações" />
               </TableRow>
@@ -532,10 +565,25 @@ export default function Colheita() {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{r.area}</TableCell>
-                  <TableCell className="text-right">{r.areaHectares} ha</TableCell>
+                  <TableCell className="text-right">{r.weightGross ? `${Number(r.weightGross).toLocaleString()} kg` : "—"}</TableCell>
+                  <TableCell className="text-right font-medium">{r.weightNet ? `${Number(r.weightNet).toLocaleString()} kg` : "—"}</TableCell>
                   <TableCell className="text-right font-bold">{r.quantitySacks} sc</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{(Number(r.productivity) || 0).toFixed(1)} sc/ha</TableCell>
-                  <TableCell className="text-muted-foreground">{r.truck ? <Badge variant="outline" className="font-mono text-[10px] bg-slate-50"><Truck className="w-3 h-3 mr-1 inline text-orange-500"/> {r.truck}</Badge> : "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {r.truck && (
+                        <Badge variant="outline" className="font-mono text-[10px] bg-muted/40 w-fit">
+                          <Truck className="w-3 h-3 mr-1 inline text-[hsl(var(--warning-text))]"/> {r.truck}
+                        </Badge>
+                      )}
+                      {r.destination && (
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-1 leading-none">
+                          <div className="w-1 h-1 rounded-full bg-muted-foreground/30" /> {r.destination}
+                        </span>
+                      )}
+                      {!r.truck && !r.destination && <span className="text-muted-foreground">—</span>}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{r.machineName}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
@@ -604,11 +652,20 @@ export default function Colheita() {
                 </SelectContent>
               </Select>
               <Select value={filterDriver} onValueChange={setFilterDriver}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Operador" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Motorista" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL}>Todos</SelectItem>
                   {uniqueDrivers.map(d => (
                     <SelectItem key={d!} value={d!}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterTruck} onValueChange={setFilterTruck}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Caminhão" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Todos</SelectItem>
+                  {uniqueTrucks.map(t => (
+                    <SelectItem key={t!} value={t!}>{t}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -676,7 +733,16 @@ export default function Colheita() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-bold text-foreground text-base leading-tight">{r.area}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{r.machineName} {r.truck && `· Placa: ${r.truck}`}</p>
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <p className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
+                    {r.machineName}
+                  </p>
+                  {(r.truck || r.destination) && (
+                    <p className="text-[10px] text-[hsl(var(--warning-text))] font-medium flex items-center gap-1">
+                      <Truck className="w-3 h-3" /> {r.truck || "S/ Placa"} {r.destination && `→ ${r.destination}`}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="text-right">
                 <p className="font-bold text-primary text-lg leading-tight">{r.quantitySacks} sc</p>
@@ -684,8 +750,22 @@ export default function Colheita() {
               </div>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-border/60 flex items-center gap-2 text-xs text-muted-foreground">
+            {(r.weightGross || r.weightNet) && (
+              <div className="mt-3 grid grid-cols-2 gap-2 bg-muted/30 p-2 rounded-lg border border-border/50">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Peso Bruto</p>
+                  <p className="text-xs font-mono font-bold text-foreground">{r.weightGross ? `${Number(r.weightGross).toLocaleString()} kg` : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Peso Líquido</p>
+                  <p className="text-xs font-mono font-bold text-foreground">{r.weightNet ? `${Number(r.weightNet).toLocaleString()} kg` : "—"}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
               <span>{r.areaHectares} ha colhidos</span>
+              {r.moisture && <span>Umid: {r.moisture}%</span>}
             </div>
           </div>
         ))}

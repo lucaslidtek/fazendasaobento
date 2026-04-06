@@ -8,7 +8,7 @@ import {
   DEMO_PRODUCTS,
   type ActivityRecord 
 } from "@/lib/demo-data";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -17,7 +17,6 @@ import {
   Activity, 
   Loader2, 
   Filter, 
-  X, 
   Pencil, 
   Trash2, 
   Download, 
@@ -30,7 +29,8 @@ import {
   User as UserIcon,
   Search,
   ChevronRight,
-  ClipboardList
+  ClipboardList,
+  Printer
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -92,6 +92,11 @@ const schema = z.object({
   operatorId: z.coerce.number().min(1, "Selecione um operador"),
   areaHectares: z.coerce.number().min(0.1, "Área inválida"),
   notes: z.string().optional(),
+  products: z.array(z.object({
+    name: z.string().min(1, "Nome é obrigatório"),
+    quantity: z.coerce.number().min(0.01, "Qtde inválida"),
+    unit: z.string().min(1, "Unidade é obrigatória"),
+  })),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -99,11 +104,11 @@ type FormValues = z.infer<typeof schema>;
 // Helper para cores de badges de atividade
 const getActivityColor = (type: string) => {
   switch (type) {
-    case "Plantio": return "bg-green-100 text-green-700 border-green-200";
-    case "Pulverização": return "bg-blue-100 text-blue-700 border-blue-200";
-    case "Adubação": return "bg-orange-100 text-orange-700 border-orange-200";
-    case "Incorporação": return "bg-amber-100 text-amber-700 border-amber-200";
-    default: return "bg-slate-100 text-slate-700 border-slate-200";
+    case "Plantio": return "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]";
+    case "Pulverização": return "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]";
+    case "Adubação": return "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]";
+    case "Incorporação": return "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]";
+    default: return "bg-muted text-muted-foreground border-border";
   }
 };
 
@@ -117,6 +122,11 @@ const getActivityIcon = (type: string) => {
 };
 
 function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onClose, isEditing }: any) {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "products"
+  });
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
@@ -193,8 +203,102 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
           )} />
         </div>
 
+        <div className="space-y-3 bg-muted/30 p-4 rounded-2xl border border-border/50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-tight text-muted-foreground flex items-center gap-2">
+              <Droplets className="w-4 h-4 text-primary" /> Insumos / Produtos
+            </h3>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={() => append({ name: "", quantity: 0, unit: "sc/ha" })}
+              className="h-8 rounded-lg text-xs"
+            >
+              <Plus className="w-3 h-3 mr-1" /> Adicionar
+            </Button>
+          </div>
+
+          {fields.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4 italic">Nenhum insumo adicionado.</p>
+          )}
+
+          <div className="space-y-3">
+            {fields.map((field, index) => (
+              <div key={field.id} className="flex flex-col sm:flex-row gap-3 bg-card p-3 rounded-xl border relative">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => remove(index)}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border shadow-sm text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+                
+                <div className="flex-1">
+                  <FormField control={form.control} name={`products.${index}.name`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Produto</FormLabel>
+                      <Select 
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          const p = DEMO_PRODUCTS.find(prod => prod.name === val);
+                          if (p) form.setValue(`products.${index}.unit`, p.unit);
+                        }} 
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {DEMO_PRODUCTS.map(p => (
+                            <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-[10px]" />
+                    </FormItem>
+                  )} />
+                </div>
+                
+                <div className="flex gap-2 w-full sm:w-[150px]">
+                  <div className="w-[60%]">
+                    <FormField control={form.control} name={`products.${index}.quantity`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Qtde</FormLabel>
+                        <FormControl><Input type="number" step="0.01" className="h-8 text-sm" {...field} /></FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <div className="w-[40%]">
+                    <FormField control={form.control} name={`products.${index}.unit`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Unid</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger className="h-8 text-xs px-2"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="L/ha">L/ha</SelectItem>
+                              <SelectItem value="kg/ha">kg/ha</SelectItem>
+                              <SelectItem value="sc/ha">sc/ha</SelectItem>
+                              <SelectItem value="un/ha">un/ha</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <FormField control={form.control} name="notes" render={({ field }) => (
-          <FormItem><FormLabel>Observações / Insumos Utilizados</FormLabel><FormControl><Input placeholder="Ex: Glifosato 2L/ha, Semente Intacta..." {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Observações</FormLabel><FormControl><Input placeholder="Ex: Aplicação feita com ventos fracos..." {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
         <div className="flex gap-3 pt-4 border-t">
@@ -211,7 +315,7 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
 
 export default function Atividades() {
   const { toast } = useToast();
-  const { selectedSafraId, selectedTalhaoId, talhoes: farmTalhoes } = useFarm();
+  const { selectedSafraId, selectedTalhaoId } = useFarm();
   
   const [records, setRecords] = useState<ActivityRecord[]>(DEMO_ACTIVITIES);
   
@@ -233,6 +337,7 @@ export default function Atividades() {
       operatorId: 0,
       areaHectares: 0,
       notes: "",
+      products: [],
     },
   });
 
@@ -273,12 +378,13 @@ export default function Atividades() {
     setEditingRecord(record);
     form.reset({
       date: record.date.split("T")[0],
-      type: record.type,
+      type: record.type as any,
       talhaoId: record.talhaoId,
       machineId: record.machineId,
       operatorId: record.operatorId,
       areaHectares: record.areaHectares,
       notes: record.notes || "",
+      products: record.products || [],
     });
     if (isMobile) setIsSheetOpen(true);
     else setIsDialogOpen(true);
@@ -306,11 +412,14 @@ export default function Atividades() {
         machineName: machine?.name || "Desconhecida",
         operatorName: user?.name || "Desconhecido",
         safraId: selectedSafraId || 4,
-        products: [], // Para futura implementação de lista dinâmica
+        products: values.products,
         createdAt: new Date().toISOString(),
       };
       setRecords([newRecord, ...records]);
-      toast({ title: "Atividade registrada com sucesso!" });
+      toast({ 
+        title: "Atividade registrada!",
+        description: values.products.length > 0 ? "Baixa de estoque processada automaticamente." : undefined
+      });
     }
     closeForm();
   };
@@ -336,14 +445,17 @@ export default function Atividades() {
             </p>
           </div>
           
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto no-print">
+            <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 rounded-xl border-primary/20 hover:bg-primary/5 text-primary">
+              <Printer className="w-4 h-4" /> Imprimir PDF
+            </Button>
             <Button variant="outline" className="hidden sm:flex h-10 px-4 gap-2 rounded-xl">
-              <Download className="w-4 h-4" /> Exportar
+              <Download className="w-4 h-4" /> Exportar CSV
             </Button>
             
             <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeForm()}>
               <DialogTrigger asChild>
-                <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl shadow-lg shadow-primary/20">
+                <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl">
                   <Plus className="w-4 h-4" /> Nova Atividade
                 </Button>
               </DialogTrigger>
@@ -367,7 +479,7 @@ export default function Atividades() {
 
         {/* Estatísticas Rápidas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="rounded-2xl border-none shadow-sm bg-primary/5">
+          <Card className="rounded-2xl border bg-primary/5">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                 <ClipboardList className="w-6 h-6" />
@@ -380,14 +492,14 @@ export default function Atividades() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-none shadow-sm bg-slate-50">
+          <Card className="rounded-2xl border bg-muted/40">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-600">
+              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
                 <Sprout className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Área Trabalhada</p>
-                <p className="text-xl font-black text-slate-800">{stats.totalArea.toLocaleString()} Hectares</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Área Trabalhada</p>
+                <p className="text-xl font-black text-foreground">{stats.totalArea.toLocaleString()} Hectares</p>
                 <p className="text-[10px] text-muted-foreground font-medium uppercase">Soma das atividades filtradas</p>
               </div>
             </CardContent>
@@ -397,7 +509,7 @@ export default function Atividades() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="px-3 py-1 bg-white shadow-sm border-muted-foreground/10 text-muted-foreground font-bold uppercase text-[10px]">
+          <Badge variant="outline" className="px-3 py-1 bg-card border-muted-foreground/10 text-muted-foreground font-bold uppercase text-[10px]">
             Recentes
           </Badge>
           <span className="text-xs text-muted-foreground font-medium">Histórico de operações</span>
@@ -425,12 +537,12 @@ export default function Atividades() {
       </div>
 
       {showFilters && (
-        <Card className="mb-4 rounded-2xl border-muted bg-slate-50/50 p-4">
+        <Card className="mb-4 rounded-2xl border-muted bg-muted/30 p-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Tipo de Atividade</label>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="h-9 bg-white border-none shadow-sm"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 bg-card border-none transition-all"> <SelectValue /> </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as operações</SelectItem>
                   <SelectItem value="Plantio">Plantio</SelectItem>
@@ -444,22 +556,23 @@ export default function Atividades() {
       )}
 
       {/* Desktop Table */}
-      <div className="hidden sm:block bg-card rounded-2xl border border-muted shadow-sm overflow-hidden">
+      <div className="hidden sm:block bg-card rounded-2xl border border-muted overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/30">
             <TableRow>
               <TableHead className="w-[100px]">Data</TableHead>
               <TableHead>Operação</TableHead>
               <TableHead>Talhão</TableHead>
-              <TableHead>Máquina / Operador</TableHead>
               <TableHead>Área</TableHead>
+              <TableHead>Insumos</TableHead>
+              <TableHead>Máquina / Operador</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRecords.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-40 text-center text-muted-foreground">
                   Nenhuma atividade registrada para os filtros selecionados.
                 </TableCell>
               </TableRow>
@@ -480,23 +593,34 @@ export default function Atividades() {
                   <TableCell>
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3 h-3 text-muted-foreground" />
-                      <span className="font-bold text-slate-800">{r.talhaoName}</span>
+                      <span className="font-bold text-foreground">{r.talhaoName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium text-foreground">{r.areaHectares} ha</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      {r.products?.slice(0, 2).map((p, idx) => (
+                        <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
+                          {p.name}
+                        </Badge>
+                      ))}
+                      {r.products && r.products.length > 2 && (
+                        <Badge variant="outline" className="text-[9px] font-bold text-primary">
+                          +{r.products.length - 2}
+                        </Badge>
+                      )}
+                      {!r.products?.length && <span className="text-muted-foreground text-xs">—</span>}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                        <Tractor className="w-3 h-3 text-muted-foreground" />
-                        {r.machineName}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-foreground font-semibold">
+                        <Tractor className="w-3 h-3 text-muted-foreground" /> {r.machineName}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold">
-                        <UserIcon className="w-2.5 h-2.5" />
-                        {r.operatorName}
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase flex-nowrap">
+                        <UserIcon className="w-2.5 h-2.5" /> {r.operatorName}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="font-black font-mono text-primary">
-                    {r.areaHectares} ha
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
@@ -511,7 +635,7 @@ export default function Atividades() {
                             <Pencil className="w-4 h-4" /> Editar
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 text-destructive focus:text-destructive focus:bg-red-50">
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5">
                             <Trash2 className="w-4 h-4" /> Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -536,7 +660,7 @@ export default function Atividades() {
         {filteredRecords.map((r) => (
           <div 
             key={r.id} 
-            className="p-4 bg-card rounded-2xl border border-muted shadow-sm touch-card active:scale-[0.98] transition-transform"
+            className="p-4 bg-card rounded-2xl border border-muted touch-card active:scale-[0.98] transition-transform"
             onClick={() => handleEdit(r, true)}
           >
             <div className="flex justify-between items-start mb-3">
@@ -549,17 +673,30 @@ export default function Atividades() {
               <p className="font-black text-primary text-sm">{r.areaHectares} ha</p>
             </div>
             
-            <p className="font-bold text-slate-800 text-base mb-1">{r.talhaoName}</p>
+            <p className="font-bold text-foreground text-base mb-1">{r.talhaoName}</p>
             
             <div className="flex justify-between items-end pt-3 border-t border-dashed border-muted/60 mt-2">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
-                  <Tractor className="w-3 h-3" />
-                  {r.machineName}
+              <div className="flex items-center justify-between w-full mt-3 pt-3 border-t border-border/60">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Tractor className="w-3 h-3" /> {r.machineName}
+                  </div>
+                  <span className="text-muted-foreground/30">|</span>
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate max-w-[100px]">
+                    <UserIcon className="w-3 h-3" /> {r.operatorName}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold">
-                  <UserIcon className="w-2.5 h-2.5" />
-                  {r.operatorName}
+                <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
+                  {r.products?.slice(0, 1).map((p, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
+                      {p.name}
+                    </Badge>
+                  ))}
+                  {r.products && r.products.length > 1 && (
+                    <Badge variant="outline" className="text-[9px] font-bold text-primary">
+                      +{r.products.length - 1}
+                    </Badge>
+                  )}
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
@@ -573,7 +710,7 @@ export default function Atividades() {
         <Sheet open={isSheetOpen} onOpenChange={(open) => !open && closeForm()}>
           <SheetTrigger asChild>
             <button
-              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-xl flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
             >
               <Plus className="w-6 h-6" />
             </button>

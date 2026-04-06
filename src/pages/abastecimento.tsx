@@ -156,7 +156,7 @@ function TransactionForm({ form, onSubmit, isPending, onClose, isEditing }: any)
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Anexo da NF</label>
           <div className="flex items-center gap-3 p-3 border border-dashed rounded-lg bg-muted/30">
-            <div className="p-2 bg-background rounded-md border shadow-sm">
+            <div className="p-2 bg-background rounded-md border">
               <FileText className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="flex-1 overflow-hidden text-ellipsis">
@@ -556,7 +556,7 @@ export default function Abastecimento() {
     <AppLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
             <Fuel className="hidden sm:block w-7 h-7 text-primary" />
             Controle de Diesel {(filteredRecords || filteredTransactions) && 
               <span className="text-muted-foreground/60 text-xl md:text-2xl">
@@ -656,7 +656,7 @@ export default function Abastecimento() {
         </div>
 
         {activeTab === "fuelings" && showFilters && (
-          <Card className="border-slate-200 bg-white shadow-sm">
+          <Card className="border bg-card">
             <CardContent className="p-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
@@ -696,7 +696,7 @@ export default function Abastecimento() {
         )}
 
         {activeTab === "inventory" && showTransactionFilters && (
-          <Card className="border-slate-200 bg-white shadow-sm">
+          <Card className="border bg-card">
             <CardContent className="p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
@@ -956,14 +956,14 @@ export default function Abastecimento() {
               activeFilterCount={activeTransactionFilterCount} 
             />
             {filteredTransactions.length === 0 ? (
-              <div className="text-center p-8 bg-card rounded-xl border text-muted-foreground shadow-sm">
+              <div className="text-center p-8 bg-card rounded-xl border text-muted-foreground">
                 Nenhuma movimentação encontrada.
               </div>
             ) : (
               filteredTransactions.map(t => (
                 <div 
                   key={t.id} 
-                  className="bg-card rounded-xl border p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
+                  className="bg-card rounded-xl border p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => handleEditTransactionOpen(t, true)}
                 >
                   <div className="flex justify-between items-start">

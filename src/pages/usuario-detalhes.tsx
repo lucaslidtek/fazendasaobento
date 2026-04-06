@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 
 const ROLE_STYLES: Record<string, string> = {
   admin: "bg-primary/10 text-primary border-primary/20",
-  operador: "bg-slate-100 text-slate-600 border-slate-200",
+  operador: "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]",
 };
 
 const profileSchema = z.object({
@@ -211,7 +211,7 @@ export default function UsuarioDetalhes() {
     <Form {...profileForm}>
       <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-5 mt-4">
         <div className="flex flex-col items-center justify-center gap-3">
-          <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden relative group cursor-pointer">
+          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-border overflow-hidden relative group cursor-pointer">
             <UserCircle2 className="w-12 h-12" />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <Upload className="w-6 h-6 text-white" />
@@ -240,7 +240,7 @@ export default function UsuarioDetalhes() {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center py-20">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Usuário não encontrado</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Usuário não encontrado</h2>
           <Button onClick={() => setLocation("/usuarios")}>Voltar para Usuários</Button>
         </div>
       </AppLayout>
@@ -268,7 +268,7 @@ export default function UsuarioDetalhes() {
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900 leading-tight">{user.name}</h1>
+              <h1 className="text-3xl font-bold font-display tracking-tight text-foreground leading-tight">{user.name}</h1>
               <Badge variant="outline" className={cn("font-semibold uppercase tracking-wider text-[10px]", ROLE_STYLES[user.role as string])}>
                 {user.role === "admin" && <ShieldAlert className="w-3 h-3 mr-1" />}
                 {user.role}
@@ -282,7 +282,7 @@ export default function UsuarioDetalhes() {
 
         <div className="flex items-center gap-4">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px] bg-white border-slate-200">
+            <SelectTrigger className="w-[180px] bg-card border">
               <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Filtrar Mês" />
             </SelectTrigger>
@@ -302,8 +302,8 @@ export default function UsuarioDetalhes() {
               <div className="hidden sm:block">
                 <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                   <DialogTrigger asChild>
-                    <Button className="h-10 px-5 bg-white text-slate-700 border-slate-200 hover:bg-slate-50 border shadow-sm">
-                      <Pencil className="w-4 h-4 mr-2 text-slate-500" />
+                    <Button className="h-10 px-5 bg-card text-muted-foreground border-border hover:bg-muted/40 border">
+                      <Pencil className="w-4 h-4 mr-2 text-muted-foreground" />
                       Editar Perfil
                     </Button>
                   </DialogTrigger>
@@ -318,8 +318,8 @@ export default function UsuarioDetalhes() {
               <div className="sm:hidden">
                 <Sheet open={isEditProfileSheetOpen} onOpenChange={setIsEditProfileSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button className="h-10 px-5 bg-white text-slate-700 border-slate-200 hover:bg-slate-50 border shadow-sm">
-                      <Pencil className="w-4 h-4 mr-2 text-slate-500" />
+                    <Button className="h-10 px-5 bg-card text-muted-foreground border-border hover:bg-muted/40 border">
+                      <Pencil className="w-4 h-4 mr-2 text-muted-foreground" />
                       Editar Perfil
                     </Button>
                   </SheetTrigger>
@@ -365,44 +365,44 @@ export default function UsuarioDetalhes() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-white border-slate-200 flex flex-col justify-between">
+        <Card className="bg-card border flex flex-col justify-between">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
                 <Tractor className="w-4 h-4 text-[hsl(var(--success-text))]" /> Colheitas
               </div>
-              <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold">{stats?.harvests.length} Registros</Badge>
+              <Badge variant="outline" className="bg-muted text-muted-foreground font-bold">{stats?.harvests.length} Registros</Badge>
             </div>
-            <div className="text-3xl font-bold text-slate-900">
-              {stats?.totalHarvestSacks.toLocaleString('pt-BR')} <span className="text-sm font-normal text-slate-500 normal-case ml-1 tracking-tight">sacas</span>
+            <div className="text-3xl font-bold font-display text-foreground">
+              {stats?.totalHarvestSacks.toLocaleString('pt-BR')} <span className="text-sm font-normal text-muted-foreground normal-case ml-1 tracking-tight">sacas</span>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-slate-200 flex flex-col justify-between">
+        <Card className="bg-card border flex flex-col justify-between">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
                 <Truck className="w-4 h-4 text-[hsl(var(--info-text))]" /> Transportes
               </div>
-              <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold">{stats?.transports.length} Viagens</Badge>
+              <Badge variant="outline" className="bg-muted text-muted-foreground font-bold">{stats?.transports.length} Viagens</Badge>
             </div>
-            <div className="text-3xl font-bold text-slate-900">
-              {stats?.totalTransportTons.toLocaleString('pt-BR')} <span className="text-sm font-normal text-slate-500 normal-case ml-1 tracking-tight">toneladas</span>
+            <div className="text-3xl font-bold font-display text-foreground">
+              {stats?.totalTransportTons.toLocaleString('pt-BR')} <span className="text-sm font-normal text-muted-foreground normal-case ml-1 tracking-tight">toneladas</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-slate-200 flex flex-col justify-between">
+        <Card className="bg-card border flex flex-col justify-between">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
-                <Droplet className="w-4 h-4 text-orange-500" /> Abastecimentos
+                <Droplet className="w-4 h-4 text-[hsl(var(--warning-text))]" /> Abastecimentos
               </div>
-              <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold">{stats?.fuelings.length} Registros</Badge>
+              <Badge variant="outline" className="bg-muted text-muted-foreground font-bold">{stats?.fuelings.length} Registros</Badge>
             </div>
-            <div className="text-3xl font-bold text-slate-900">
-              {stats?.totalFuelingLiters.toLocaleString('pt-BR')} <span className="text-sm font-normal text-slate-500 normal-case ml-1 tracking-tight">litros</span>
+            <div className="text-3xl font-bold font-display text-foreground">
+              {stats?.totalFuelingLiters.toLocaleString('pt-BR')} <span className="text-sm font-normal text-muted-foreground normal-case ml-1 tracking-tight">litros</span>
             </div>
           </CardContent>
         </Card>
@@ -410,7 +410,7 @@ export default function UsuarioDetalhes() {
 
       {/* Tabs Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-slate-200/50 p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto">
+        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto">
           <TabsTrigger value="overview" className="px-6 py-2 whitespace-nowrap">Resumo Geral</TabsTrigger>
           <TabsTrigger value="harvests" className="px-6 py-2 whitespace-nowrap">Apontamentos Colheita</TabsTrigger>
           <TabsTrigger value="transports" className="px-6 py-2 whitespace-nowrap">Histórico de Transportes</TabsTrigger>
@@ -419,14 +419,14 @@ export default function UsuarioDetalhes() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-white border-slate-200">
-              <CardHeader className="pb-3 border-b border-slate-100">
+            <Card className="bg-card border">
+              <CardHeader className="pb-3 border-b border-border">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" /> Atividade Recente
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-border">
                   {/* Combina e ordena os registros recentes */}
                   {[
                     ...(stats?.harvests.map((h: any) => ({ ...h, _type: 'harvest', _date: new Date(h.date) })) || []),
@@ -436,39 +436,39 @@ export default function UsuarioDetalhes() {
                     .sort((a, b) => b._date.getTime() - a._date.getTime())
                     .slice(0, 5) // Show top 5 recent events
                     .map((item: any, idx) => (
-                      <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                      <div key={idx} className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
                             item._type === 'harvest' && "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))]",
                             item._type === 'transport' && "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))]",
-                            item._type === 'fueling' && "bg-orange-100 text-orange-600"
+                            item._type === 'fueling' && "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))]"
                           )}>
                             {item._type === 'harvest' && <Tractor className="w-4 h-4" />}
                             {item._type === 'transport' && <Truck className="w-4 h-4" />}
                             {item._type === 'fueling' && <Droplet className="w-4 h-4" />}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-700">
+                            <p className="text-sm font-bold text-muted-foreground">
                               {item._type === 'harvest' && `Colheita: ${item.machineName}`}
                               {item._type === 'transport' && `Transporte: ${item.origin} → ${item.destination}`}
                               {item._type === 'fueling' && `Abastecimento: ${item.machineName}`}
                             </p>
-                            <p className="text-xs text-slate-500 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {item._type === 'harvest' && `${item.quantitySacks} sacas · ${item.talhao}`}
                               {item._type === 'transport' && `${item.cargoTons} ton · ${item.truckPlate}`}
                               {item._type === 'fueling' && `${item.liters} L · ${item.talhao || item.servico}`}
                             </p>
                           </div>
                         </div>
-                        <div className="text-xs font-medium text-slate-400">
+                        <div className="text-xs font-medium text-muted-foreground">
                           {item._date.toLocaleDateString("pt-BR")}
                         </div>
                       </div>
                     ))
                   }
                   {!stats?.harvests.length && !stats?.transports.length && !stats?.fuelings.length && (
-                    <div className="p-8 flex flex-col items-center justify-center text-slate-400">
+                    <div className="p-8 flex flex-col items-center justify-center text-muted-foreground">
                       <Activity className="w-8 h-8 opacity-20 mb-2" />
                       <span className="text-sm">Nenhuma atividade registrada no período</span>
                     </div>
@@ -477,8 +477,8 @@ export default function UsuarioDetalhes() {
               </CardContent>
             </Card>
             
-            <Card className="bg-white border-slate-200 shadow-sm overflow-hidden hidden lg:block border-dashed border-2">
-              <CardHeader className="pb-2 border-b border-slate-100">
+            <Card className="bg-card border overflow-hidden hidden lg:block border-dashed border-2">
+              <CardHeader className="pb-2 border-b border-border">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" /> Desempenho Operacional
                 </CardTitle>
@@ -545,9 +545,9 @@ export default function UsuarioDetalhes() {
 
           <div className="sm:hidden space-y-3">
             {stats?.harvests.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                <Tractor className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 font-medium">Nenhum apontamento registrado.</p>
+              <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+                <Tractor className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium">Nenhum apontamento registrado.</p>
               </div>
             )}
             {stats?.harvests.map((h: any) => (
@@ -558,8 +558,8 @@ export default function UsuarioDetalhes() {
                       <Tractor className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-900">{h.machineName}</div>
-                      <div className="text-xs text-slate-500">{format(new Date(h.date), "dd/MM/yyyy")}</div>
+                      <div className="text-sm font-bold text-foreground">{h.machineName}</div>
+                      <div className="text-xs text-muted-foreground">{format(new Date(h.date), "dd/MM/yyyy")}</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -621,9 +621,9 @@ export default function UsuarioDetalhes() {
 
           <div className="sm:hidden space-y-3">
             {stats?.transports.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                <Truck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 font-medium">Nenhum transporte registrado.</p>
+              <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+                <Truck className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium">Nenhum transporte registrado.</p>
               </div>
             )}
             {stats?.transports.map((t: any) => (
@@ -685,7 +685,7 @@ export default function UsuarioDetalhes() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm font-semibold">{f.talhao || '--'}</TableCell>
-                    <TableCell className="text-right font-black font-mono text-orange-600">{f.liters} L</TableCell>
+                    <TableCell className="text-right font-black font-mono text-[hsl(var(--warning-text))]">{f.liters} L</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -694,25 +694,25 @@ export default function UsuarioDetalhes() {
 
           <div className="sm:hidden space-y-3">
             {stats?.fuelings.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                <Droplet className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 font-medium">Nenhum abastecimento registrado.</p>
+              <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+                <Droplet className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium">Nenhum abastecimento registrado.</p>
               </div>
             )}
             {stats?.fuelings.map((f: any) => (
               <div key={f.id} className="bg-card rounded-2xl border p-4 touch-card">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                    <div className="w-8 h-8 rounded-full bg-[hsl(var(--warning-subtle))] flex items-center justify-center text-[hsl(var(--warning-text))]">
                       <Droplet className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-900">{f.machineName}</div>
-                      <div className="text-xs text-slate-500">{format(new Date(f.date), "dd/MM/yyyy")}</div>
+                      <div className="text-sm font-bold text-foreground">{f.machineName}</div>
+                      <div className="text-xs text-muted-foreground">{format(new Date(f.date), "dd/MM/yyyy")}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black font-mono text-orange-600">{f.liters} L</div>
+                    <div className="text-sm font-black font-mono text-[hsl(var(--warning-text))]">{f.liters} L</div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-border/50">

@@ -126,7 +126,7 @@ export default function Dashboard() {
       <div className="space-y-6 md:space-y-8">
         {/* Cabeçalho — visível apenas no desktop */}
         <div className="hidden md:block">
-          <h1 className="text-3xl font-bold tracking-tight">Visão Geral</h1>
+          <h1 className="text-3xl font-bold font-display tracking-tight">Visão Geral</h1>
           <p className="text-muted-foreground mt-1">
             Acompanhe os principais indicadores da fazenda.
           </p>

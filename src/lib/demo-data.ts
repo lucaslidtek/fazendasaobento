@@ -1,19 +1,13 @@
-import type {
-  DashboardSummary,
-  HarvestRecord,
-  TransportRecord,
-  Machine,
-  Product,
-  Truck,
-  User,
-  UserRole,
-} from "@workspace/api-client-react";
+import { Machine, User, TransportRecord } from "@workspace/api-client";
 
 export interface ExtendedMachine extends Omit<Machine, 'id'> {
   id: number;
-  purchase_cost?: number;
-  safraId?: number;
-  talhaoId?: number;
+  type: string;
+  status: "ativo" | "manutencao" | "parado";
+  horimeter: number;
+  fuelLevel: number; // 0-100
+  lastMaintenance: string;
+  nextMaintenance: number; // horímetro
 }
 
 export interface Safra {
@@ -38,21 +32,19 @@ export interface Talhao {
 export interface StockMovement {
   id: number;
   productId: number;
-  productName: string;
+  date: string;
   type: "entrada" | "saida";
   quantity: number;
-  date: string;
-  reason?: string;
-  safra?: string;
-  safraId?: number;
-  talhao?: string;
-  talhaoId?: number;
-  createdAt: string;
+  unit: string;
+  reason: string;
+  user: string;
 }
 
 export interface ExtendedUser extends Omit<User, 'id'> {
   id: number;
-  status?: string;
+  avatar?: string;
+  role: "admin" | "operador" | "gerente";
+  lastActive?: string;
 }
 
 export interface FuelingRecord {
@@ -60,32 +52,25 @@ export interface FuelingRecord {
   date: string;
   machineId: number;
   machineName: string;
-  liters: number;
+  operatorId: number;
   operatorName: string;
-  talhao?: string;
+  volumeLiters: number;
+  fuelType: "Diesel S10" | "Diesel S500" | "Arla 32";
+  costPerLiter: number;
+  totalCost: number;
   talhaoId?: number;
-  safraId?: number;
-  servico?: string;
-  responsavelId?: number;
-  responsavelName?: string;
-  pump?: string;
-  notes?: string;
-  createdAt: string;
+  odometer?: number;
+  horimeter?: number;
 }
 
 export interface DieselTransaction {
   id: number;
   date: string;
-  type: "entrada" | "saida";
-  category: string;
-  value: number;
-  liters: number;
-  nfNumber?: string;
-  hasAttachment?: boolean;
+  type: "entrada" | "saída";
+  volume: number;
   description: string;
-  createdAt: string;
-  safraId?: number;
-  talhaoId?: number;
+  responsible: string;
+  balanceAfter: number;
 }
 
 export interface BankAccount {
@@ -106,7 +91,11 @@ export interface FinancialRecord {
   bankAccountName: string;
   safraId?: number;
   talhaoId?: number;
+  machineId?: number;
+  machineName?: string;
   supplier?: string;
+  paymentMethod?: string;
+  dueDate?: string;
   nfNumber?: string;
   createdAt: string;
 }
@@ -122,7 +111,7 @@ export interface ActivityRecord {
   machineName: string;
   operatorId: number;
   operatorName: string;
-  products: { productId: number; name: string; quantity: number; unit: string }[];
+  products: { productId?: number; name: string; quantity: number; unit: string }[];
   areaHectares: number;
   notes?: string;
   createdAt: string;
@@ -135,130 +124,64 @@ export const DEMO_SAFRAS: Safra[] = [
   { id: 3, name: "Safra 2022/2023", startDate: "2022-09-01", endDate: "2023-03-31", status: "inativo" },
 ];
 
+export interface DashboardSummary {
+  totalHarvestSacks: number;
+  totalHarvestHectares: number;
+  totalRevenue: number;
+  totalExpenses: number;
+  cashBalance: number;
+  upcomingPayments: number;
+}
+
 export const DEMO_DASHBOARD: DashboardSummary = {
   totalHarvestSacks: 48320,
   totalHarvestHectares: 1240,
-  totalTransportTons: 2890,
-  totalFuelingLiters: 34780,
-  activeMachines: 8,
-  activeTrucks: 4,
-  lowStockProducts: 3,
-  harvestByCulture: [
-    { culture: "soja", totalSacks: 31200, totalHectares: 800 },
-    { culture: "milho", totalSacks: 12800, totalHectares: 340 },
-    { culture: "trigo", totalSacks: 4320, totalHectares: 100 },
-  ],
-  fuelingByMachine: [
-    { machineName: "John Deere S790", totalLiters: 9800 },
-    { machineName: "New Holland TC5.90", totalLiters: 8320 },
-    { machineName: "Massey 7245", totalLiters: 7100 },
-    { machineName: "Case IH 9250", totalLiters: 6200 },
-    { machineName: "Stara Estrela 32", totalLiters: 3360 },
-  ],
-  recentHarvests: [
-    { id: 1, date: "2026-03-10", cultures: ["soja"], area: "Talhão A1", areaHectares: 20, quantitySacks: 1240, productivity: 62.0, machineId: 1, machineName: "John Deere S790", driverName: "Carlos Mendes", createdAt: "2026-03-10T08:00:00Z" as any },
-    { id: 2, date: "2026-03-09", cultures: ["milho"], area: "Talhão B3", areaHectares: 20, quantitySacks: 980, productivity: 49.0, machineId: 2, machineName: "New Holland TC5.90", driverName: "Paulo Andrade", createdAt: "2026-03-09T08:00:00Z" as any },
-    { id: 3, date: "2026-03-08", cultures: ["soja"], area: "Talhão C2", areaHectares: 24, quantitySacks: 1560, productivity: 65.0, machineId: 4, machineName: "Case IH 9250", driverName: "José Silva", createdAt: "2026-03-08T08:00:00Z" as any },
-    { id: 4, date: "2026-03-07", cultures: ["soja"], area: "Talhão A2", areaHectares: 18, quantitySacks: 1100, productivity: 61.1, machineId: 3, machineName: "Massey 7245", driverName: "Carlos Mendes", createdAt: "2026-03-07T08:00:00Z" as any },
-  ],
-  recentTransports: [
-    { id: 1, date: "2026-03-11", origin: "Armazém Central", destination: "Cooperativa Agroinova", cargoTons: 45.2, truckId: 1, truckPlate: "QRS-2024", driverName: "Roberto Farias", createdAt: "2026-03-11T10:00:00Z" as any },
-    { id: 2, date: "2026-03-10", origin: "Silo Norte", destination: "Terminal Cerealista", cargoTons: 38.0, truckId: 2, truckPlate: "DEF-5678", driverName: "Marcos Lima", createdAt: "2026-03-10T10:00:00Z" as any },
-    { id: 3, date: "2026-03-09", origin: "Armazém Central", destination: "Bunge Alimentos", cargoTons: 52.1, truckId: 3, truckPlate: "GHI-9012", driverName: "Roberto Farias", createdAt: "2026-03-09T10:00:00Z" as any },
-  ],
+  totalRevenue: 2450000,
+  totalExpenses: 1120000,
+  cashBalance: 1330000,
+  upcomingPayments: 45600,
 };
 
 export const DEMO_HARVESTS: any[] = [
-  { id: 1, date: "2026-03-10", cultures: ["soja"], area: "Talhão A1", talhaoId: 1, safraId: 4, areaHectares: 20, quantitySacks: 1240, productivity: 62.0, machineId: 1, machineName: "John Deere S790", driverName: "Carlos Mendes", createdAt: "2026-03-10T08:00:00Z" },
-  { id: 2, date: "2026-03-09", cultures: ["milho"], area: "Talhão B3", talhaoId: 5, safraId: 4, areaHectares: 20, quantitySacks: 980, productivity: 49.0, machineId: 2, machineName: "New Holland TC5.90", driverName: "Paulo Andrade", createdAt: "2026-03-09T08:00:00Z" },
-  { id: 3, date: "2026-03-08", cultures: ["soja"], area: "Talhão C2", talhaoId: 7, safraId: 4, areaHectares: 24, quantitySacks: 1560, productivity: 65.0, machineId: 4, machineName: "Case IH 9250", driverName: "José Silva", createdAt: "2026-03-08T08:00:00Z" },
-  { id: 4, date: "2026-03-07", cultures: ["soja"], area: "Talhão A2", talhaoId: 2, safraId: 4, areaHectares: 18, quantitySacks: 1100, productivity: 61.1, machineId: 3, machineName: "Massey 7245", driverName: "Carlos Mendes", createdAt: "2026-03-07T08:00:00Z" },
-  { id: 5, date: "2026-03-06", cultures: ["Trigo"], area: "Talhão D1", talhaoId: 8, safraId: 4, areaHectares: 15, quantitySacks: 720, productivity: 48.0, machineId: 1, machineName: "John Deere S790", driverName: "Ana Rodrigues", createdAt: "2026-03-06T08:00:00Z" },
-  { id: 6, date: "2026-03-05", cultures: ["milho", "soja"], area: "Talhão B1", talhaoId: 4, safraId: 4, areaHectares: 22, quantitySacks: 1090, productivity: 49.5, machineId: 2, machineName: "New Holland TC5.90", driverName: "Paulo Andrade", createdAt: "2026-03-05T08:00:00Z" },
-  { id: 7, date: "2026-03-04", cultures: ["soja"], area: "Talhão A3", talhaoId: 3, safraId: 4, areaHectares: 19, quantitySacks: 1178, productivity: 62.0, machineId: 4, machineName: "Case IH 9250", driverName: "José Silva", createdAt: "2026-03-04T08:00:00Z" },
-  { id: 8, date: "2026-03-03", cultures: ["soja"], area: "Talhão C1", talhaoId: 6, safraId: 4, areaHectares: 21, quantitySacks: 1302, productivity: 62.0, machineId: 3, machineName: "Massey 7245", driverName: "Carlos Mendes", createdAt: "2026-03-03T08:00:00Z" },
+  { id: 1, date: "2026-03-10", cultures: ["soja"], area: "Talhão A1", talhaoId: 1, safraId: 4, areaHectares: 20, quantitySacks: 1240, productivity: 62.0, machineId: 1, machineName: "John Deere S790", driverName: "Carlos Mendes", truck: "ABC-1234", destination: "Silo Principal", weightGross: 35000, weightNet: 28000, moisture: 13.5, impurity: 1.0, createdAt: "2026-03-10T08:00:00Z" },
+  { id: 2, date: "2026-03-09", cultures: ["milho"], area: "Talhão B3", talhaoId: 5, safraId: 4, areaHectares: 20, quantitySacks: 980, productivity: 49.0, machineId: 2, machineName: "New Holland TC5.90", driverName: "Paulo Andrade", truck: "DEF-5678", destination: "Silo Norte", weightGross: 32000, weightNet: 26000, moisture: 14.0, impurity: 1.2, createdAt: "2026-03-09T08:00:00Z" },
+  { id: 3, date: "2026-03-08", cultures: ["soja"], area: "Talhão C2", talhaoId: 7, safraId: 4, areaHectares: 24, quantitySacks: 1560, productivity: 65.0, machineId: 4, machineName: "Case IH 9250", driverName: "José Silva", truck: "GHI-9012", destination: "Cooperativa", weightGross: 42000, weightNet: 35000, moisture: 13.0, impurity: 0.8, createdAt: "2026-03-08T08:00:00Z" },
+  { id: 4, date: "2026-03-07", cultures: ["soja"], area: "Talhão A2", talhaoId: 2, safraId: 4, areaHectares: 18, quantitySacks: 1100, productivity: 61.1, machineId: 3, machineName: "Massey 7245", driverName: "Carlos Mendes", truck: "ABC-1234", destination: "Silo Principal", weightGross: 33000, weightNet: 27000, moisture: 13.8, impurity: 1.1, createdAt: "2026-03-07T08:00:00Z" },
+  { id: 5, date: "2026-03-06", cultures: ["Trigo"], area: "Talhão D1", talhaoId: 8, safraId: 4, areaHectares: 15, quantitySacks: 720, productivity: 48.0, machineId: 1, machineName: "John Deere S790", driverName: "Ana Rodrigues", truck: "JKL-3456", destination: "Silo Sul", weightGross: 25000, weightNet: 20000, moisture: 12.5, impurity: 0.5, createdAt: "2026-03-06T08:00:00Z" },
+  { id: 6, date: "2026-03-05", cultures: ["milho", "soja"], area: "Talhão B1", talhaoId: 4, safraId: 4, areaHectares: 22, quantitySacks: 1090, productivity: 49.5, machineId: 2, machineName: "New Holland TC5.90", driverName: "Paulo Andrade", truck: "MNO-7890", destination: "Silo Norte", weightGross: 34000, weightNet: 27500, moisture: 14.5, impurity: 1.5, createdAt: "2026-03-05T08:00:00Z" },
+  { id: 7, date: "2026-03-04", cultures: ["soja"], area: "Talhão A3", talhaoId: 3, safraId: 4, areaHectares: 19, quantitySacks: 1178, productivity: 62.0, machineId: 4, machineName: "Case IH 9250", driverName: "José Silva", truck: "PQR-1234", destination: "Cooperativa", weightGross: 36000, weightNet: 30000, moisture: 13.2, impurity: 0.9, createdAt: "2026-03-04T08:00:00Z" },
+  { id: 8, date: "2026-03-03", cultures: ["soja"], area: "Talhão C1", talhaoId: 6, safraId: 4, areaHectares: 21, quantitySacks: 1302, productivity: 62.0, machineId: 3, machineName: "Massey 7245", driverName: "Carlos Mendes", truck: "STU-5678", destination: "Silo Principal", weightGross: 38000, weightNet: 32000, moisture: 13.9, impurity: 1.2, createdAt: "2026-03-03T08:00:00Z" },
 ];
 
 export const DEMO_TRANSPORTS: (TransportRecord & { machineId?: number; safraId?: number })[] = [
   { id: 1, date: "2026-03-11", origin: "Armazém Central", destination: "Cooperativa Agroinova", cargoTons: 45.2, truckId: 1, truckPlate: "QRS-2024", driverName: "Roberto Farias", machineId: 9, safraId: 4, createdAt: "2026-03-11T10:00:00Z" as any },
   { id: 2, date: "2026-03-10", origin: "Silo Norte", destination: "Terminal Cerealista", cargoTons: 38.0, truckId: 2, truckPlate: "DEF-5678", driverName: "Marcos Lima", machineId: 9, safraId: 4, createdAt: "2026-03-10T10:00:00Z" as any },
   { id: 3, date: "2026-03-09", origin: "Armazém Central", destination: "Bunge Alimentos", cargoTons: 52.1, truckId: 3, truckPlate: "GHI-9012", driverName: "Roberto Farias", machineId: 10, notes: "Carga urgente", safraId: 4, createdAt: "2026-03-09T10:00:00Z" as any },
-  { id: 4, date: "2026-03-08", origin: "Silo Sul", destination: "Cargill", cargoTons: 41.8, truckId: 1, truckPlate: "QRS-2024", driverName: "Marcos Lima", machineId: 9, safraId: 4, createdAt: "2026-03-08T10:00:00Z" as any },
-  { id: 5, date: "2026-03-07", origin: "Armazém Central", destination: "ADM", cargoTons: 49.0, truckId: 2, truckPlate: "DEF-5678", driverName: "Roberto Farias", machineId: 10, safraId: 4, createdAt: "2026-03-07T10:00:00Z" as any },
+  { id: 4, date: "2026-03-08", origin: "Armazém Central", destination: "Silo Sul", cargoTons: 41.5, truckId: 1, truckPlate: "QRS-2024", driverName: "Roberto Farias", machineId: 10, safraId: 4, createdAt: "2026-03-08T10:00:00Z" as any },
 ];
 
 export const DEMO_MACHINES: ExtendedMachine[] = [
-  { id: 1, name: "John Deere S790", type: "colheitadeira", model: "S790", status: "ativo", purchase_cost: 2850000, location: "Galpão Principal", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 2, name: "New Holland TC5.90", type: "colheitadeira", model: "TC5.90", status: "ativo", purchase_cost: 1950000, location: "Galpão Principal", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 3, name: "Massey Ferguson 7245", type: "trator", model: "7245", status: "ativo", purchase_cost: 450000, location: "Galpão Anexo 1", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 4, name: "Case IH 9250", type: "colheitadeira", model: "9250", status: "ativo", purchase_cost: 3100000, location: "Galpão Principal", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 5, name: "Stara Estrela 32", type: "equipamento", model: "Estrela 32", status: "ativo", purchase_cost: 850000, location: "Pátio Central", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 6, name: "Valtra BM 110", type: "trator", model: "BM 110", status: "manutencao", purchase_cost: 280000, location: "Oficina", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 7, name: "John Deere 5090E", type: "trator", model: "5090E", status: "ativo", purchase_cost: 320000, location: "Galpão Anexo 2", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 8, name: "Becker Aton 24", type: "equipamento", model: "Aton 24", status: "inativo", purchase_cost: 120000, location: "Pátio Secundário", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 9, name: "Volvo FH 540 (Frota)", type: "caminhao", model: "FH 540", status: "ativo", purchase_cost: 650000, location: "Garagem Frota", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 10, name: "Scania R450 (Frota)", type: "caminhao", model: "R450", status: "ativo", purchase_cost: 580000, location: "Garagem Frota", createdAt: "2024-01-01T00:00:00Z" },
+  { id: 1, name: "John Deere S790", type: "colheitadeira", status: "ativo", horimeter: 1240, fuelLevel: 85, lastMaintenance: "2026-01-15", nextMaintenance: 1500 },
+  { id: 2, name: "New Holland TC5.90", type: "colheitadeira", status: "ativo", horimeter: 850, fuelLevel: 42, lastMaintenance: "2026-02-10", nextMaintenance: 1000 },
+  { id: 3, name: "Massey Ferguson 7245", type: "colheitadeira", status: "manutencao", horimeter: 2100, fuelLevel: 12, lastMaintenance: "2026-03-05", nextMaintenance: 2200 },
+  { id: 4, name: "Case IH Axial-Flow 9250", type: "colheitadeira", status: "ativo", horimeter: 450, fuelLevel: 98, lastMaintenance: "2026-02-28", nextMaintenance: 750 },
+  { id: 5, name: "John Deere 8R 370", type: "trator", status: "ativo", horimeter: 620, fuelLevel: 65, lastMaintenance: "2026-01-20", nextMaintenance: 1000 },
+  { id: 6, name: "TDP 12000", type: "pulverizador", status: "ativo", horimeter: 340, fuelLevel: 72, lastMaintenance: "2026-02-15", nextMaintenance: 500 },
+  { id: 7, name: "Stara Imperador 4000", type: "pulverizador", status: "parado", horimeter: 890, fuelLevel: 5, lastMaintenance: "2026-01-05", nextMaintenance: 1000 },
+  { id: 8, name: "Valtra BH 224", type: "trator", status: "ativo", horimeter: 4500, fuelLevel: 55, lastMaintenance: "2026-02-25", nextMaintenance: 4750 },
+  { id: 9, name: "Caminhão Scania R540", type: "transporte", status: "ativo", horimeter: 75000, fuelLevel: 90, lastMaintenance: "2026-02-10", nextMaintenance: 85000 },
+  { id: 10, name: "Caminhão Volvo FH 540", type: "transporte", status: "ativo", horimeter: 12000, fuelLevel: 60, lastMaintenance: "2026-01-30", nextMaintenance: 20000 },
 ];
 
-export const DEMO_FUELINGS: FuelingRecord[] = [
-  { id: 1, date: "2026-03-11", machineId: 1, machineName: "John Deere S790", liters: 320, operatorName: "Carlos Mendes", talhao: "Talhão A1", talhaoId: 1, safraId: 4, servico: "Colheita", responsavelId: 1, responsavelName: "Carlos Mendes", createdAt: "2026-03-11T07:00:00Z" },
-  { id: 2, date: "2026-03-11", machineId: 2, machineName: "New Holland TC5.90", liters: 280, operatorName: "Paulo Andrade", talhao: "Talhão B3", talhaoId: 5, safraId: 4, servico: "Colheita", responsavelId: 2, responsavelName: "Paulo Andrade", createdAt: "2026-03-11T07:30:00Z" },
-  { id: 3, date: "2026-03-10", machineId: 3, machineName: "Massey Ferguson 7245", liters: 190, operatorName: "José Silva", talhao: "Talhão C2", talhaoId: 7, safraId: 4, servico: "Transporte", responsavelId: 3, responsavelName: "José Silva", createdAt: "2026-03-10T07:00:00Z" },
-  { id: 4, date: "2026-03-10", machineId: 4, machineName: "Case IH 9250", liters: 350, operatorName: "Carlos Mendes", notes: "Colheita intensa", talhao: "Talhão A2", talhaoId: 2, safraId: 4, servico: "Colheita", responsavelId: 1, responsavelName: "Carlos Mendes", createdAt: "2026-03-10T07:30:00Z" },
-  { id: 5, date: "2026-03-09", machineId: 1, machineName: "John Deere S790", liters: 310, operatorName: "Carlos Mendes", talhao: "Talhão A1", talhaoId: 1, safraId: 4, servico: "Colheita", responsavelId: 1, responsavelName: "Carlos Mendes", createdAt: "2026-03-09T07:00:00Z" },
-  { id: 6, date: "2026-03-08", machineId: 5, machineName: "Stara Estrela 32", liters: 120, operatorName: "Ana Rodrigues", talhao: "Talhão D1", talhaoId: 8, safraId: 4, servico: "Plantio", responsavelId: 5, responsavelName: "Ana Rodrigues", createdAt: "2026-03-08T07:00:00Z" },
-];
-
-export const DEMO_DIESEL_TRANSACTIONS: DieselTransaction[] = [
-  { id: 1, date: "2026-03-12", type: "entrada", category: "Compra", value: 45000, liters: 10000, nfNumber: "NF-12345", description: "Carga completa Posto Central", safraId: 4, createdAt: "2026-03-12T10:00:00Z" },
-  { id: 2, date: "2026-03-01", type: "entrada", category: "Compra", value: 36000, liters: 8000, nfNumber: "NF-12210", description: "Abastecimento mensal", safraId: 4, createdAt: "2026-03-01T09:00:00Z" },
-  { id: 3, date: "2026-03-15", type: "saida", category: "Ajuste", value: 0, liters: 50, description: "Limpeza de tanque", safraId: 4, createdAt: "2026-03-15T14:00:00Z" },
-];
-
-export const DEMO_PRODUCTS: Product[] = [
-  { id: 1, name: "Herbicida Glifosato 480", category: "Defensivo", unit: "L", currentStock: 1200, minStock: 500, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 2, name: "Fungicida Fox Xpro", category: "Defensivo", unit: "L", currentStock: 85, minStock: 200, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 3, name: "Inseticida Karate Zeon", category: "Defensivo", unit: "L", currentStock: 340, minStock: 150, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 4, name: "Adubo MAP 12-52-00", category: "Fertilizante", unit: "KG", currentStock: 42000, minStock: 10000, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 5, name: "Ureia 45%", category: "Fertilizante", unit: "KG", currentStock: 18500, minStock: 8000, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 6, name: "Semente Soja M8349", category: "Semente", unit: "SC", currentStock: 420, minStock: 200, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 7, name: "Semente Milho DKB 390", category: "Semente", unit: "SC", currentStock: 38, minStock: 80, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 8, name: "Diesel S10 (tanque)", category: "Combustível", unit: "L", currentStock: 12400, minStock: 5000, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 9, name: "Óleo Hidráulico 68", category: "Lubrificante", unit: "L", currentStock: 180, minStock: 50, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 10, name: "Adubo KCl 60%", category: "Fertilizante", unit: "KG", currentStock: 3200, minStock: 5000, createdAt: "2024-01-01T00:00:00Z" },
-];
-
-export const DEMO_TRUCKS: Truck[] = [
-  { id: 1, plate: "QRS-2024", model: "Volvo FH 540", capacity: 45, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 2, plate: "DEF-5678", model: "Scania R450", capacity: 38, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 3, plate: "GHI-9012", model: "Mercedes Actros", capacity: 52, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 4, plate: "JKL-3456", model: "Iveco Stralis", capacity: 42, status: "manutencao", createdAt: "2024-01-01T00:00:00Z" },
-];
-
-export const DEMO_USERS: ExtendedUser[] = [
-  { id: 1, name: "Carlos Mendes", email: "carlos@fazenda.com", role: "admin" as UserRole, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 2, name: "Paulo Andrade", email: "paulo@fazenda.com", role: "operador" as UserRole, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 3, name: "José Silva", email: "jose@fazenda.com", role: "operador" as UserRole, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 4, name: "Ana Rodrigues", email: "ana@fazenda.com", role: "admin" as UserRole, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 5, name: "Lucas Admin", email: "lucas@fazenda.com", role: "admin" as UserRole, status: "ativo", createdAt: "2024-01-01T00:00:00Z" },
-  { id: 6, name: "Roberto Farias", email: "roberto@fazenda.com", role: "operador" as UserRole, status: "ativo", createdAt: "2024-02-15T00:00:00Z" },
-  { id: 7, name: "Marcos Lima", email: "marcos@fazenda.com", role: "operador" as UserRole, status: "ativo", createdAt: "2024-02-18T00:00:00Z" },
-];
-
-export const DEMO_STOCK_MOVEMENTS: StockMovement[] = [
-  { id: 1, productId: 1, productName: "Herbicida Glifosato 480", type: "entrada", quantity: 1000, date: "2026-03-01", reason: "Compra inicial", safra: "2025/2026", safraId: 4, createdAt: "2026-03-01T10:00:00Z" },
-  { id: 2, productId: 1, productName: "Herbicida Glifosato 480", type: "saida", quantity: 150, date: "2026-03-05", reason: "Aplicação soja", safra: "2025/2026", safraId: 4, talhao: "Talhão A1", talhaoId: 1, createdAt: "2026-03-05T08:00:00Z" },
-  { id: 3, productId: 1, productName: "Herbicida Glifosato 480", type: "saida", quantity: 200, date: "2026-03-10", reason: "Aplicação milho", safra: "2025/2026", safraId: 4, talhao: "Talhão B3", talhaoId: 5, createdAt: "2026-03-10T09:30:00Z" },
-  { id: 4, productId: 1, productName: "Herbicida Glifosato 480", type: "entrada", quantity: 550, date: "2026-03-15", reason: "Reposição estoque", safra: "2025/2026", safraId: 4, createdAt: "2026-03-15T14:20:00Z" },
-  
-  { id: 5, productId: 2, productName: "Fungicida Fox Xpro", type: "entrada", quantity: 200, date: "2026-02-15", reason: "Compra NF 8832", safra: "2025/2026", safraId: 4, createdAt: "2026-02-15T11:00:00Z" },
-  { id: 6, productId: 2, productName: "Fungicida Fox Xpro", type: "saida", quantity: 115, date: "2026-03-18", reason: "Prevenção ferrugem", safra: "2025/2026", safraId: 4, talhao: "Talhão C2", talhaoId: 7, createdAt: "2026-03-18T07:15:00Z" },
-];
-
-export const DEMO_CROPS = [
-  { id: 1, name: "Soja", description: "Soja Intacta 2 Xtend", status: "ativo" },
-  { id: 2, name: "Milho", description: "Milho Safrinha", status: "ativo" },
-  { id: 3, name: "Trigo", description: "Trigo de Inverno", status: "ativo" },
+export const DEMO_TALHOES: Talhao[] = [
+  { id: 1, name: "Talhão A1", property: "Fazenda São Bento", areaHectares: 20, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 2, name: "Talhão A2", property: "Fazenda São Bento", areaHectares: 18, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 3, name: "Talhão A3", property: "Sítio Novo", areaHectares: 19, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 4, name: "Talhão B1", property: "Fazenda Progresso", areaHectares: 22, cultureId: 2, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 5, name: "Talhão B3", property: "Fazenda Progresso", areaHectares: 20, cultureId: 2, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 6, name: "Talhão C1", property: "Fazenda São Bento", areaHectares: 21, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 7, name: "Talhão C2", property: "Agrovila", areaHectares: 24, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+  { id: 8, name: "Talhão D1", property: "Sítio Novo", areaHectares: 15, cultureId: undefined, status: "inativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
 ];
 
 export interface TalhaoCultura {
@@ -277,130 +200,122 @@ export const DEMO_TALHAO_CULTURAS: TalhaoCultura[] = [
   { talhaoId: 7, safraId: 4, cultureId: 1 },
 ];
 
-export const DEMO_TALHOES: Talhao[] = [
-  { id: 1, name: "Talhão A1", property: "Fazenda São Bento", areaHectares: 20, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 2, name: "Talhão A2", property: "Fazenda São Bento", areaHectares: 18, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 3, name: "Talhão A3", property: "Sítio Novo", areaHectares: 19, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 4, name: "Talhão B1", property: "Fazenda Progresso", areaHectares: 22, cultureId: 2, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 5, name: "Talhão B3", property: "Fazenda Progresso", areaHectares: 20, cultureId: 2, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 6, name: "Talhão C1", property: "Fazenda São Bento", areaHectares: 21, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 7, name: "Talhão C2", property: "Agrovila", areaHectares: 24, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
-  { id: 8, name: "Talhão D1", property: "Sítio Novo", areaHectares: 15, cultureId: undefined, status: "inativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
+export const DEMO_USERS: ExtendedUser[] = [
+  { id: 1, name: "Lucas Almeida", email: "lucas@fazenda.com.br", role: "admin", avatar: "/avatars/lucas.png", lastActive: "2 minutes ago" },
+  { id: 2, name: "João Pedro", email: "joao@fazenda.com.br", role: "operador", avatar: "/avatars/joao.png", lastActive: "1 hour ago" },
+  { id: 3, name: "Marcos Lima", email: "marcos@fazenda.com.br", role: "operador", avatar: "/avatars/marcos.png", lastActive: "Yesterday" },
+  { id: 4, name: "Roberto Farias", email: "roberto@fazenda.com.br", role: "operador", lastActive: "3 hours ago" },
+];
+
+export const DEMO_BANK_ACCOUNTS: BankAccount[] = [
+  { id: 1, name: "Banco do Brasil", icon: "bb" },
+  { id: 2, name: "Sicoob", icon: "sicoob" },
+  { id: 3, name: "Santander", icon: "santander" },
+  { id: 4, name: "Caixa", icon: "cef" },
+  { id: 5, name: "Dinheiro (Caixa)", icon: "cash" },
+];
+
+export const DEMO_FINANCIAL_RECORDS: FinancialRecord[] = [
+  { id: 1, date: "2026-03-12", type: "despesa", category: "Insumos", description: "Compra de Fertilizante NPK", value: 45600, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Agropecuária Central", paymentMethod: "Boleto", dueDate: "2026-04-12", nfNumber: "88901", createdAt: "2026-03-12T09:00:00Z" },
+  { id: 2, date: "2026-03-11", type: "receita", category: "Vendas", description: "Venda Safra Soja - 500sc", value: 87500, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Cooperativa ABC", paymentMethod: "Pix", dueDate: "2026-03-11", nfNumber: "NF-992", createdAt: "2026-03-11T14:30:00Z" },
+  { id: 3, date: "2026-03-11", type: "despesa", category: "Máquinas", description: "Manutenção Trator JD 8R", value: 3450, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "JD Peças", paymentMethod: "Cartão", dueDate: "2026-03-25", nfNumber: "12234", machineId: 5, machineName: "John Deere 8R 370", createdAt: "2026-03-11T10:00:00Z" },
+  { id: 4, date: "2026-03-10", type: "despesa", category: "Combustível", description: "Abastecimento Diesel S10", value: 12500, status: "aberto", bankAccountId: 3, bankAccountName: "Santander", supplier: "Posto do Campo", paymentMethod: "Boleto", dueDate: "2026-03-30", createdAt: "2026-03-10T16:00:00Z" },
+  { id: 5, date: "2026-03-10", type: "despesa", category: "Administrativo", description: "Energia Elétrica", value: 890, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Copel", paymentMethod: "Débito Automático", dueDate: "2026-03-10", createdAt: "2026-03-10T08:00:00Z" },
+  { id: 6, date: "2026-03-08", type: "despesa", category: "Máquinas", description: "Troca de Óleo - Colheitadeira", value: 1850, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Mecânica Agrícola", paymentMethod: "Pix", machineId: 1, machineName: "John Deere S790", createdAt: "2026-03-08T09:00:00Z" },
+  { id: 7, date: "2026-03-05", type: "despesa", category: "Máquinas", description: "Reparo Barra de Corte", value: 4200, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Peças & Cia", paymentMethod: "Boleto", machineId: 1, machineName: "John Deere S790", createdAt: "2026-03-05T15:00:00Z" },
+];
+
+export const DEMO_ACTIVITIES: ActivityRecord[] = [
+  { 
+    id: 1, date: "2026-03-12", type: "Plantio", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 1, machineName: "John Deere 8R", operatorId: 1, operatorName: "Lucas Lima", areaHectares: 45, 
+    products: [
+      { productId: 1, name: "Semente Soja RR", quantity: 2.5, unit: "sc/ha" },
+      { productId: 3, name: "NPK 04-14-08", quantity: 250, unit: "kg/ha" }
+    ],
+    createdAt: "2026-03-12T10:00:00Z" 
+  },
+  { 
+    id: 2, date: "2026-03-11", type: "Pulverização", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 6, machineName: "TDP 12000", operatorId: 2, operatorName: "Marcos Silva", areaHectares: 20, 
+    products: [
+      { productId: 2, name: "Glifosato 480", quantity: 3, unit: "L/ha" }
+    ],
+    notes: "Aplicação pré-emergente", 
+    createdAt: "2026-03-11T16:00:00Z" 
+  },
+  { 
+    id: 3, date: "2026-02-15", type: "Incorporação", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 8, machineName: "Valtra BH 224", operatorId: 3, operatorName: "José Santos", areaHectares: 20, 
+    products: [],
+    notes: "Preparo de solo pós-chuva",
+    createdAt: "2026-02-15T08:00:00Z" 
+  },
+  { 
+    id: 4, date: "2026-01-20", type: "Adubação", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 5, machineName: "John Deere 8R 370", operatorId: 1, operatorName: "Lucas Almeida", areaHectares: 20, 
+    products: [
+      { productId: 105, name: "Cloreto de Potássio", quantity: 120, unit: "kg/ha" }
+    ],
+    createdAt: "2026-01-20T08:00:00Z" 
+  },
+  { 
+    id: 5, date: "2026-03-15", type: "Pulverização", talhaoId: 4, talhaoName: "Talhão B1", safraId: 4, machineId: 7, machineName: "Stara Imperador 4000", operatorId: 2, operatorName: "Marcos Lima", areaHectares: 22, 
+    products: [
+      { productId: 2, name: "Glifosato 480", quantity: 2.5, unit: "L/ha" }
+    ],
+    createdAt: "2026-03-15T14:00:00Z" 
+  }
+];
+
+export const DEMO_PRODUCTS = [
+  { id: 1, name: "Semente Soja RR", category: "Sementes", currentStock: 450, minStock: 100, unit: "SC" },
+  { id: 2, name: "Glifosato 480", category: "Defensivos", currentStock: 120, minStock: 200, unit: "L" },
+  { id: 3, name: "NPK 04-14-08", category: "Fertilizantes", currentStock: 12500, minStock: 5000, unit: "KG" },
+  { id: 4, name: "Diesel S10", category: "Combustível", currentStock: 50, minStock: 1000, unit: "L" },
+];
+
+export const DEMO_CROPS = [
+  { id: 1, name: "Soja", color: "#4CAF50" },
+  { id: 2, name: "Milho", color: "#FFC107" },
+  { id: 3, name: "Trigo", color: "#F44336" },
+  { id: 4, name: "Cana-de-Açúcar", color: "#8BC34A" },
+];
+
+export const DEMO_STOCK_MOVEMENTS = [
+  { id: 1, productId: 1, date: "2026-03-12T10:00:00Z", type: "saida", quantity: 50, unit: "SC", reason: "Plantio Talhão A1", safra: "2025/2026", talhao: "Talhão A1" },
+  { id: 2, productId: 1, date: "2026-03-10T08:00:00Z", type: "entrada", quantity: 500, unit: "SC", reason: "Compra NF-1234", safra: "2025/2026" },
+  { id: 3, productId: 2, date: "2026-03-11T16:00:00Z", type: "saida", quantity: 360, unit: "L", reason: "Dessecação Talhão B2", safra: "2025/2026", talhao: "Talhão B2" },
+  { id: 4, productId: 2, date: "2026-03-05T09:00:00Z", type: "entrada", quantity: 480, unit: "L", reason: "Compra NF-1122", safra: "2024/2025" },
+  { id: 5, productId: 4, date: "2026-03-12T17:30:00Z", type: "saida", quantity: 450, unit: "L", reason: "Abastecimento Frota", safra: "2025/2026" },
+  { id: 6, productId: 3, date: "2026-03-08T14:00:00Z", type: "entrada", quantity: 2000, unit: "KG", reason: "Compra NF-1550", safra: "2025/2026" },
+];
+
+export const DEMO_DIESEL_MOVEMENTS: DieselTransaction[] = [
+  { id: 1, date: "2026-03-12", type: "saída", volume: 450, description: "Abast. John Deere S790", responsible: "João Pedro", balanceAfter: 4550 },
+  { id: 2, date: "2026-03-11", type: "entrada", volume: 5000, description: "Compra Trr", responsible: "Lucas Almeida", balanceAfter: 5000 },
 ];
 
 export interface MachineMaintenance {
   id: number;
-  date: string;
   machineId: number;
   description: string;
   cost: number;
+  date: string;
   type: "preventiva" | "corretiva";
   category: "Peças" | "Serviço" | "Óleo/Lubrificantes" | "Pneus" | "Outros";
   providerName?: string;
   createdAt: string;
 }
 
-export interface MachineRevenue {
-  id: number;
-  date: string;
-  machineId: number;
-  description: string;
-  value: number;
-  type: "receita" | "lucro";
-  source: "Prestação de Serviço" | "Locação" | "Valor Agregado Interno" | "Outros";
-  safraId?: number;
-  talhaoId?: number;
-  createdAt: string;
-}
-
-export const DEMO_MACHINE_REVENUES: MachineRevenue[] = [
-  { id: 1, date: "2026-03-10", machineId: 1, description: "Colheita vizinho (Fazenda Alvorada)", value: 15000, type: "receita", source: "Prestação de Serviço", safraId: 4, createdAt: "2026-03-10T14:00:00Z" },
-  { id: 2, date: "2026-03-05", machineId: 1, description: "Colheita interna (Milho Safra 26)", value: 45000, type: "lucro", source: "Valor Agregado Interno", safraId: 4, createdAt: "2026-03-05T10:00:00Z" },
-  { id: 3, date: "2026-02-28", machineId: 2, description: "Serviço de colheita terceirizado", value: 12000, type: "receita", source: "Prestação de Serviço", safraId: 4, createdAt: "2026-02-28T09:00:00Z" },
-  { id: 4, date: "2026-03-12", machineId: 9, description: "Frete Soja (Cooperativa)", value: 3800, type: "receita", source: "Prestação de Serviço", safraId: 4, createdAt: "2026-03-12T16:00:00Z" },
-  { id: 5, date: "2026-03-01", machineId: 3, description: "Plantio interno - Valor Agregado", value: 8500, type: "lucro", source: "Valor Agregado Interno", safraId: 4, createdAt: "2026-03-01T08:00:00Z" },
-];
-
 export const DEMO_MACHINE_MAINTENANCES: MachineMaintenance[] = [
-  { id: 1, date: "2026-03-15", machineId: 1, description: "Troca de óleo de motor e filtros", cost: 3500, type: "preventiva", category: "Óleo/Lubrificantes", providerName: "Torno Mecânico Silva", createdAt: "2026-03-15T10:00:00Z" },
-  { id: 2, date: "2026-02-20", machineId: 1, description: "Substituição correia do elevador", cost: 1200, type: "corretiva", category: "Peças", createdAt: "2026-02-20T14:30:00Z" },
-  { id: 3, date: "2026-03-02", machineId: 2, description: "Revisão de 500 horas", cost: 4800, type: "preventiva", category: "Serviço", providerName: "Concessionária Local", createdAt: "2026-03-02T08:00:00Z" },
-  { id: 4, date: "2026-03-08", machineId: 9, description: "Troca de 2 pneus dianteiros", cost: 5600, type: "corretiva", category: "Pneus", providerName: "Borracharia do Trevo", createdAt: "2026-03-08T11:00:00Z" },
+  { id: 1, machineId: 1, description: "Troca de óleo do motor", cost: 1250, date: "2026-01-15", type: "preventiva", category: "Óleo/Lubrificantes", providerName: "Oficina Central", createdAt: "2026-01-15T10:00:00Z" },
+  { id: 2, machineId: 2, description: "Revisão geral de colheita", cost: 4500, date: "2026-02-10", type: "preventiva", category: "Serviço", providerName: "AgroAssist", createdAt: "2026-02-10T10:00:00Z" },
 ];
 
-export const DEMO_BANK_ACCOUNTS: BankAccount[] = [
-  { id: 1, name: "Banco do Brasil (Ana Carla)", icon: "bb" },
-  { id: 2, name: "Banco do Brasil (Filipe)", icon: "bb" },
-  { id: 3, name: "Caixa Econômica Federal (Filipe)", icon: "cef" },
-  { id: 4, name: "Cartão de Crédito Filipe", icon: "card" },
-  { id: 5, name: "Cruzóleo", icon: "store" },
-  { id: 6, name: "Santander", icon: "santander" },
-  { id: 7, name: "Sicoob (Ana Carla)", icon: "sicoob" },
-  { id: 8, name: "Sicoob (Filipe)", icon: "sicoob" },
-  { id: 9, name: "Dinheiro", icon: "cash" },
+export const DEMO_MACHINE_REVENUES = [
+  { id: 1, machineId: 1, description: "Prestação de serviço colheita", value: 12500, date: "2026-03-12", type: "lucro", source: "Terceiros" },
+  { id: 2, machineId: 2, description: "Venda de excedente diesel", value: 4500, date: "2026-03-11", type: "receita", source: "Venda Interna" },
 ];
 
-export const DEMO_FINANCIAL_RECORDS: FinancialRecord[] = [
-  { id: 1, date: "2026-03-15", type: "receita", category: "Vendas", description: "Venda antecipada Soja Safra 25/26", value: 450000, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil (Ana Carla)", safraId: 4, createdAt: "2026-03-15T10:00:00Z" },
-  { id: 2, date: "2026-03-10", type: "despesa", category: "Insumos", description: "Sementes Soja M8349 (50 sacos)", value: 25000, status: "pago", bankAccountId: 8, bankAccountName: "Sicoob (Filipe)", safraId: 4, supplier: "Agro Sementes S.A.", nfNumber: "NF-99881", createdAt: "2026-03-10T14:30:00Z" },
-  { id: 3, date: "2026-03-05", type: "despesa", category: "Máquinas", description: "Manutenção Preventiva Colheitadeira JD S790", value: 3500, status: "pago", bankAccountId: 7, bankAccountName: "Sicoob (Ana Carla)", safraId: 4, talhaoId: 1, supplier: "JD Oficina", createdAt: "2026-03-05T08:00:00Z" },
-  { id: 4, date: "2026-02-28", type: "receita", category: "Outros", description: "Rendimento Aplicação", value: 850.45, status: "pago", bankAccountId: 2, bankAccountName: "Banco do Brasil (Filipe)", createdAt: "2026-02-28T18:00:00Z" },
-  { id: 5, date: "2026-03-18", type: "despesa", category: "Administrativo", description: "Energia Elétrica Sede Fazenda", value: 1240.20, status: "aberto", bankAccountId: 9, bankAccountName: "Dinheiro", createdAt: "2026-03-18T10:00:00Z" },
-  { id: 6, date: "2026-03-20", type: "despesa", category: "Combustível", description: "Compra Diesel para Tanque (10.000L)", value: 48000, status: "aberto", bankAccountId: 1, bankAccountName: "Banco do Brasil (Ana Carla)", safraId: 4, supplier: "Posto Cruzóleo", createdAt: "2026-03-20T09:00:00Z" },
-];
-
-export const DEMO_ACTIVITIES: ActivityRecord[] = [
-  { 
-    id: 1, 
-    date: "2026-03-12", 
-    type: "Pulverização", 
-    talhaoId: 1, 
-    talhaoName: "Talhão A1", 
-    safraId: 4, 
-    machineId: 3, 
-    machineName: "Massey Ferguson 7245", 
-    operatorId: 2, 
-    operatorName: "Paulo Andrade",
-    products: [
-      { productId: 1, name: "Herbicida Glifosato 480", quantity: 2, unit: "L/ha" }
-    ],
-    areaHectares: 20,
-    notes: "Aplicação preventiva",
-    createdAt: "2026-03-12T08:00:00Z" 
-  },
-  { 
-    id: 2, 
-    date: "2026-03-05", 
-    type: "Plantio", 
-    talhaoId: 4, 
-    talhaoName: "Talhão B1", 
-    safraId: 4, 
-    machineId: 5, 
-    machineName: "Stara Estrela 32", 
-    operatorId: 1, 
-    operatorName: "Carlos Mendes",
-    products: [
-      { productId: 6, name: "Semente Soja M8349", quantity: 60, unit: "KG/ha" },
-      { productId: 4, name: "Adubo MAP 12-52-00", quantity: 150, unit: "KG/ha" }
-    ],
-    areaHectares: 22,
-    createdAt: "2026-03-05T07:00:00Z" 
-  },
-  { 
-    id: 3, 
-    date: "2026-03-10", 
-    type: "Adubação", 
-    talhaoId: 7, 
-    talhaoName: "Talhão C2", 
-    safraId: 4, 
-    machineId: 7, 
-    machineName: "John Deere 5090E", 
-    operatorId: 3, 
-    operatorName: "José Silva",
-    products: [
-      { productId: 5, name: "Ureia 45%", quantity: 100, unit: "KG/ha" }
-    ],
-    areaHectares: 24,
-    createdAt: "2026-03-10T09:00:00Z" 
-  }
+export const DEMO_FUELINGS: FuelingRecord[] = [
+  { id: 1, date: "2026-03-12", machineId: 1, machineName: "John Deere S790", operatorId: 2, operatorName: "João Pedro", volumeLiters: 450, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 2610, talhaoId: 1, odometer: 1240, horimeter: 1240 },
+  { id: 2, date: "2026-03-11", machineId: 2, machineName: "New Holland TC5.90", operatorId: 3, operatorName: "Marcos Lima", volumeLiters: 320, fuelType: "Diesel S10", costPerLiter: 5.85, totalCost: 1872, talhaoId: 5, odometer: 850, horimeter: 850 },
+  { id: 3, date: "2026-03-10", machineId: 5, machineName: "John Deere 8R 370", operatorId: 1, operatorName: "Lucas Almeida", volumeLiters: 280, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 1624, talhaoId: 1, odometer: 620, horimeter: 620 },
 ];

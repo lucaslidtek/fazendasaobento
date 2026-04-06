@@ -172,8 +172,8 @@ export default function Usuarios() {
     <AppLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Users className="hidden sm:block w-7 h-7 text-primary" />
+          <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
+            <Users className="hidden md:block w-7 h-7 text-primary" />
             Controle de Acessos {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -181,7 +181,7 @@ export default function Usuarios() {
           </p>
         </div>
         
-        <div className="hidden sm:block">
+        <div className="hidden md:block">
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
               <Button className="h-10 px-5">
@@ -202,7 +202,7 @@ export default function Usuarios() {
       </div>
 
       {/* TABELA — desktop */}
-      <div className="hidden sm:block bg-card rounded-2xl border overflow-hidden">
+      <div className="hidden md:block bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
@@ -282,7 +282,7 @@ export default function Usuarios() {
       </div>
 
       {/* CARDS — mobile */}
-      <div className="sm:hidden space-y-3">
+      <div className="md:hidden space-y-3">
         {isLoading && (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         )}
@@ -355,7 +355,7 @@ export default function Usuarios() {
       </div>
 
       {/* FAB mobile */}
-      <div className="sm:hidden">
+      <div className="md:hidden">
         <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
             onClick={() => setIsSheetOpen(true)}

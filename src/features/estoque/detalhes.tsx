@@ -28,11 +28,13 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { FormContent, productSchema } from "./estoque";
+import { FormContent, productSchema } from "./page";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateProduct, useDeleteProduct, getListProductsQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useFarm } from "@/contexts/FarmContext";
+import { DEMO_TALHOES } from "@/lib/demo-data";
 
 const movementSchema = z.object({
   type: z.enum(["entrada", "saida"]),
@@ -47,6 +49,8 @@ export default function EstoqueDetalhes() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { safras, selectedSafraId } = useFarm();
+  const currentSafra = useMemo(() => safras.find(s => s.id === selectedSafraId), [safras, selectedSafraId]);
   
   const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
   const [isMovementSheetOpen, setIsMovementSheetOpen] = useState(false);
@@ -68,7 +72,7 @@ export default function EstoqueDetalhes() {
     let totalIn = 0;
     let totalOut = 0;
     
-    flatMovements.forEach(m => {
+    flatMovements.forEach((m: any) => {
       if (m.type === "entrada") totalIn += m.quantity;
       if (m.type === "saida") totalOut += m.quantity;
     });
@@ -80,10 +84,10 @@ export default function EstoqueDetalhes() {
     if (!product) return [];
     
     // Process movements chronologically to calculate running balance
-    const productMovements = [...flatMovements].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const productMovements = [...flatMovements].sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     let totalDelta = 0;
-    productMovements.forEach(m => {
+    productMovements.forEach((m: any) => {
       totalDelta += m.type === "entrada" ? m.quantity : -m.quantity;
     });
     
@@ -179,7 +183,14 @@ export default function EstoqueDetalhes() {
 
   const movementForm = useForm<z.infer<typeof movementSchema>>({
     resolver: zodResolver(movementSchema) as any,
-    defaultValues: { type: "saida", quantity: 0, date: new Date().toISOString().split("T")[0], reason: "", safra: "2025/2026", talhao: "" },
+    defaultValues: { 
+      type: "saida", 
+      quantity: 0, 
+      date: new Date().toISOString().split("T")[0], 
+      reason: "", 
+      safra: currentSafra?.name || "2025/2026", 
+      talhao: "" 
+    },
   });
 
   const onSubmit = () => {
@@ -193,7 +204,7 @@ export default function EstoqueDetalhes() {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center py-20">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Produto não encontrado</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Produto não encontrado</h2>
           <Button onClick={() => setLocation("/estoque")}>Voltar para Estoque</Button>
         </div>
       </AppLayout>
@@ -206,29 +217,29 @@ export default function EstoqueDetalhes() {
     <Form {...movementForm}>
       <form onSubmit={movementForm.handleSubmit(onSubmit as any)} className="space-y-4">
         <FormField control={movementForm.control} name="type" render={({ field }) => (
-          <FormItem><FormLabel>Tipo de Movimento</FormLabel>
+          <FormItem><FormLabel className="text-[10px] font-bold uppercase">Tipo de Movimento</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+              <FormControl><SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger></FormControl>
               <SelectContent>
-                <SelectItem value="entrada">Entrada (+)</SelectItem>
-                <SelectItem value="saida">Saída (-)</SelectItem>
+                <SelectItem value="entrada">Entrada (Compra/Ajuste)</SelectItem>
+                <SelectItem value="saida">Saída (Aplicação/Retirada)</SelectItem>
               </SelectContent>
             </Select>
           </FormItem>
         )} />
         <div className="grid grid-cols-2 gap-4">
           <FormField control={movementForm.control as any} name="quantity" render={({ field }) => (
-            <FormItem><FormLabel>Quantidade ({product.unit})</FormLabel><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel className="text-[10px] font-bold uppercase">Quantidade ({product.unit})</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-xl" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={movementForm.control as any} name="date" render={({ field }) => (
-            <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel className="text-[10px] font-bold uppercase">Data</FormLabel><FormControl><Input type="date" className="rounded-xl" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField control={movementForm.control as any} name="safra" render={({ field }) => (
-            <FormItem><FormLabel>Safra</FormLabel>
+            <FormItem><FormLabel className="text-[10px] font-bold uppercase">Safra</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger className="rounded-xl"><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="2024/2025">2024/2025</SelectItem>
                   <SelectItem value="2025/2026">2025/2026</SelectItem>
@@ -236,18 +247,26 @@ export default function EstoqueDetalhes() {
               </Select>
             </FormItem>
           )} />
-          {movementForm.watch("type") === "saida" && (
-            <FormField control={movementForm.control as any} name="talhao" render={({ field }) => (
-              <FormItem><FormLabel>Talhão</FormLabel><FormControl><Input placeholder="Ex: Talhão A1" {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-          )}
+          <FormField control={movementForm.control as any} name="talhao" render={({ field }) => (
+            <FormItem><FormLabel className="text-[10px] font-bold uppercase">Talhão (Opcional)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl><SelectTrigger className="rounded-xl"><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {DEMO_TALHOES.map(t => (
+                    <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )} />
         </div>
         <FormField control={movementForm.control as any} name="reason" render={({ field }) => (
-          <FormItem><FormLabel>Motivo / Observação</FormLabel><FormControl><Input placeholder="Ex: NF 123 ou Aplicação" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel className="text-[10px] font-bold uppercase">Motivo / Observação</FormLabel><FormControl><Input placeholder="Ex: NF 123 ou Aplicação" className="rounded-xl" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => { setIsMovementDialogOpen(false); setIsMovementSheetOpen(false); }} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">Confirmar</Button>
+        <div className="flex gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={() => { setIsMovementDialogOpen(false); setIsMovementSheetOpen(false); }} className="flex-1 rounded-xl">Cancelar</Button>
+          <Button type="submit" className="flex-1 rounded-xl">Confirmar</Button>
         </div>
       </form>
     </Form>
@@ -270,20 +289,20 @@ export default function EstoqueDetalhes() {
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-slate-900 leading-tight">{product.name}</h1>
+              <h1 className="text-3xl font-bold font-display text-foreground leading-tight">{product.name}</h1>
               {isCritical ? (
-                <Badge variant="destructive" className="flex items-center gap-1">
+                <Badge variant="destructive" className="flex items-center gap-1 rounded-lg">
                   <AlertTriangle className="w-3 h-3" /> Crítico
                 </Badge>
               ) : (
-                <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]">
+                <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] rounded-lg">
                   Normal
                 </Badge>
               )}
             </div>
             <p className="text-muted-foreground font-medium flex items-center gap-2">
               {product.category}
-              <span className="text-slate-300">|</span>
+              <span className="text-muted-foreground/50">|</span>
               Mínimo: {product.minStock || 0} {product.unit}
             </p>
           </div>
@@ -327,20 +346,20 @@ export default function EstoqueDetalhes() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-white border-slate-200 border-primary/20 bg-primary/[0.02]">
+        <Card className="bg-card border border-primary/20 bg-primary/[0.02]">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
                 <Boxes className="w-3.5 h-3.5 text-primary" /> Saldo Atual
               </div>
-              <div className="text-2xl font-bold text-slate-900">
-                {product.currentStock} <span className="text-xs font-normal text-slate-500 uppercase ml-1 tracking-tight">{product.unit}</span>
+              <div className="text-2xl font-bold text-foreground">
+                {product.currentStock} <span className="text-xs font-normal text-muted-foreground uppercase ml-1 tracking-tight">{product.unit}</span>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-white border-slate-200">
+        <Card className="bg-card border">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
@@ -353,7 +372,7 @@ export default function EstoqueDetalhes() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-slate-200">
+        <Card className="bg-card border">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
@@ -370,13 +389,13 @@ export default function EstoqueDetalhes() {
       {/* Movement History like a Bank Statement */}
       <div className="mt-10">
         <div className="flex items-center gap-2 mb-6">
-          <History className="w-5 h-5 text-slate-400" />
-          <h2 className="text-lg font-bold text-slate-800">Histórico de Movimentações</h2>
+          <History className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-bold text-foreground">Histórico de Movimentações</h2>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden relative">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden relative">
           {/* Vertical timeline line for desktop */}
-          <div className="hidden sm:block absolute left-[39px] top-6 bottom-6 w-px bg-slate-100 z-0" />
+          <div className="hidden sm:block absolute left-[39px] top-6 bottom-6 w-px bg-muted z-0" />
           
           {flatMovements.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center gap-3">
@@ -386,16 +405,16 @@ export default function EstoqueDetalhes() {
           ) : (
             <div className="flex flex-col">
               {groupedMovements.map((group) => (
-                <div key={group.date} className="relative border-b border-slate-100 last:border-0 pb-2">
+                <div key={group.date} className="relative border-b border-border last:border-0 pb-2">
                    {/* Day Header */}
-                   <div className="flex items-center justify-between bg-slate-50 border-b border-slate-100 p-3 sm:px-6 sticky top-0 z-20">
+                   <div className="flex items-center justify-between bg-muted/40 border-b border-border p-3 sm:px-6 sticky top-0 z-20">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-sm font-bold text-slate-700">
+                        <h3 className="text-sm font-bold text-muted-foreground">
                           {format(new Date(group.date), "dd/MM/yyyy")}
                         </h3>
                       </div>
-                      <div className="text-sm font-medium text-slate-500">
-                        Saldo do dia: <span className="font-bold text-slate-700">{group.endOfDayBalance.toFixed(1)} {product.unit}</span>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Saldo do dia: <span className="font-bold text-muted-foreground">{group.endOfDayBalance.toFixed(1)} {product.unit}</span>
                       </div>
                    </div>
                    
@@ -404,13 +423,13 @@ export default function EstoqueDetalhes() {
                      {group.movements.map((m) => {
                        const isEntrada = m.type === "entrada";
                        return (
-                          <div key={m.id} className="group relative hover:bg-slate-50/50 transition-colors p-4 flex flex-col sm:flex-row sm:items-center gap-4 pl-4 sm:pl-16 z-10">
+                          <div key={m.id} className="group relative hover:bg-muted/30 transition-colors p-4 flex flex-col sm:flex-row sm:items-center gap-4 pl-4 sm:pl-16 z-10">
                             {/* Detailed row */}
-                            <div className="hidden sm:flex w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white absolute left-[35px] group-hover:bg-primary transition-colors" />
+                            <div className="hidden sm:flex w-2 h-2 rounded-full bg-muted-foreground/30 ring-4 ring-background absolute left-[35px] group-hover:bg-primary transition-colors" />
 
                             <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   {isEntrada ? (
                                     <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] h-6 px-2 text-[10px] uppercase font-bold tracking-wider">
                                       Compra
@@ -420,13 +439,25 @@ export default function EstoqueDetalhes() {
                                       Aplicação
                                     </Badge>
                                   )}
+                                  
+                                  {/* Integração Etapa 9: Sinalização de Origem */}
+                                  {(() => {
+                                    const reason = m.reason?.toLowerCase() || "";
+                                    const isFinanceiro = reason.includes("compra") || reason.includes("nf");
+                                    const isCampo = reason.includes("plantio") || reason.includes("talhão") || reason.includes("dessecação") || reason.includes("aplicação");
+                                    
+                                    if (isFinanceiro) return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 h-6 px-2 text-[10px] uppercase font-bold tracking-wider">Origem: Financeiro</Badge>;
+                                    if (isCampo) return <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-indigo-200 h-6 px-2 text-[10px] uppercase font-bold tracking-wider">Origem: Campo</Badge>;
+                                    return <Badge variant="outline" className="bg-muted text-muted-foreground h-6 px-2 text-[10px] uppercase font-bold tracking-wider">Origem: Manual</Badge>;
+                                  })()}
+
                                   {(m.safra || m.talhao) && (
-                                    <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
+                                    <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
                                       {m.safra} {m.talhao ? `• ${m.talhao}` : ""}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-sm font-medium text-slate-600 truncate">
+                                <p className="text-sm font-medium text-muted-foreground truncate">
                                   {m.reason || (isEntrada ? "Entrada no estoque" : "Retirada do estoque")}
                                 </p>
                               </div>

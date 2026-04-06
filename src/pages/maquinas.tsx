@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Tractor, Loader2, MapPin, Pencil, Trash2, MoreHorizontal, DollarSign, Download, Filter, X } from "lucide-react";
+import { Plus, Tractor, Loader2, MapPin, Pencil, Trash2, MoreHorizontal, DollarSign, Download, Filter, X, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -255,8 +255,8 @@ export default function Maquinas() {
     <AppLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Tractor className="hidden sm:block w-7 h-7 text-primary" />
+          <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
+            <Tractor className="hidden md:block w-7 h-7 text-primary" />
             Frota e Máquinas {filteredRecords && <span className="text-muted-foreground/60 text-xl md:text-2xl">({filteredRecords.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -265,12 +265,16 @@ export default function Maquinas() {
           
         </div>
 
-        <div className="hidden sm:flex items-center gap-2">
-          <Button variant="outline" className="h-10 px-4 bg-white" onClick={exportToCSV}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
+        <div className="hidden md:flex items-center gap-2 no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
           </Button>
-          <Button variant="outline" className="h-10 px-4 bg-white" onClick={() => setShowFilters(v => !v)}>
+          <Button variant="outline" className="h-10 px-4 bg-card rounded-xl" onClick={exportToCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            Exportar CSV
+          </Button>
+          <Button variant="outline" className="h-10 px-4 bg-card" onClick={() => setShowFilters(v => !v)}>
             <Filter className="w-4 h-4 mr-2" />
             Filtros
             {activeFilterCount > 0 && (
@@ -298,7 +302,7 @@ export default function Maquinas() {
 
       {/* Painel de Filtros — desktop */}
       {showFilters && (
-        <div className="hidden sm:block bg-card border rounded-2xl p-4 mb-4">
+        <div className="hidden md:block bg-card border rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Filtros</span>
             {activeFilterCount > 0 && (
@@ -351,13 +355,13 @@ export default function Maquinas() {
       
       {/* Resumo da filtragem */}
       {activeFilterCount > 0 && (
-        <div className="hidden sm:flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+        <div className="hidden md:flex items-center gap-2 mb-3 text-sm text-muted-foreground">
           <span>Exibindo <strong className="text-foreground">{filteredRecords.length}</strong> de <strong className="text-foreground">{records?.length ?? 0}</strong> registros</span>
         </div>
       )}
 
       {/* TABELA — desktop */}
-      <div className="hidden sm:block bg-card rounded-2xl border overflow-hidden">
+      <div className="hidden md:block bg-card rounded-2xl border overflow-hidden">
         {isLoading && !apiRecords ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : (
@@ -419,7 +423,7 @@ export default function Maquinas() {
       </div>
 
       {/* CARDS — mobile */}
-      <div className="sm:hidden space-y-3">
+      <div className="md:hidden space-y-3">
         <MobileListControls 
           onFilterClick={() => setShowFilters(v => !v)} 
           onExportClick={exportToCSV} 
@@ -534,7 +538,7 @@ export default function Maquinas() {
       </div>
 
       {/* FAB mobile */}
-      <div className="sm:hidden">
+      <div className="md:hidden">
         <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
             onClick={() => setIsSheetOpen(true)}

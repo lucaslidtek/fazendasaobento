@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Map as MapIcon, Loader2, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Plus, Map as MapIcon, Loader2, Pencil, Trash2, MoreHorizontal, Sprout, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { DEMO_TALHOES, DEMO_CROPS, Talhao, DEMO_TALHAO_CULTURAS } from "@/lib/demo-data";
@@ -82,14 +83,14 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing, uni
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
-          <FormItem><FormLabel>Nome do Talhão</FormLabel><FormControl><Input placeholder="Ex: Talhão A1, Gleba Oeste" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel className="text-[10px] font-bold uppercase">Nome do Talhão</FormLabel><FormControl><Input className="rounded-xl" placeholder="Ex: Talhão A1, Gleba Oeste" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="property" render={({ field }) => (
           <FormItem>
-            <FormLabel>Propriedade</FormLabel>
+            <FormLabel className="text-[10px] font-bold uppercase">Propriedade</FormLabel>
             <FormControl>
               <div className="relative">
-                <Input list="properties-list" placeholder="Ex: Fazenda São Bento" {...field} />
+                <Input list="properties-list" className="rounded-xl" placeholder="Ex: Fazenda São Bento" {...field} />
                 <datalist id="properties-list">
                   {uniqueProperties.map((p: string) => (
                     <option key={p} value={p} />
@@ -100,36 +101,38 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing, uni
             <FormMessage />
           </FormItem>
         )} />
-        <FormField control={form.control} name="areaHectares" render={({ field }) => (
-          <FormItem><FormLabel>Área (Hectares)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 20" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="areaHectares" render={({ field }) => (
+            <FormItem><FormLabel className="text-[10px] font-bold uppercase">Área (Hectares)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-xl" placeholder="Ex: 20" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="status" render={({ field }) => (
+            <FormItem><FormLabel className="text-[10px] font-bold uppercase">Status</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl><SelectTrigger className="rounded-xl"><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            <FormMessage /></FormItem>
+          )} />
+        </div>
         <FormField control={form.control} name="cultureId" render={({ field }) => (
-          <FormItem><FormLabel>Cultura Atual (Opcional)</FormLabel>
+          <FormItem><FormLabel className="text-[10px] font-bold uppercase">Cultura Atual (Opcional)</FormLabel>
             <Select onValueChange={field.onChange} value={field.value?.toString() || "none"}>
-              <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma cultura" /></SelectTrigger></FormControl>
+              <FormControl><SelectTrigger className="rounded-xl"><SelectValue placeholder="Selecione uma cultura" /></SelectTrigger></FormControl>
               <SelectContent>
                 <SelectItem value="none">Nenhuma</SelectItem>
-                {DEMO_CROPS.map(c => (
+                {DEMO_CROPS.map((c: any) => (
                   <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           <FormMessage /></FormItem>
         )} />
-        <FormField control={form.control} name="status" render={({ field }) => (
-          <FormItem><FormLabel>Status</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
-              <SelectContent>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-          <FormMessage /></FormItem>
-        )} />
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={isPending} className="flex-1">
+        <div className="flex gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-xl">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="flex-1 rounded-xl">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEditing ? "Salvar alterações" : "Cadastrar"}
           </Button>
@@ -243,7 +246,7 @@ export default function Talhoes() {
     if (!selectedSafraId) return "—";
     const mapping = DEMO_TALHAO_CULTURAS.find(c => c.talhaoId === talhaoId && c.safraId === selectedSafraId);
     if (!mapping) return "—";
-    const culture = DEMO_CROPS.find(c => c.id === mapping.cultureId);
+    const culture = DEMO_CROPS.find((c: any) => c.id === mapping.cultureId);
     return culture ? culture.name : "—";
   };
 
@@ -251,28 +254,36 @@ export default function Talhoes() {
     <AppLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-            <MapIcon className="hidden sm:block w-7 h-7 text-primary" />
-            Talhões {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
+          <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
+            <MapIcon className="hidden md:block w-7 h-7 text-secondary" />
+            Talhões e Áreas {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Gestão das áreas de plantio e talhões da fazenda.
+            Gestão das glebas, áreas de plantio e histórico da terra.
           </p>
         </div>
 
-        <div className="hidden sm:block">
+        <div className="flex items-center gap-2 w-full sm:w-auto no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl">
+            <Printer className="w-4 h-4" />
+            <span className="hidden md:inline">Imprimir PDF</span>
+          </Button>
+          <Button variant="outline" className="h-10 px-4 bg-card rounded-xl hidden sm:flex border-muted-foreground/20">
+            <Download className="w-4 h-4 mr-2 text-muted-foreground" />
+            Exportar CSV
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Talhão
+              <Button className="h-10 px-5 gap-2 rounded-xl">
+                <Plus className="w-4 h-4" />
+                <span>Novo Talhão</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[400px]">
+            <DialogContent className="sm:max-w-[400px] rounded-3xl">
               <DialogHeader>
                 <DialogTitle className="text-xl">{editingRecord ? "Editar Talhão" : "Novo Talhão"}</DialogTitle>
               </DialogHeader>
-              <div className="mt-2">
+              <div className="mt-2 text-left">
                 <FormContent {...formProps} />
               </div>
             </DialogContent>
@@ -280,123 +291,141 @@ export default function Talhoes() {
         </div>
       </div>
 
-      {/* TABELA — desktop */}
-      <div className="hidden sm:block bg-card rounded-2xl border overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
-        ) : (
-          <Table>
-            <TableHeader className="bg-muted/40">
-              <TableRow>
-                <TableHead>Nome da Área</TableHead>
-                <TableHead>Propriedade</TableHead>
-                <TableHead>Área (ha)</TableHead>
-                <TableHead>Cultura Atual</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[88px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {records?.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Nenhum talhão cadastrado.</TableCell></TableRow>
-              )}
-              {records?.map((r: Talhao) => (
-                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setLocation(`/talhoes/${r.id}`)}>
-                  <TableCell className="font-bold">{r.name}</TableCell>
-                  <TableCell>{r.property || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.areaHectares} ha</TableCell>
-                  <TableCell className="text-muted-foreground">{getCultureName(r.id)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={STATUS_STYLES[r.status as keyof typeof STATUS_STYLES] ?? ""}>
-                      {STATUS_LABELS[r.status] ?? r.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => { e.stopPropagation(); handleEditOpen(r, false); }}
-                        className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+      <div className="w-full">
+        {/* TABELA — desktop */}
+        <div className="hidden md:block bg-card rounded-2xl border overflow-hidden shadow-sm">
+          {isLoading ? (
+            <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-muted/40">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Identificação</TableHead>
+                  <TableHead>Propriedade</TableHead>
+                  <TableHead className="text-right">Área (ha)</TableHead>
+                  <TableHead>Cultura Atual</TableHead>
+                  <TableHead className="text-center w-[120px]">Status</TableHead>
+                  <TableHead className="w-[88px]" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+              </TableHeader>
+              <TableBody>
+                {records?.length === 0 && (
+                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">Nenhum talhão cadastrado.</TableCell></TableRow>
+                )}
+                {records?.map((r: Talhao) => (
+                  <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer group" onClick={() => setLocation(`/talhoes/${r.id}`)}>
+                    <TableCell className="text-center">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <MapIcon className="w-4 h-4" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-foreground">{r.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.property || "—"}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-foreground">{r.areaHectares} ha</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-muted/50 border-none text-[10px] uppercase font-bold text-muted-foreground">
+                        {getCultureName(r.id)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className={cn("rounded-lg h-6 px-2 text-[10px] uppercase font-black", STATUS_STYLES[r.status as keyof typeof STATUS_STYLES] ?? "")}>
+                        {STATUS_LABELS[r.status] ?? r.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => { e.stopPropagation(); handleEditOpen(r, false); }}
+                          className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-xl">
+                            <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                              Excluir Talhão
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
 
-      {/* CARDS — mobile */}
-      <div className="sm:hidden space-y-3">
-        {isLoading && (
-          <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
-        )}
-        {!isLoading && records?.length === 0 && (
-          <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
-            Nenhum talhão cadastrado.
-          </div>
-        )}
-        {records?.map((r: Talhao) => (
-          <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card cursor-pointer" onClick={() => setLocation(`/talhoes/${r.id}`)}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline" className={STATUS_STYLES[r.status as keyof typeof STATUS_STYLES] ?? ""}>
-                    {STATUS_LABELS[r.status]}
-                  </Badge>
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-semibold">
-                    {r.areaHectares} ha
-                  </Badge>
-                </div>
-                <p className="font-bold text-base mt-2">{r.name}</p>
-                <p className="text-sm font-medium text-muted-foreground mt-0.5">{r.property || "—"}</p>
-                <p className="text-sm text-muted-foreground mt-0.5">Cultura: {getCultureName(r.id)}</p>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
-                    <Pencil className="w-4 h-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+        {/* CARDS — mobile */}
+        <div className="md:hidden space-y-3">
+          {isLoading && (
+            <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
+          )}
+          {!isLoading && records?.length === 0 && (
+            <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
+              Nenhum talhão cadastrado.
             </div>
-          </div>
-        ))}
+          )}
+          {records?.map((r: Talhao) => (
+            <div key={r.id} className="bg-card rounded-2xl border p-4 touch-card cursor-pointer transition-all active:scale-[0.98]" onClick={() => setLocation(`/talhoes/${r.id}`)}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{r.property || "Sem Propriedade"}</p>
+                    <Badge variant="outline" className={cn("rounded-md h-4 px-1.5 text-[8px] uppercase font-black tracking-tight", STATUS_STYLES[r.status as keyof typeof STATUS_STYLES] ?? "")}>
+                      {STATUS_LABELS[r.status]}
+                    </Badge>
+                  </div>
+                  <p className="font-bold text-foreground text-lg leading-tight">{r.name}</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 -mt-1 -mr-1 flex-shrink-0 text-muted-foreground">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()} className="rounded-xl">
+                    <DropdownMenuItem onClick={() => handleEditOpen(r, true)} className="gap-2 cursor-pointer">
+                      <Pencil className="w-4 h-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-border/60">
+                <div className="flex items-center gap-1">
+                  <Sprout className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground font-medium">{getCultureName(r.id)}</span>
+                </div>
+                <div className="text-primary font-mono font-black text-base">
+                  {r.areaHectares} <span className="text-[10px] uppercase ml-0.5 tracking-tighter">ha</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* FAB mobile */}
-      <div className="sm:hidden">
+      <div className="md:hidden">
         <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsSheetOpen(true); }}>
           <button
             onClick={() => setIsSheetOpen(true)}
-            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95 shadow-primary/20 border border-white/10"
           >
             <Plus className="w-6 h-6" />
           </button>
@@ -405,7 +434,9 @@ export default function Talhoes() {
             <SheetHeader className="text-left mb-4">
               <SheetTitle className="text-lg">{editingRecord ? "Editar Talhão" : "Novo Talhão"}</SheetTitle>
             </SheetHeader>
-            <FormContent {...formProps} />
+            <div className="text-left">
+              <FormContent {...formProps} />
+            </div>
           </SheetContent>
         </Sheet>
       </div>

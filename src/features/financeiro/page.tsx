@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { 
   DEMO_FINANCIAL_RECORDS, 
   DEMO_BANK_ACCOUNTS, 
+  DEMO_MACHINES,
   type FinancialRecord,
   type BankAccount
 } from "@/lib/demo-data";
@@ -10,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   Plus, 
   Wallet, 
@@ -27,7 +29,9 @@ import {
   CheckCircle2,
   Clock,
   ChevronRight,
-  Search
+  Search,
+  Copy,
+  Printer
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -82,6 +86,8 @@ import { MobileListControls } from "@/components/ui/MobileListControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFarm } from "@/contexts/FarmContext";
 
+const ALL = "all";
+
 const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
   type: z.enum(["receita", "despesa"]),
@@ -94,6 +100,9 @@ const schema = z.object({
   talhaoId: z.coerce.number().optional().or(z.literal(0)),
   supplier: z.string().optional(),
   nfNumber: z.string().optional(),
+  dueDate: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  machineId: z.coerce.number().optional().or(z.literal(0)),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -133,10 +142,35 @@ function FormContent({ form, bankAccounts, safras, talhoes, onSubmit, isPending,
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="date" render={({ field }) => (
-            <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Data do Lançamento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
+          <FormField control={form.control} name="dueDate" render={({ field }) => (
+            <FormItem><FormLabel>Data de Vencimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="value" render={({ field }) => (
-            <FormItem><FormLabel>Valor (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0,00" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Valor (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="0,00" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Forma de Pagamento</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Pix">Pix</SelectItem>
+                  <SelectItem value="Boleto">Boleto</SelectItem>
+                  <SelectItem value="Transferência">Transferência</SelectItem>
+                  <SelectItem value="Cartão">Cartão</SelectItem>
+                  <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="Débito Automático">Débito Automático</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
           )} />
         </div>
 
@@ -198,24 +232,33 @@ function FormContent({ form, bankAccounts, safras, talhoes, onSubmit, isPending,
             <FormItem>
               <FormLabel>Talhão (Opcional)</FormLabel>
               <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : "0"}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Vincular ao talhão" /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o talhão" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="0">Nenhum</SelectItem>
-                  {talhoes.map((t: any) => (
-                    <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
-                  ))}
+                  {talhoes.map((t: any) => <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <FormMessage />
             </FormItem>
           )} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="machineId" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Máquina (Opcional)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ? field.value.toString() : "0"}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Selecione a máquina" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="0">Nenhuma</SelectItem>
+                  {DEMO_MACHINES.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
           <FormField control={form.control} name="supplier" render={({ field }) => (
             <FormItem><FormLabel>Fornecedor / Cliente</FormLabel><FormControl><Input placeholder="Ex: Cooperativa X" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control} name="nfNumber" render={({ field }) => (
-            <FormItem><FormLabel>NF (Opcional)</FormLabel><FormControl><Input placeholder="Número da nota" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
@@ -245,6 +288,8 @@ export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("movimentacoes");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterBank, setFilterBank] = useState<string>("all");
+  const [filterSupplier, setFilterSupplier] = useState<string>(ALL);
+  const [filterMonth, setFilterMonth] = useState<string>(ALL);
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -258,12 +303,22 @@ export default function Financeiro() {
       value: 0,
       status: "pago",
       bankAccountId: 0,
+      dueDate: new Date().toISOString().split("T")[0],
+      paymentMethod: "",
+      machineId: 0,
       safraId: selectedSafraId || 0,
       talhaoId: selectedTalhaoId || 0,
       supplier: "",
       nfNumber: "",
     },
   });
+
+  const uniqueSuppliers = useMemo(() => [...new Set(records?.map(r => r.supplier))].filter(Boolean).sort(), [records]);
+  const uniqueMonths = useMemo(() => {
+    const dates = records?.map(r => r.dueDate || r.date).filter(Boolean);
+    const months = dates?.map(d => format(new Date(d), "MMMM", { locale: ptBR }));
+    return [...new Set(months)].sort();
+  }, [records]);
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
@@ -274,6 +329,11 @@ export default function Financeiro() {
       // Filtros da Interface
       if (filterType !== "all" && r.type !== filterType) return false;
       if (filterBank !== "all" && r.bankAccountId !== Number(filterBank)) return false;
+      if (filterSupplier !== ALL && r.supplier !== filterSupplier) return false;
+      if (filterMonth !== ALL) {
+        const m = format(new Date(r.dueDate || r.date), "MMMM", { locale: ptBR });
+        if (m !== filterMonth) return false;
+      }
       
       if (search) {
         const s = search.toLowerCase();
@@ -286,7 +346,14 @@ export default function Financeiro() {
       }
       return true;
     }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [records, filterType, filterBank, search, selectedSafraId, selectedTalhaoId]);
+  }, [records, filterType, filterBank, filterSupplier, filterMonth, search, selectedSafraId, selectedTalhaoId]);
+
+  const activeFilterCount = [
+    filterType !== "all",
+    filterBank !== "all",
+    filterSupplier !== ALL,
+    filterMonth !== ALL,
+  ].filter(Boolean).length;
 
   const totals = useMemo(() => {
     const receita = filteredRecords.filter(r => r.type === "receita" && r.status === "pago").reduce((acc, r) => acc + r.value, 0);
@@ -322,8 +389,11 @@ export default function Financeiro() {
       bankAccountId: record.bankAccountId,
       safraId: record.safraId || 0,
       talhaoId: record.talhaoId || 0,
+      machineId: record.machineId || 0,
       supplier: record.supplier || "",
       nfNumber: record.nfNumber || "",
+      dueDate: record.dueDate || record.date,
+      paymentMethod: record.paymentMethod || ""
     });
     if (isMobile) setIsSheetOpen(true);
     else setIsDialogOpen(true);
@@ -332,13 +402,20 @@ export default function Financeiro() {
   const onSubmit = (values: FormValues) => {
     const bankAccount = bankAccounts.find(a => a.id === Number(values.bankAccountId));
     
+    const isStockIntegrated = values.type === "despesa" && 
+                             (values.category === "Insumos" || values.category === "Combustível") && 
+                             values.status === "pago";
+
     if (editingRecord) {
       setRecords(records.map(r => r.id === editingRecord.id ? { 
         ...r, 
         ...values, 
         bankAccountName: bankAccount?.name || r.bankAccountName 
       } : r));
-      toast({ title: "Lançamento atualizado com sucesso!" });
+      toast({ 
+        title: "Lançamento atualizado!",
+        description: isStockIntegrated ? "As alterações foram refletidas no estoque." : undefined
+      });
     } else {
       const newRecord: FinancialRecord = {
         id: Math.max(...records.map(r => r.id), 0) + 1,
@@ -347,9 +424,24 @@ export default function Financeiro() {
         createdAt: new Date().toISOString(),
       };
       setRecords([newRecord, ...records]);
-      toast({ title: "Lançamento registrado!" });
+      toast({ 
+        title: "Lançamento registrado!", 
+        description: isStockIntegrated ? "Entrada de estoque processada automaticamente." : undefined 
+      });
     }
     closeForm();
+  };
+
+  const handleDuplicate = (record: FinancialRecord, isMobile: boolean) => {
+    const { id, createdAt, ...dataToCopy } = record;
+    setEditingRecord(null); // It's a new record
+    form.reset({
+      ...dataToCopy,
+      date: new Date().toISOString().split("T")[0],
+      status: "aberto"
+    });
+    if (isMobile) setIsSheetOpen(true);
+    else setIsDialogOpen(true);
   };
 
   const handleDelete = (id: number) => {
@@ -360,8 +452,34 @@ export default function Financeiro() {
   };
 
   const handleExport = () => {
-    toast({ title: "Exportação iniciada...", description: "O arquivo CSV será baixado em instantes." });
-    // Lógica de exportação simulada
+    const rows = filteredRecords.map(r => [
+      format(new Date(r.date), "dd/MM/yyyy"),
+      r.type,
+      r.category,
+      r.description,
+      r.supplier || "",
+      r.value.toFixed(2),
+      r.status,
+      r.bankAccountName,
+      r.dueDate ? format(new Date(r.dueDate), "dd/MM/yyyy") : "",
+      r.paymentMethod || "",
+      r.nfNumber || ""
+    ]);
+
+    const csvContent = [
+      ["Data", "Tipo", "Categoria", "Descricao", "Fornecedor", "Valor", "Status", "Conta", "Vencimento", "Forma Pagamento", "NF"].join(","),
+      ...rows.map(e => e.join(","))
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `financeiro-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Exportação concluída!" });
   };
 
   return (
@@ -378,14 +496,17 @@ export default function Financeiro() {
             </p>
           </div>
           
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto no-print">
+            <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 rounded-xl border-primary/20 hover:bg-primary/5 text-primary">
+              <Printer className="w-4 h-4" /> Imprimir PDF
+            </Button>
             <Button variant="outline" onClick={handleExport} className="hidden sm:flex h-10 px-4 gap-2 rounded-xl">
-              <Download className="w-4 h-4" /> Exportar
+              <Download className="w-4 h-4" /> Exportar CSV
             </Button>
             
             <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeForm()}>
               <DialogTrigger asChild>
-                <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl shadow-lg shadow-primary/20">
+                <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl">
                   <Plus className="w-4 h-4" /> Novo Lançamento
                 </Button>
               </DialogTrigger>
@@ -409,44 +530,44 @@ export default function Financeiro() {
 
         {/* Resumo Financeiro */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="rounded-2xl border-none shadow-sm bg-green-50/50">
+          <Card className="rounded-2xl border bg-[hsl(var(--success-subtle))]">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-600">
+              <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--success)/0.1)] flex items-center justify-center text-[hsl(var(--success-text))]">
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-green-700/60 uppercase tracking-wider">Receitas Pagas</p>
-                <p className="text-xl font-black text-green-700">R$ {totals.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-xs font-bold text-[hsl(var(--success-text))] uppercase tracking-wider">Receitas Pagas</p>
+                <p className="text-xl font-black text-[hsl(var(--success-text))]">R$ {totals.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 {totals.pendenteReceita > 0 && (
-                  <p className="text-[10px] text-green-600/70 font-medium">R$ {totals.pendenteReceita.toLocaleString()} pendente</p>
+                  <p className="text-[10px] text-[hsl(var(--success-text))] font-medium">R$ {totals.pendenteReceita.toLocaleString()} pendente</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-none shadow-sm bg-red-50/50">
+          <Card className="rounded-2xl border bg-destructive/5">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-600">
+              <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive">
                 <TrendingDown className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-red-700/60 uppercase tracking-wider">Despesas Pagas</p>
-                <p className="text-xl font-black text-red-700">R$ {totals.despesa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-xs font-bold text-destructive uppercase tracking-wider">Despesas Pagas</p>
+                <p className="text-xl font-black text-destructive">R$ {totals.despesa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 {totals.pendenteDespesa > 0 && (
-                  <p className="text-[10px] text-red-600/70 font-medium">R$ {totals.pendenteDespesa.toLocaleString()} pendente</p>
+                  <p className="text-[10px] text-destructive font-medium">R$ {totals.pendenteDespesa.toLocaleString()} pendente</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          <Card className={`rounded-2xl border-none shadow-sm ${totals.saldo >= 0 ? 'bg-primary/5' : 'bg-orange-50'}`}>
+          <Card className={`rounded-2xl border ${totals.saldo >= 0 ? 'bg-primary/5' : 'bg-[hsl(var(--warning-subtle))]'}`}>
             <CardContent className="p-4 flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totals.saldo >= 0 ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-600'}`}>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totals.saldo >= 0 ? 'bg-primary/10 text-primary' : 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning-text))]'}`}>
                 <DollarSign className="w-6 h-6" />
               </div>
               <div>
-                <p className={`text-xs font-bold uppercase tracking-wider ${totals.saldo >= 0 ? 'text-primary' : 'text-orange-700'}`}>Saldo em Caixa</p>
-                <p className={`text-xl font-black ${totals.saldo >= 0 ? 'text-primary' : 'text-orange-700'}`}>R$ {totals.saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className={`text-xs font-bold uppercase tracking-wider ${totals.saldo >= 0 ? 'text-primary' : 'text-[hsl(var(--warning-text))]'}`}>Saldo em Caixa</p>
+                <p className={`text-xl font-black ${totals.saldo >= 0 ? 'text-primary' : 'text-[hsl(var(--warning-text))]'}`}>R$ {totals.saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                 <p className="text-[10px] text-muted-foreground font-medium">Considerando apenas pagos</p>
               </div>
             </CardContent>
@@ -483,12 +604,12 @@ export default function Financeiro() {
         </div>
 
         {showFilters && (
-          <Card className="mb-4 rounded-2xl border-muted bg-slate-50/50">
-            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="mb-4 rounded-2xl border-muted bg-muted/30">
+            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Tipo de Registro</label>
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="h-9 bg-white border-none shadow-sm"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 bg-card border-none transition-all"> <SelectValue /> </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
                     <SelectItem value="receita">Apenas Receitas</SelectItem>
@@ -499,7 +620,7 @@ export default function Financeiro() {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Conta Bancária</label>
                 <Select value={filterBank} onValueChange={setFilterBank}>
-                  <SelectTrigger className="h-9 bg-white border-none shadow-sm"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 bg-card border-none transition-all"> <SelectValue /> </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as contas</SelectItem>
                     {bankAccounts.map(acc => (
@@ -508,8 +629,32 @@ export default function Financeiro() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase">Fornecedor / Cliente</label>
+                <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+                  <SelectTrigger className="h-9 bg-card border-none transition-all"> <SelectValue /> </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>Todos</SelectItem>
+                    {uniqueSuppliers.map(s => (
+                      <SelectItem key={s!} value={s!}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase">Mês de Vencimento</label>
+                <Select value={filterMonth} onValueChange={setFilterMonth}>
+                  <SelectTrigger className="h-9 bg-card border-none transition-all"> <SelectValue /> </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>Todos os meses</SelectItem>
+                    {uniqueMonths.map(m => (
+                      <SelectItem key={m!} value={m!} className="capitalize">{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex items-end">
-                <Button variant="ghost" onClick={() => {setFilterType("all"); setFilterBank("all"); setSearch("");}} className="h-9 text-xs text-muted-foreground gap-2">
+                <Button variant="ghost" onClick={() => {setFilterType("all"); setFilterBank("all"); setFilterSupplier(ALL); setFilterMonth(ALL); setSearch("");}} className="h-9 text-xs text-muted-foreground gap-2">
                   <X className="w-3 h-3" /> Limpar Filtros
                 </Button>
               </div>
@@ -519,15 +664,14 @@ export default function Financeiro() {
 
         <TabsContent value="movimentacoes" className="mt-0">
           {/* Desktop Table */}
-          <div className="hidden sm:block bg-card rounded-2xl border border-muted shadow-sm overflow-hidden">
+          <div className="hidden sm:block bg-card rounded-2xl border border-muted overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[100px]">Data</TableHead>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Conta</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Status / Conta</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
@@ -548,34 +692,34 @@ export default function Financeiro() {
                       <TableCell className="max-w-[250px]">
                         <div className="flex flex-col">
                           <span className="font-semibold text-foreground truncate">{r.description}</span>
-                          {r.supplier && <span className="text-[10px] text-muted-foreground truncate uppercase">{r.supplier}</span>}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[9px] h-4 font-semibold bg-muted text-muted-foreground border-border uppercase">
+                              {r.category}
+                            </Badge>
+                            {r.supplier && <span className="text-[10px] text-muted-foreground truncate uppercase">{r.supplier}</span>}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px] font-medium bg-slate-50 uppercase tracking-tighter">
-                          {r.category}
-                        </Badge>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {r.dueDate ? format(new Date(r.dueDate), "dd/MM/yy") : "—"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{r.bankAccountName}</span>
+                        <div className="flex flex-col gap-1.5">
+                          {r.status === "pago" ? (
+                            <Badge variant="outline" className="text-[9px] h-4 font-bold uppercase bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] w-fit">
+                              <CheckCircle2 className="w-2.5 h-2.5 mr-1" /> Pago
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] h-4 font-bold uppercase bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)] w-fit">
+                              <Clock className="w-2.5 h-2.5 mr-1" /> Aberto
+                            </Badge>
+                          )}
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <Building2 className="w-2.5 h-2.5" /> {r.bankAccountName}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {r.status === "pago" ? (
-                          <div className="flex items-center gap-1.5 text-green-600">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span className="text-xs font-semibold">Pago</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-orange-500">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span className="text-xs font-semibold">Aberto</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className={`text-right font-black font-mono ${r.type === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
+                      <TableCell className={`text-right font-black font-mono ${r.type === 'receita' ? 'text-[hsl(var(--success-text))]' : 'text-destructive'}`}>
                         {r.type === 'receita' ? '+' : '-'} R$ {r.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
@@ -587,11 +731,14 @@ export default function Financeiro() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="rounded-xl">
-                              <DropdownMenuItem onClick={() => handleEdit(r, false)} className="gap-2 focus:bg-muted">
-                                <Pencil className="w-4 h-4" /> Editar
+                              <DropdownMenuItem onClick={() => handleEdit(r, false)} className="gap-2 focus:bg-muted cursor-pointer font-medium">
+                                <Pencil className="w-4 h-4 cursor-pointer" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDuplicate(r, false)} className="gap-2 focus:bg-muted cursor-pointer font-medium">
+                                <Copy className="w-4 h-4 cursor-pointer" /> Duplicar
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 text-destructive focus:text-destructive focus:bg-red-50">
+                              <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5">
                                 <Trash2 className="w-4 h-4" /> Excluir
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -610,26 +757,32 @@ export default function Financeiro() {
             <MobileListControls 
               onFilterClick={() => setShowFilters(!showFilters)} 
               onExportClick={handleExport}
-              activeFilterCount={ (filterType !== 'all' ? 1 : 0) + (filterBank !== 'all' ? 1 : 0) }
+              activeFilterCount={ activeFilterCount }
             />
             
             {filteredRecords.map((r) => (
               <div 
                 key={r.id} 
-                className="p-4 bg-card rounded-2xl border border-muted shadow-sm touch-card active:scale-[0.98] transition-transform"
+                className="p-4 bg-card rounded-2xl border border-muted touch-card active:scale-[0.98] transition-transform"
                 onClick={() => handleEdit(r, true)}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant={r.status === 'pago' ? 'secondary' : 'outline'} className={`text-[10px] uppercase font-bold py-0 ${r.status === 'pago' ? 'bg-green-100 text-green-700' : 'text-orange-500'}`}>
+                      <Badge variant="outline" className={`text-[10px] uppercase font-bold ${r.status === 'pago' ? 'bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]' : 'bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]'}`}>
                         {r.status}
                       </Badge>
                       <span className="text-[10px] font-bold text-muted-foreground uppercase">{format(new Date(r.date), "dd/MM/yyyy")}</span>
                     </div>
-                    <p className="font-bold text-slate-800 leading-tight truncate max-w-[200px]">{r.description}</p>
+                    <p className="font-bold text-foreground leading-tight truncate max-w-[200px]">{r.description}</p>
+                    {(r.dueDate || r.paymentMethod) && (
+                      <div className="flex items-center gap-3 mt-1.5 text-[10px] font-medium text-muted-foreground/80">
+                        {r.dueDate && <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-[hsl(var(--warning-text))]" /> Venc: {format(new Date(r.dueDate), "dd/MM/yy")}</span>}
+                        {r.paymentMethod && <span className="flex items-center gap-1 underline decoration-primary/30 underline-offset-2">{r.paymentMethod}</span>}
+                      </div>
+                    )}
                   </div>
-                  <div className={`text-right font-black ${r.type === 'receita' ? 'text-green-600' : 'text-red-500'}`}>
+                  <div className={`text-right font-black ${r.type === 'receita' ? 'text-[hsl(var(--success-text))]' : 'text-destructive'}`}>
                     {r.type === 'receita' ? '+' : '-'} R$ {r.value.toLocaleString()}
                   </div>
                 </div>
@@ -661,11 +814,11 @@ export default function Financeiro() {
                 .reduce((acc, r) => r.type === 'receita' ? acc + r.value : acc - r.value, 0);
 
               return (
-                <Card key={acc.id} className="rounded-2xl border-muted shadow-sm hover:border-primary/30 transition-colors">
+                <Card key={acc.id} className="rounded-2xl border-muted hover:border-primary/30 transition-colors">
                   <CardHeader className="p-4 pb-2 border-b border-muted/40 bg-muted/10">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border flex items-center justify-center font-bold text-primary shadow-sm uppercase">
+                        <div className="w-10 h-10 rounded-xl bg-card border flex items-center justify-center font-bold text-primary uppercase">
                           {acc.icon}
                         </div>
                         <div>
@@ -687,14 +840,14 @@ export default function Financeiro() {
                   <CardContent className="p-4 flex flex-col gap-3">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground font-medium">Saldo Confirmado</span>
-                      <span className={`text-lg font-black font-mono ${balance >= 0 ? 'text-slate-800' : 'text-red-600'}`}>
+                      <span className={`text-lg font-black font-mono ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
                         R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                     {pendente !== 0 && (
                       <div className="flex justify-between items-center pt-2 border-t border-dashed">
                         <span className="text-[10px] text-muted-foreground font-bold uppercase">Previsto / Pendente</span>
-                        <span className={`text-xs font-bold font-mono ${pendente >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                        <span className={`text-xs font-bold font-mono ${pendente >= 0 ? 'text-[hsl(var(--success-text))]' : 'text-[hsl(var(--warning-text))]'}`}>
                           {pendente >= 0 ? '+' : ''} R$ {pendente.toLocaleString()}
                         </span>
                       </div>
@@ -712,7 +865,7 @@ export default function Financeiro() {
         <Sheet open={isSheetOpen} onOpenChange={(open) => !open && closeForm()}>
           <SheetTrigger asChild>
             <button
-              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-xl flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+              className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
             >
               <Plus className="w-6 h-6" />
             </button>

@@ -4,7 +4,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { apiFetchSafraById, apiUpdateSafra, apiDeleteSafra, FormContent, schema } from "./safras";
 import { DEMO_STOCK_MOVEMENTS, DEMO_PRODUCTS, DEMO_HARVESTS } from "@/lib/demo-data";
-import { Loader2, CalendarDays, Sprout, TrendingUp, DollarSign, Tractor, ChevronRight, MapPin, Box, Map, Package, Activity, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { 
+  Loader2, 
+  CalendarDays, 
+  Sprout, 
+  TrendingUp, 
+  Tractor, 
+  ChevronRight, 
+  Box, 
+  Map, 
+  Package, 
+  Activity, 
+  Pencil, 
+  Trash2, 
+  MoreHorizontal 
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -185,7 +199,7 @@ export default function SafraDetalhes() {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center py-20">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Safra não encontrada</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Safra não encontrada</h2>
           <Button onClick={() => window.location.href = "/safras"}>Voltar para Safras</Button>
         </div>
       </AppLayout>
@@ -215,14 +229,14 @@ export default function SafraDetalhes() {
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-slate-900 leading-tight">{safra.name}</h1>
+              <h1 className="text-3xl font-bold font-display text-foreground leading-tight">{safra.name}</h1>
               <Badge variant="outline" className={cn("font-semibold uppercase text-[10px] tracking-wider", STATUS_STYLES[safra.status as string])}>
                 {STATUS_LABELS[safra.status] ?? safra.status}
               </Badge>
             </div>
             <p className="text-muted-foreground font-medium flex items-center gap-2">
               Período de Operação
-              <span className="text-slate-300">|</span>
+              <span className="text-muted-foreground/50">|</span>
               <span className="flex items-center gap-1">
                 {formatDate(safra.startDate)} a {formatDate(safra.endDate)}
               </span>
@@ -260,13 +274,13 @@ export default function SafraDetalhes() {
           { icon: Box, label: "Estimativa Colheita", value: plantedAreaAndCultures.totalSacks.toLocaleString(), unit: "sc" },
           { icon: TrendingUp, label: "Receita Est.", value: "28M", unit: "BRL", primary: true },
         ].map((kpi, idx) => (
-          <Card key={idx} className={cn("bg-white border-slate-200", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
+          <Card key={idx} className={cn("bg-card border", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
-                <kpi.icon className={cn("w-3.5 h-3.5", kpi.primary ? "text-primary" : "text-slate-400")} /> {kpi.label}
+                <kpi.icon className={cn("w-3.5 h-3.5", kpi.primary ? "text-primary" : "text-muted-foreground")} /> {kpi.label}
               </div>
-              <div className="text-2xl font-bold text-slate-900 flex items-baseline gap-1">
-                {kpi.value} <span className="text-xs font-normal text-slate-500 uppercase tracking-tight">{kpi.unit}</span>
+              <div className="text-2xl font-bold text-foreground flex items-baseline gap-1">
+                {kpi.value} <span className="text-xs font-normal text-muted-foreground uppercase tracking-tight">{kpi.unit}</span>
               </div>
             </CardContent>
           </Card>
@@ -275,7 +289,7 @@ export default function SafraDetalhes() {
 
       {/* Tabs and Content Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-slate-200/50 p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto flex-nowrap">
+        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto flex-nowrap">
           <TabsTrigger value="overview" className="px-6 py-2">Dashboard</TabsTrigger>
           <TabsTrigger value="culturas" className="px-6 py-2">Culturas Plantadas</TabsTrigger>
           <TabsTrigger value="insumos" className="px-6 py-2">Estoque Aplicado</TabsTrigger>
@@ -283,7 +297,7 @@ export default function SafraDetalhes() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="w-full xl:w-2/3">
-            <Card className="bg-white border-slate-200">
+            <Card className="bg-card border">
               <CardHeader>
                 <CardTitle className="text-base font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
@@ -294,26 +308,26 @@ export default function SafraDetalhes() {
               <CardContent>
                 <div className="space-y-4">
                   {plantedAreaAndCultures.culturas.map((c: any, i: number) => (
-                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors gap-4">
+                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/30 hover:bg-muted/40 transition-colors gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] font-bold border border-emerald-200 uppercase text-xs flex-shrink-0">
                           {c.culture.substring(0, 2)}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 capitalize">{c.culture}</p>
-                          <p className="text-xs font-medium text-slate-500">Colhido: {c.totalSacks.toLocaleString()} sc</p>
+                          <p className="font-bold text-foreground capitalize">{c.culture}</p>
+                          <p className="text-xs font-medium text-muted-foreground">Colhido: {c.totalSacks.toLocaleString()} sc</p>
                         </div>
                       </div>
-                      <div className="sm:text-right bg-white p-3 rounded-lg border border-slate-100 shadow-sm sm:bg-transparent sm:p-0 sm:border-0 sm:shadow-none w-full sm:w-auto">
-                        <p className="font-bold text-slate-800">{c.totalArea.toLocaleString()} ha</p>
-                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Área Destinada</p>
+                      <div className="sm:text-right bg-card p-3 rounded-lg border border-border sm:bg-transparent sm:p-0 sm:border-0 w-full sm:w-auto">
+                        <p className="font-bold text-foreground">{c.totalArea.toLocaleString()} ha</p>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Área Destinada</p>
                       </div>
                     </div>
                   ))}
                   
                   {plantedAreaAndCultures.culturas.length === 0 && (
                     <div className="py-8 text-center text-muted-foreground flex flex-col items-center">
-                      <Sprout className="w-8 h-8 text-slate-300 mb-2" />
+                      <Sprout className="w-8 h-8 text-muted-foreground/50 mb-2" />
                       Nenhuma cultura plantada nesta safra.
                     </div>
                   )}
@@ -325,14 +339,14 @@ export default function SafraDetalhes() {
 
         <TabsContent value="culturas" className="space-y-4">
           <div className="flex items-center gap-2 mb-4 mt-2">
-            <Sprout className="w-5 h-5 text-slate-400" />
-            <h2 className="text-lg font-bold text-slate-800">Culturas Plantadas</h2>
+            <Sprout className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-lg font-bold text-foreground">Culturas Plantadas</h2>
           </div>
 
           {plantedAreaAndCultures.culturas.length > 0 ? (
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block rounded-2xl border bg-card shadow-sm overflow-hidden">
+              <div className="hidden md:block rounded-2xl border bg-card overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
@@ -349,7 +363,7 @@ export default function SafraDetalhes() {
                             <div className="w-8 h-8 rounded-lg bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] font-bold uppercase text-xs">
                               {c.culture.substring(0, 2)}
                             </div>
-                            <span className="font-bold text-slate-900 capitalize">{c.culture}</span>
+                            <span className="font-bold text-foreground capitalize">{c.culture}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">{c.totalArea.toLocaleString()} <span className="text-xs text-muted-foreground uppercase">ha</span></TableCell>
@@ -363,14 +377,14 @@ export default function SafraDetalhes() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4">
                 {plantedAreaAndCultures.culturas.map((c: any, i: number) => (
-                  <Card key={i} className="bg-white border-slate-200 hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/colheita`}>
+                  <Card key={i} className="bg-card border hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/colheita`}>
                     <CardContent className="p-5 flex items-center gap-5">
                       <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] flex-shrink-0 uppercase font-bold text-lg">
                         {c.culture.substring(0, 2)}
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <div className="text-base font-bold text-slate-900 leading-tight capitalize">{c.culture}</div>
+                          <div className="text-base font-bold text-foreground leading-tight capitalize">{c.culture}</div>
                         </div>
                         <div className="text-xs text-muted-foreground font-medium mb-2">Total Colhido na Safra</div>
                         <div className="flex items-end justify-between">
@@ -379,8 +393,8 @@ export default function SafraDetalhes() {
                             <span className="text-[10px] uppercase font-bold tracking-wider mb-1">sc</span>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-slate-800 text-sm leading-tight">{c.totalArea.toLocaleString()} ha</p>
-                            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Área</p>
+                            <p className="font-bold text-foreground text-sm leading-tight">{c.totalArea.toLocaleString()} ha</p>
+                            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Área</p>
                           </div>
                         </div>
                       </div>
@@ -390,23 +404,23 @@ export default function SafraDetalhes() {
               </div>
             </>
           ) : (
-            <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-              <Sprout className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium text-lg">Nenhuma cultura atrelada a esta safra.</p>
+            <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+              <Sprout className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium text-lg">Nenhuma cultura atrelada a esta safra.</p>
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="insumos" className="space-y-4">
           <div className="flex items-center gap-2 mb-4 mt-2">
-            <Package className="w-5 h-5 text-slate-400" />
-            <h2 className="text-lg font-bold text-slate-800">Insumos Retirados do Estoque</h2>
+            <Package className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-lg font-bold text-foreground">Insumos Retirados do Estoque</h2>
           </div>
           
           {usedProducts.length > 0 ? (
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block rounded-2xl border bg-card shadow-sm overflow-hidden">
+              <div className="hidden md:block rounded-2xl border bg-card overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
@@ -423,7 +437,7 @@ export default function SafraDetalhes() {
                             <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
                               <Activity className="w-4 h-4" />
                             </div>
-                            <span className="font-bold text-slate-900">{p.name}</span>
+                            <span className="font-bold text-foreground">{p.name}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{p.category}</TableCell>
@@ -437,14 +451,14 @@ export default function SafraDetalhes() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4">
                 {usedProducts.map((p: any) => (
-                  <Card key={p.id} className="bg-white border-slate-200 hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/estoque/${p.id}`}>
+                  <Card key={p.id} className="bg-card border hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/estoque/${p.id}`}>
                     <CardContent className="p-5 flex items-center gap-5">
                       <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
                         <Activity className="w-6 h-6" />
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <div className="text-base font-bold text-slate-900 leading-tight">{p.name}</div>
+                          <div className="text-base font-bold text-foreground leading-tight">{p.name}</div>
                         </div>
                         <div className="text-xs text-muted-foreground font-medium mb-2">{p.category}</div>
                         <div className="flex items-end gap-1 text-primary">
@@ -458,9 +472,9 @@ export default function SafraDetalhes() {
               </div>
             </>
           ) : (
-            <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-              <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium text-lg">Nenhum insumo aplicado nesta safra até o momento.</p>
+            <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+              <Package className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium text-lg">Nenhum insumo aplicado nesta safra até o momento.</p>
             </div>
           )}
         </TabsContent>

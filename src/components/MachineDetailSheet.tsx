@@ -106,7 +106,7 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="sm:max-w-3xl overflow-y-auto bg-slate-50/50">
+      <SheetContent className="sm:max-w-3xl overflow-y-auto bg-muted/30">
         <SheetHeader className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-3">
@@ -129,7 +129,7 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
             <div className="flex items-center gap-2 min-w-[150px]">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="h-9 bg-white">
+                <SelectTrigger className="h-9 bg-card">
                   <SelectValue placeholder="Filtrar Mês" />
                 </SelectTrigger>
                 <SelectContent>
@@ -146,7 +146,7 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
           
           <div className="mt-4 flex flex-wrap gap-3">
             {machine.purchase_cost && (
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-white px-3 py-2 rounded-lg border border-slate-200">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-card px-3 py-2 rounded-lg border border-border">
                 <DollarSign className="w-4 h-4 text-[hsl(var(--success-text))]" />
                 Custo de Aquisição: 
                 <span className="text-[hsl(var(--success-text))] font-bold ml-1">
@@ -155,68 +155,68 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
               </div>
             )}
             {machine.location && (
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-slate-100/50 px-3 py-2 rounded-lg border border-slate-200">
-                <MapPin className="w-4 h-4 text-slate-500" />
-                Localização: <span className="text-slate-700 font-bold ml-1">{machine.location}</span>
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg border border-border">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                Localização: <span className="text-muted-foreground font-bold ml-1">{machine.location}</span>
               </div>
             )}
           </div>
         </SheetHeader>
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <Card className="bg-white shadow-sm border-slate-200">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-1 uppercase font-bold tracking-wider">
                 <Box className="w-3 h-3 text-primary" /> Produção
               </div>
-              <div className="text-lg font-bold text-slate-900">{stats?.totalSacks.toLocaleString()} <span className="text-[10px] font-normal text-slate-500 uppercase tracking-tighter">sc</span></div>
+              <div className="text-lg font-bold text-foreground">{stats?.totalSacks.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-tighter">sc</span></div>
             </CardContent>
           </Card>
-          <Card className="bg-white shadow-sm border-slate-200">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-1 uppercase font-bold tracking-wider">
                 <Map className="w-3 h-3 text-primary" /> Área
               </div>
-              <div className="text-lg font-bold text-slate-900">{stats?.totalArea.toLocaleString()} <span className="text-[10px] font-normal text-slate-500 uppercase tracking-tighter">ha</span></div>
+              <div className="text-lg font-bold text-foreground">{stats?.totalArea.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-tighter">ha</span></div>
             </CardContent>
           </Card>
-          <Card className="bg-white shadow-sm border-slate-200">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-1 uppercase font-bold tracking-wider">
                 <Fuel className="w-3 h-3 text-primary" /> Combustível
               </div>
-              <div className="text-lg font-bold text-slate-900">{stats?.totalLiters.toLocaleString()} <span className="text-[10px] font-normal text-slate-500 uppercase tracking-tighter">L</span></div>
+              <div className="text-lg font-bold text-foreground">{stats?.totalLiters.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-tighter">L</span></div>
             </CardContent>
           </Card>
-          <Card className="bg-white shadow-sm border-slate-200">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-1 uppercase font-bold tracking-wider">
                 <Truck className="w-3 h-3 text-primary" /> Transporte
               </div>
-              <div className="text-lg font-bold text-slate-900">{stats?.totalTons.toLocaleString()} <span className="text-[10px] font-normal text-slate-500 uppercase tracking-tighter">ton</span></div>
+              <div className="text-lg font-bold text-foreground">{stats?.totalTons.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-tighter">ton</span></div>
             </CardContent>
           </Card>
-          <Card className="bg-white shadow-sm border-slate-200 lg:col-span-1 col-span-2">
+          <Card className="bg-card border-border lg:col-span-1 col-span-2">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-1 uppercase font-bold tracking-wider">
                 <TrendingUp className="w-3 h-3 text-primary" /> Rendimento
               </div>
-              <div className="text-lg font-bold text-slate-900">{stats?.avgProductivity} <span className="text-[10px] font-normal text-slate-500 uppercase tracking-tighter">sc/ha</span></div>
+              <div className="text-lg font-bold text-foreground">{stats?.avgProductivity} <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-tighter">sc/ha</span></div>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-slate-200/50 p-1 w-full justify-start gap-1 overflow-x-auto h-auto min-h-[44px]">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-white px-4 py-2">Visão Geral</TabsTrigger>
-            <TabsTrigger value="harvests" className="data-[state=active]:bg-white px-4 py-2">Colheitas</TabsTrigger>
-            <TabsTrigger value="fuelings" className="data-[state=active]:bg-white px-4 py-2">Abastecimentos</TabsTrigger>
-            <TabsTrigger value="transports" className="data-[state=active]:bg-white px-4 py-2">Transportes</TabsTrigger>
+          <TabsList className="bg-muted p-1 w-full justify-start gap-1 overflow-x-auto h-auto min-h-[44px]">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-card px-4 py-2">Visão Geral</TabsTrigger>
+            <TabsTrigger value="harvests" className="data-[state=active]:bg-card px-4 py-2">Colheitas</TabsTrigger>
+            <TabsTrigger value="fuelings" className="data-[state=active]:bg-card px-4 py-2">Abastecimentos</TabsTrigger>
+            <TabsTrigger value="transports" className="data-[state=active]:bg-card px-4 py-2">Transportes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <Card className="bg-white shadow-sm border-slate-200">
+               <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-primary" /> Colheita por Data
@@ -243,7 +243,7 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
                 </CardContent>
               </Card>
 
-              <Card className="bg-white shadow-sm border-slate-200">
+              <Card className="bg-card border-border">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Fuel className="w-4 h-4 text-primary" /> Trend de Combustível
@@ -276,26 +276,26 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
             {stats?.machineHarvests.length ? (
               <div className="space-y-3">
                 {stats.machineHarvests.map((h: any) => (
-                  <div key={h.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:border-primary/30">
+                  <div key={h.id} className="bg-card p-4 rounded-xl border border-border transition-all hover:border-primary/30">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="text-sm font-bold text-slate-900 mb-1">{h.area}</div>
+                        <div className="text-sm font-bold text-foreground mb-1">{h.area}</div>
                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                           <Calendar className="w-3 h-3" /> {new Date(h.date).toLocaleDateString('pt-BR')} · {h.driverName}
                         </div>
                       </div>
-                      <Badge variant="outline" className="bg-slate-50 uppercase text-[10px] font-bold tracking-tighter">
+                      <Badge variant="outline" className="bg-muted/40 uppercase text-[10px] font-bold tracking-tighter">
                         {h.culture}
                       </Badge>
                     </div>
-                    <div className="flex gap-6 mt-3 pt-3 border-t border-slate-100">
+                    <div className="flex gap-6 mt-3 pt-3 border-t border-border">
                       <div>
                         <div className="text-[10px] uppercase text-muted-foreground font-bold leading-tight">Produção</div>
-                        <div className="text-sm font-bold text-slate-800">{h.quantitySacks} <span className="text-[10px] font-normal">sc</span></div>
+                        <div className="text-sm font-bold text-foreground">{h.quantitySacks} <span className="text-[10px] font-normal">sc</span></div>
                       </div>
                       <div>
                         <div className="text-[10px] uppercase text-muted-foreground font-bold leading-tight">Área</div>
-                        <div className="text-sm font-bold text-slate-800">{h.areaHectares} <span className="text-[10px] font-normal">ha</span></div>
+                        <div className="text-sm font-bold text-foreground">{h.areaHectares} <span className="text-[10px] font-normal">ha</span></div>
                       </div>
                       <div>
                         <div className="text-[10px] uppercase text-muted-foreground font-bold leading-tight">Rendimento</div>
@@ -306,7 +306,7 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl bg-slate-100/30">
+              <div className="p-12 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl bg-muted/30">
                 Nenhuma colheita registrada para este período.
               </div>
             )}
@@ -316,20 +316,20 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
              {stats?.machineFuelings.length ? (
               <div className="space-y-3">
                 {stats.machineFuelings.map((f: any) => (
-                  <div key={f.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-all hover:border-primary/30">
+                  <div key={f.id} className="bg-card p-4 rounded-xl border border-border flex items-center justify-between transition-all hover:border-primary/30">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-primary">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-primary">
                         <Fuel className="w-5 h-5" />
                       </div>
                       <div>
-                         <div className="text-sm font-bold text-slate-900">{f.liters} Litros</div>
-                         <div className="text-xs text-muted-foreground flex items-center gap-1 text-slate-500">
-                          <Calendar className="w-3 h-3" /> {new Date(f.date).toLocaleDateString('pt-BR')} · <span className="text-slate-700 font-medium">{f.operatorName}</span>
+                         <div className="text-sm font-bold text-foreground">{f.liters} Litros</div>
+                         <div className="text-xs text-muted-foreground flex items-center gap-1 text-muted-foreground">
+                          <Calendar className="w-3 h-3" /> {new Date(f.date).toLocaleDateString('pt-BR')} · <span className="text-muted-foreground font-medium">{f.operatorName}</span>
                         </div>
                       </div>
                     </div>
                     {f.notes && (
-                      <div className="text-[10px] bg-[hsl(var(--warning-subtle))] px-2 py-1 rounded text-amber-700 max-w-[150px] truncate border border-amber-100">
+                      <div className="text-[10px] bg-[hsl(var(--warning-subtle))] px-2 py-1 rounded text-[hsl(var(--warning-text))] max-w-[150px] truncate border border-[hsl(var(--warning)/0.2)]">
                         {f.notes}
                       </div>
                     )}
@@ -337,7 +337,7 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl bg-slate-100/30">
+              <div className="p-12 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl bg-muted/30">
                 Nenhum abastecimento registrado para este período.
               </div>
             )}
@@ -347,35 +347,35 @@ export function MachineDetailSheet({ machine, onClose }: MachineDetailSheetProps
              {stats?.machineTransports.length ? (
               <div className="space-y-3">
                 {stats.machineTransports.map((t: any) => (
-                  <div key={t.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:border-primary/30">
+                  <div key={t.id} className="bg-card p-4 rounded-xl border border-border transition-all hover:border-primary/30">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))]">
                           <Truck className="w-5 h-5" />
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-slate-900">{t.cargoTons} Toneladas</div>
+                          <div className="text-sm font-bold text-foreground">{t.cargoTons} Toneladas</div>
                           <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                             {t.origin} → {t.destination}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-0.5">Placa</div>
-                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 text-[10px] px-1.5 py-0 h-4">{t.truckPlate}</Badge>
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter mb-0.5">Placa</div>
+                        <Badge variant="secondary" className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0 h-4">{t.truckPlate}</Badge>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-50">
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-border">
                        <span className="text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> {new Date(t.date).toLocaleDateString('pt-BR')}
                        </span>
-                       <span className="font-medium text-slate-700">{t.driverName}</span>
+                       <span className="font-medium text-muted-foreground">{t.driverName}</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl bg-slate-100/30">
+              <div className="p-12 text-center text-muted-foreground italic border-2 border-dashed rounded-3xl bg-muted/30">
                 Nenhum transporte vinculado a esta unidade.
               </div>
             )}

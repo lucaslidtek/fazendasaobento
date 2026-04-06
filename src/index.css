@@ -159,4 +159,52 @@
   }
   .animate-modal-in { animation: modal-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .animate-modal-out { animation: modal-out 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  @media print {
+    .no-print, 
+    button, 
+    aside, 
+    header.sticky,
+    [role="tablist"],
+    .dropdown-menu,
+    .sheet-content,
+    .dialog-content {
+      display: none !important;
+    }
+
+    body {
+      background: white !important;
+      color: black !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+
+    .card {
+      border: 1px solid #eee !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+    }
+
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+    }
+
+    th, td {
+      border-bottom: 1px solid #ddd !important;
+      font-size: 10px !important;
+    }
+
+    .badge {
+      border: 1px solid #ccc !important;
+      color: black !important;
+      background: transparent !important;
+    }
+  }
 }

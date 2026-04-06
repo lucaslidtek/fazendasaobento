@@ -99,7 +99,7 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0 shadow-xl">
+    <Sidebar collapsible="icon" className="border-r-0">
       <SidebarContent className="bg-sidebar">
 
         {/* ── Header: logo + toggle ── */}
@@ -128,7 +128,7 @@ export function AppSidebar() {
                 setSelectedSafraId(Number(val));
                 setSelectedTalhaoId(null); // Reset talhão when safra changes
               }}>
-                <SelectTrigger className="h-10 text-sm font-semibold bg-white text-sidebar border-none shadow-sm hover:bg-zinc-50 focus:ring-0 rounded-lg">
+                <SelectTrigger className="h-10 text-sm font-semibold bg-white text-sidebar border-none hover:bg-zinc-50 focus:ring-0 rounded-lg">
                   <SelectValue placeholder="Selecione a safra" />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,7 +142,7 @@ export function AppSidebar() {
             <div className="space-y-1.5">
               <label className="text-[11px] uppercase tracking-wider font-bold text-sidebar-foreground/80">Área / Talhão</label>
               <Select value={selectedTalhaoId?.toString() || "all"} onValueChange={(val) => setSelectedTalhaoId(val === "all" ? null : Number(val))}>
-                <SelectTrigger className="h-10 text-sm font-semibold bg-white text-sidebar border-none shadow-sm hover:bg-zinc-50 focus:ring-0 rounded-lg">
+                <SelectTrigger className="h-10 text-sm font-semibold bg-white text-sidebar border-none hover:bg-zinc-50 focus:ring-0 rounded-lg">
                   <SelectValue placeholder="Visão Geral (Todos)" />
                 </SelectTrigger>
                 <SelectContent className="text-sidebar">
@@ -169,7 +169,7 @@ export function AppSidebar() {
                     asChild
                     isActive={location === item.path}
                     tooltip={item.title}
-                    className="hover-elevate transition-all duration-200 py-5 mx-2 rounded-xl group-data-[collapsible=icon]:mx-1"
+                    className="transition-colors py-5 mx-2 rounded-xl group-data-[collapsible=icon]:mx-1"
                   >
                     <Link href={item.path} className="flex items-center gap-3 text-sidebar-foreground/75 hover:text-sidebar-foreground">
                       <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -196,7 +196,7 @@ export function AppSidebar() {
                       asChild
                       isActive={location === item.path}
                       tooltip={item.title}
-                      className="hover-elevate transition-all duration-200 py-5 mx-2 rounded-xl group-data-[collapsible=icon]:mx-1"
+                      className="transition-colors py-5 mx-2 rounded-xl group-data-[collapsible=icon]:mx-1"
                     >
                       <Link href={item.path} className="flex items-center gap-3 text-sidebar-foreground/75 hover:text-sidebar-foreground">
                         <item.icon className="w-5 h-5 flex-shrink-0" />
