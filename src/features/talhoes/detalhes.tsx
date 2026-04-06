@@ -435,7 +435,7 @@ export default function TalhaoDetalhes() {
                   <TableBody>
                     {harvestStats.harvests.map((h: any, i: number) => (
                       <TableRow key={i} className="hover:bg-muted/30 cursor-pointer group" onClick={() => window.location.href = `/colheita`}>
-                        <TableCell className="font-bold text-foreground">Safra de {h.culture}</TableCell>
+                        <TableCell className="font-bold text-foreground">Safra de {h.cultures?.join(", ") ?? "—"}</TableCell>
                         <TableCell className="text-muted-foreground text-xs">{formatDate(h.date)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-muted/50 border-none text-[10px] uppercase font-bold text-muted-foreground px-2">
@@ -460,7 +460,7 @@ export default function TalhaoDetalhes() {
                     <CardContent className="p-5 flex flex-col gap-3">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="text-base font-bold text-foreground leading-tight">Safra de {h.culture}</div>
+                          <div className="text-base font-bold text-foreground leading-tight">Safra de {h.cultures?.join(", ") ?? "—"}</div>
                           <div className="text-xs text-muted-foreground mt-0.5 font-medium">{formatDate(h.date)}</div>
                         </div>
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold px-2 rounded-lg">

@@ -2,7 +2,7 @@
 
 **Fonte:** Transcrição da reunião de alinhamento (Felipe, Júnior, Lucas)
 **Última atualização:** 2026-04-06
-**Status:** Validado contra o SPEC v1
+**Status:** Validado contra o SPEC v1 + Transcrições Vídeo/Áudio (Júnior, Abril 2026)
 
 > Este documento registra TODAS as decisões de negócio extraídas da reunião.
 > Ele serve como fonte da verdade para implementação, manutenção e onboarding.
@@ -48,7 +48,16 @@
 | RN-019 | Transporte de frete **faz parte da Colheita**, não é uma tela separada — _"juntar na colheita, fica melhor, fica tudo numa aba só"_ | 13:54–14:45 |
 | RN-020 | A tela de produtividade/relatório mostra o resultado consolidado da colheita | 7:22–7:30 |
 
-### 2.4 Fórmulas e Descontos
+### 2.4 Relatório do Silo (Validação via Transcrição — Vídeo 1)
+
+| Regra | Descrição | Ref. |
+|-------|-----------|------|
+| RN-025 | O relatório do silo é separado por **cultura** ("relatório de milho", "relatório de soja") | V1 0:40 |
+| RN-026 | **Peso de Entrada** (Peso Bruto) é o valor base para pagamento ao motorista — confirma RN-011 | V1 0:13 |
+| RN-027 | Campos do relatório do silo: Peso Entrada, Umidade (%), Impureza (%), Peso Líquido, Motorista, Placa do Caminhão, Data | V1 0:09–0:37 |
+| RN-028 | O Peso Líquido é o que **interfere na produtividade da lavoura** — confirma RN-012 | V1 0:23–0:29 |
+
+### 2.5 Fórmulas e Descontos
 
 | Regra | Descrição | Ref. |
 |-------|-----------|------|
@@ -114,6 +123,16 @@
 | RN-062 | Os insumos selecionados na atividade devem **dar baixa no estoque automaticamente** | 27:10–27:17 |
 | RN-063 | Os insumos consumidos entram como **custo da cultura/área** | 27:15–27:17 |
 | RN-064 | A atividade registra em qual **fase/etapa** o talhão está (plantio, 1º fungicida, etc.) | 28:04–28:22 |
+
+### 6.2 Valoração de Atividades (Transcrição — Vídeo 2 + Áudio)
+
+| Regra | Descrição | Ref. |
+|-------|-----------|------|
+| RN-065 | Cada atividade deve exibir o **valor total**, calculado a partir dos produtos utilizados | V2 0:29–0:35 |
+| RN-066 | **Custo por hectare** da atividade = Valor Total ÷ Tamanho da Área | V2 0:35–0:42 |
+| RN-067 | A atividade registra: **Operador** (quem operava a máquina), **Máquina**, e **Produtos/Insumos** — confirma estrutura existente | V2 0:42–0:50 |
+| RN-068 | Para cada produto: **Dosagem/ha**, **Valor/ha** (derivado do preço × dosagem), **Quantidade total na área**, **Valor total do produto** | V2 0:52–1:07 |
+| RN-069 | Os produtos consumidos nas atividades são as **saídas do estoque**. Entradas vêm do Financeiro — confirma RN-053 e RN-062 | V2 1:09–1:16 |
 
 ---
 
@@ -231,3 +250,13 @@
 | RN-103 | Relatórios devem incluir: Produção (total sacos), Produtividade (sc/ha), Rentabilidade (custos diretos + indiretos) | 38:44–39:53 |
 | RN-104 | Rentabilidade direta = custos de plantio + insumos pela área | 39:14–39:29 |
 | RN-105 | Custos indiretos = arrendo, administrativo, escritório (rateado), manutenção geral | 39:29–39:52 |
+
+---
+
+## 12. Custo da Safra e Relatório Final (Transcrição — Áudio)
+
+| Regra | Descrição | Ref. |
+|-------|-----------|------|
+| RN-106 | Ao alocar valor de cada atividade **por hectare**, obtém-se o custo total por hectare durante a safra | Áudio 0:00–0:12 |
+| RN-107 | O **relatório final de safra** mostra "o que custou tudo a safra por área", discriminando cada atividade | Áudio 0:15–0:22 |
+| RN-108 | Temporalidade padrão da safra: **outubro → maio** (aproximadamente) | Áudio 0:12–0:15 |

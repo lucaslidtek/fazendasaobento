@@ -121,7 +121,7 @@ export interface ActivityRecord {
   machineName: string;
   operatorId: number;
   operatorName: string;
-  products: { productId?: number; name: string; quantity: number; unit: string }[];
+  products: { productId?: number; name: string; quantity: number; unit: string; unitPrice: number }[];
   areaHectares: number;
   notes?: string;
   createdAt: string;
@@ -247,15 +247,15 @@ export const DEMO_ACTIVITIES: ActivityRecord[] = [
   { 
     id: 1, date: "2026-03-12", type: "Plantio", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 1, machineName: "John Deere 8R", operatorId: 1, operatorName: "Lucas Lima", areaHectares: 45, 
     products: [
-      { productId: 1, name: "Semente Soja RR", quantity: 2.5, unit: "sc/ha" },
-      { productId: 3, name: "NPK 04-14-08", quantity: 250, unit: "kg/ha" }
+      { productId: 1, name: "Semente Soja RR", quantity: 2.5, unit: "sc/ha", unitPrice: 180.00 },
+      { productId: 3, name: "NPK 04-14-08", quantity: 250, unit: "kg/ha", unitPrice: 3.20 }
     ],
     createdAt: "2026-03-12T10:00:00Z" 
   },
   { 
     id: 2, date: "2026-03-11", type: "Pulverização", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 6, machineName: "TDP 12000", operatorId: 2, operatorName: "Marcos Silva", areaHectares: 20, 
     products: [
-      { productId: 2, name: "Glifosato 480", quantity: 3, unit: "L/ha" }
+      { productId: 2, name: "Glifosato 480", quantity: 3, unit: "L/ha", unitPrice: 45.00 }
     ],
     notes: "Aplicação pré-emergente", 
     createdAt: "2026-03-11T16:00:00Z" 
@@ -269,38 +269,39 @@ export const DEMO_ACTIVITIES: ActivityRecord[] = [
   { 
     id: 4, date: "2026-01-20", type: "Adubação", talhaoId: 1, talhaoName: "Talhão A1", safraId: 4, machineId: 5, machineName: "John Deere 8R 370", operatorId: 1, operatorName: "Lucas Almeida", areaHectares: 20, 
     products: [
-      { productId: 105, name: "Cloreto de Potássio", quantity: 120, unit: "kg/ha" }
+      { productId: 105, name: "Cloreto de Potássio", quantity: 120, unit: "kg/ha", unitPrice: 4.50 }
     ],
     createdAt: "2026-01-20T08:00:00Z" 
   },
   { 
     id: 5, date: "2026-03-15", type: "Pulverização", talhaoId: 4, talhaoName: "Talhão B1", safraId: 4, machineId: 7, machineName: "Stara Imperador 4000", operatorId: 2, operatorName: "Marcos Lima", areaHectares: 22, 
     products: [
-      { productId: 2, name: "Glifosato 480", quantity: 2.5, unit: "L/ha" }
+      { productId: 2, name: "Glifosato 480", quantity: 2.5, unit: "L/ha", unitPrice: 45.00 }
     ],
     createdAt: "2026-03-15T14:00:00Z" 
   },
   { 
     id: 6, date: "2026-03-14", type: "Adubação", talhaoId: 6, talhaoName: "Talhão C1", safraId: 4, machineId: 8, machineName: "Valtra BH 224", operatorId: 3, operatorName: "João Santos", areaHectares: 21, 
     products: [
-      { productId: 3, name: "NPK 04-14-08", quantity: 200, unit: "kg/ha" }
+      { productId: 3, name: "NPK 04-14-08", quantity: 200, unit: "kg/ha", unitPrice: 3.20 }
     ],
     createdAt: "2026-03-14T09:00:00Z" 
   },
   { 
     id: 7, date: "2026-03-13", type: "Plantio", talhaoId: 7, talhaoName: "Talhão C2", safraId: 4, machineId: 5, machineName: "John Deere 8R 370", operatorId: 1, operatorName: "Lucas Almeida", areaHectares: 24, 
     products: [
-      { productId: 1, name: "Semente Soja RR", quantity: 2.2, unit: "sc/ha" }
+      { productId: 1, name: "Semente Soja RR", quantity: 2.2, unit: "sc/ha", unitPrice: 180.00 }
     ],
     createdAt: "2026-03-13T08:00:00Z" 
   }
 ];
 
 export const DEMO_PRODUCTS = [
-  { id: 1, name: "Semente Soja RR", category: "Sementes", currentStock: 450, minStock: 100, unit: "SC" },
-  { id: 2, name: "Glifosato 480", category: "Defensivos", currentStock: 120, minStock: 200, unit: "L" },
-  { id: 3, name: "NPK 04-14-08", category: "Fertilizantes", currentStock: 12500, minStock: 5000, unit: "KG" },
-  { id: 4, name: "Diesel S10", category: "Combustível", currentStock: 50, minStock: 1000, unit: "L" },
+  { id: 1, name: "Semente Soja RR", category: "Sementes", currentStock: 450, minStock: 100, unit: "SC", unitPrice: 180.00 },
+  { id: 2, name: "Glifosato 480", category: "Defensivos", currentStock: 120, minStock: 200, unit: "L", unitPrice: 45.00 },
+  { id: 3, name: "NPK 04-14-08", category: "Fertilizantes", currentStock: 12500, minStock: 5000, unit: "KG", unitPrice: 3.20 },
+  { id: 4, name: "Diesel S10", category: "Combustível", currentStock: 50, minStock: 1000, unit: "L", unitPrice: 5.80 },
+  { id: 105, name: "Cloreto de Potássio", category: "Fertilizantes", currentStock: 8000, minStock: 2000, unit: "KG", unitPrice: 4.50 },
 ];
 
 export const DEMO_CROPS = [
@@ -363,4 +364,12 @@ export const DEMO_FUELINGS: FuelingRecord[] = [
   { id: 5, date: "2026-03-08", machineId: 6, machineName: "TDP 12000", operatorName: "Paulo Andrade", volumeLiters: 180, fuelType: "Diesel S10", costPerLiter: 5.82, totalCost: 1047.6, talhaoId: 4, talhaoName: "Talhão B1", responsavelName: "João Pedro", safraId: 4, horimeter: 340 },
   { id: 6, date: "2026-03-07", machineId: 8, machineName: "Valtra BH 224", operatorName: "Ana Rodrigues", volumeLiters: 250, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 1450, talhaoId: 8, talhaoName: "Talhão D1", responsavelName: "Roberto Farias", safraId: 4, horimeter: 4500 },
   { id: 7, date: "2026-03-06", machineId: 3, machineName: "Massey Ferguson 7245", operatorName: "Carlos Mendes", volumeLiters: 310, fuelType: "Diesel S500", costPerLiter: 5.35, totalCost: 1658.5, talhaoId: 6, talhaoName: "Talhão C1", responsavelName: "João Pedro", safraId: 4, horimeter: 2100 },
+  { id: 8, date: "2026-03-05", machineId: 1, machineName: "John Deere S790", operatorName: "Carlos Mendes", volumeLiters: 380, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 2204, talhaoId: 3, talhaoName: "Talhão A3", responsavelName: "Lucas Almeida", safraId: 4, horimeter: 1200 },
+  { id: 9, date: "2026-03-04", machineId: 2, machineName: "New Holland TC5.90", operatorName: "Paulo Andrade", volumeLiters: 340, fuelType: "Diesel S10", costPerLiter: 5.85, totalCost: 1989, talhaoId: 4, talhaoName: "Talhão B1", responsavelName: "Roberto Farias", safraId: 4, horimeter: 820 },
+  { id: 10, date: "2026-03-03", machineId: 4, machineName: "Case IH 9250", operatorName: "José Silva", volumeLiters: 395, fuelType: "Diesel S500", costPerLiter: 5.40, totalCost: 2133, talhaoId: 2, talhaoName: "Talhão A2", responsavelName: "Marcos Lima", safraId: 4, horimeter: 430 },
+  { id: 11, date: "2026-03-02", machineId: 1, machineName: "John Deere S790", operatorName: "João Pedro", volumeLiters: 420, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 2436, talhaoId: 2, talhaoName: "Talhão A2", responsavelName: "Lucas Almeida", safraId: 4, horimeter: 1180 },
+  { id: 12, date: "2026-03-01", machineId: 5, machineName: "John Deere 8R 370", operatorName: "Lucas Almeida", volumeLiters: 300, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 1740, talhaoId: 8, talhaoName: "Talhão D1", responsavelName: "Lucas Almeida", safraId: 4, horimeter: 590 },
+  { id: 13, date: "2026-02-28", machineId: 2, machineName: "New Holland TC5.90", operatorName: "Marcos Lima", volumeLiters: 355, fuelType: "Diesel S10", costPerLiter: 5.85, totalCost: 2077, talhaoId: 5, talhaoName: "Talhão B3", responsavelName: "Roberto Farias", safraId: 4, horimeter: 790 },
+  { id: 14, date: "2026-02-27", machineId: 4, machineName: "Case IH 9250", operatorName: "José Silva", volumeLiters: 430, fuelType: "Diesel S500", costPerLiter: 5.40, totalCost: 2322, talhaoId: 3, talhaoName: "Talhão A3", responsavelName: "Marcos Lima", safraId: 4, horimeter: 410 },
+  { id: 15, date: "2026-02-26", machineId: 5, machineName: "John Deere 8R 370", operatorName: "Lucas Almeida", volumeLiters: 260, fuelType: "Diesel S10", costPerLiter: 5.80, totalCost: 1508, talhaoId: 7, talhaoName: "Talhão C2", responsavelName: "Lucas Almeida", safraId: 4, horimeter: 560 },
 ];

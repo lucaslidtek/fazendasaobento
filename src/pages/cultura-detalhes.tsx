@@ -114,7 +114,7 @@ export default function CulturaDetalhes() {
     if (!cultura) return { totalSacks: 0, totalArea: 0, productivityAvg: 0, harvests: [] };
     
     // Exact or partial name match on demo harvests
-    const harvests = DEMO_HARVESTS.filter(h => h.culture.toLowerCase() === cultura.name.toLowerCase());
+    const harvests = DEMO_HARVESTS.filter(h => h.cultures?.some((c: string) => c.toLowerCase() === cultura.name.toLowerCase()));
     
     // Calculate total stats
     let sacks = 0;

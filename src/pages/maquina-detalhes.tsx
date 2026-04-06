@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { 
   DEMO_HARVESTS, 
   DEMO_FUELINGS, 
-  DEMO_TRANSPORTS, 
   DEMO_MACHINES,
   DEMO_MACHINE_REVENUES,
   DEMO_MACHINE_MAINTENANCES,
@@ -25,7 +24,6 @@ import {
   TrendingUp, 
   Calendar, 
   BarChart3, 
-  Truck, 
   ChevronRight, 
   MapPin,
   Wrench,
@@ -254,7 +252,6 @@ export default function MaquinaDetalhes() {
 
     let harvests = DEMO_HARVESTS.filter(h => h.machineId === machine.id);
     let fuelings = DEMO_FUELINGS.filter(f => f.machineId === machine.id);
-    let transports = DEMO_TRANSPORTS.filter(t => t.machineId === machine.id);
     let revenues = DEMO_MACHINE_REVENUES.filter(r => r.machineId === machine.id);
     
     const financialMaintenances = DEMO_FINANCIAL_RECORDS
@@ -280,7 +277,6 @@ export default function MaquinaDetalhes() {
       const monthIndex = parseInt(selectedMonth);
       harvests = harvests.filter(h => new Date(h.date).getMonth() === monthIndex);
       fuelings = fuelings.filter(f => new Date(f.date).getMonth() === monthIndex);
-      transports = transports.filter(t => t.machineId === machine.id && new Date(t.date).getMonth() === monthIndex);
       revenues = revenues.filter(r => new Date(r.date).getMonth() === monthIndex);
       maintenances = maintenances.filter(m => new Date(m.date).getMonth() === monthIndex);
     }
@@ -288,7 +284,6 @@ export default function MaquinaDetalhes() {
     const totalSacks = harvests.reduce((acc: number, h: any) => acc + h.quantitySacks, 0);
     const totalArea = harvests.reduce((acc: number, h: any) => acc + h.areaHectares, 0);
     const totalLiters = fuelings.reduce((acc: number, f: any) => acc + f.volumeLiters, 0);
-    const totalTons = transports.reduce((acc: number, t: any) => acc + t.cargoTons, 0);
     const avgProductivity = totalArea > 0 ? (totalSacks / totalArea).toFixed(1) : "0";
 
     const totalRevenue = revenues.reduce((acc: number, r: any) => acc + r.value, 0);
@@ -313,14 +308,12 @@ export default function MaquinaDetalhes() {
       totalSacks,
       totalArea,
       totalLiters,
-      totalTons,
       avgProductivity,
       totalRevenue,
       totalMaintenance,
       operatingProfit,
       machineHarvests: harvests,
       machineFuelings: fuelings,
-      machineTransports: transports,
       machineRevenues: revenues,
       machineMaintenances: maintenances,
       harvestChartData,
@@ -330,8 +323,7 @@ export default function MaquinaDetalhes() {
 
   const getRevenueRedirect = (revenue: any) => {
     const desc = revenue.description.toLowerCase();
-    if (desc.includes('colheita') || desc.includes('plantio')) return '/colheita';
-    if (desc.includes('frete') || desc.includes('transporte')) return '/transporte';
+    if (desc.includes('colheita') || desc.includes('plantio') || desc.includes('frete') || desc.includes('transporte')) return '/colheita';
     if (desc.includes('abastecimento')) return '/abastecimento';
     return '/maquinas';
   };
@@ -441,7 +433,6 @@ export default function MaquinaDetalhes() {
           { icon: Box, label: "Produção", value: stats?.totalSacks.toLocaleString(), unit: "sc" },
           { icon: Map, label: "Área", value: stats?.totalArea.toLocaleString(), unit: "ha" },
           { icon: Fuel, label: "Combustível", value: stats?.totalLiters.toLocaleString(), unit: "L" },
-          { icon: Truck, label: "Transporte", value: stats?.totalTons.toLocaleString(), unit: "ton" },
           { icon: TrendingUp, label: "Rendimento", value: stats?.avgProductivity, unit: "sc/ha", primary: true },
         ].map((kpi, idx) => (
           <Card key={idx} className={cn("bg-card border rounded-2xl", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
@@ -498,7 +489,6 @@ export default function MaquinaDetalhes() {
           <TabsTrigger value="overview" className="px-6 py-2 rounded-lg">Dashboard</TabsTrigger>
           <TabsTrigger value="harvests" className="px-6 py-2 rounded-lg">Colheita</TabsTrigger>
           <TabsTrigger value="fuelings" className="px-6 py-2 rounded-lg">Abastecimento</TabsTrigger>
-          <TabsTrigger value="transports" className="px-6 py-2 rounded-lg">Transporte</TabsTrigger>
           <TabsTrigger value="profits" className="px-6 py-2 rounded-lg">Lucros/Receitas</TabsTrigger>
           <TabsTrigger value="maintenance" className="px-6 py-2 rounded-lg">Manutenção</TabsTrigger>
         </TabsList>
@@ -577,7 +567,7 @@ export default function MaquinaDetalhes() {
                         </div>
                       </div>
                       <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] uppercase text-[9px] font-bold">
-                        {h.culture}
+                        {h.cultures?.join(", ") ?? "—"}
                       </Badge>
                     </div>
                     <div className="grid grid-cols-3 gap-2 pt-4 border-t border-border">
@@ -634,45 +624,7 @@ export default function MaquinaDetalhes() {
           )}
         </TabsContent>
 
-        <TabsContent value="transports" className="space-y-4">
-          {stats?.machineTransports.length ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {stats.machineTransports.map((t: any) => (
-                <Card key={t.id} className="bg-card border rounded-2xl hover:border-primary/30 transition-all">
-                  <CardContent className="p-5">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[hsl(var(--info-subtle))] flex items-center justify-center text-[hsl(var(--info-text))]">
-                          <Truck className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-foreground">{t.cargoTons} <span className="font-normal text-muted-foreground">ton</span></div>
-                          <div className="text-[10px] text-muted-foreground font-bold uppercase">{new Date(t.date).toLocaleDateString('pt-BR')}</div>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="bg-muted text-muted-foreground font-bold text-[10px]">{t.truckPlate}</Badge>
-                    </div>
-                    <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Trajeto:</span>
-                        <span className="font-bold text-foreground">{t.origin} → {t.destination}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Motorista:</span>
-                        <span className="font-bold text-muted-foreground">{t.driverName}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
-              <Truck className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-              <p className="text-muted-foreground font-medium">Nenhum transporte registrado para esta unidade.</p>
-            </div>
-          )}
-        </TabsContent>
+
 
         <TabsContent value="profits" className="space-y-4">
           {stats?.machineRevenues.length ? (

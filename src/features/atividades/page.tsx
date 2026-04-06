@@ -28,9 +28,9 @@ import {
   Tractor,
   User as UserIcon,
   Search,
-  ChevronRight,
   ClipboardList,
-  Printer
+  Printer,
+  DollarSign
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -96,6 +96,7 @@ const schema = z.object({
     name: z.string().min(1, "Nome é obrigatório"),
     quantity: z.coerce.number().min(0.01, "Qtde inválida"),
     unit: z.string().min(1, "Unidade é obrigatória"),
+    unitPrice: z.coerce.number().min(0, "Preço inválido"),
   })),
 });
 
@@ -212,7 +213,7 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
               type="button" 
               variant="outline" 
               size="sm" 
-              onClick={() => append({ name: "", quantity: 0, unit: "sc/ha" })}
+              onClick={() => append({ name: "", quantity: 0, unit: "sc/ha", unitPrice: 0 })}
               className="h-8 rounded-lg text-xs"
             >
               <Plus className="w-3 h-3 mr-1" /> Adicionar
@@ -244,7 +245,10 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                         onValueChange={(val) => {
                           field.onChange(val);
                           const p = DEMO_PRODUCTS.find(prod => prod.name === val);
-                          if (p) form.setValue(`products.${index}.unit`, p.unit);
+                          if (p) {
+                            form.setValue(`products.${index}.unit`, p.unit);
+                            if (p.unitPrice) form.setValue(`products.${index}.unitPrice`, p.unitPrice);
+                          }
                         }} 
                         value={field.value}
                       >
@@ -262,8 +266,8 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                   )} />
                 </div>
                 
-                <div className="flex gap-2 w-full sm:w-[150px]">
-                  <div className="w-[60%]">
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="w-[80px]">
                     <FormField control={form.control} name={`products.${index}.quantity`} render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Qtde</FormLabel>
@@ -272,7 +276,7 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                       </FormItem>
                     )} />
                   </div>
-                  <div className="w-[40%]">
+                  <div className="w-[70px]">
                     <FormField control={form.control} name={`products.${index}.unit`} render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Unid</FormLabel>
@@ -291,10 +295,52 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                       </FormItem>
                     )} />
                   </div>
+                  <div className="w-[90px]">
+                    <FormField control={form.control} name={`products.${index}.unitPrice`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">R$/un</FormLabel>
+                        <FormControl><Input type="number" step="0.01" className="h-8 text-sm" placeholder="0,00" {...field} /></FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )} />
+                  </div>
                 </div>
+                {/* Inline value calculation */}
+                {(() => {
+                  const qty = form.watch(`products.${index}.quantity`) || 0;
+                  const price = form.watch(`products.${index}.unitPrice`) || 0;
+                  const total = qty * price;
+                  return total > 0 ? (
+                    <div className="w-full text-right text-[10px] font-bold text-primary mt-1">
+                      = R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                  ) : null;
+                })()}
               </div>
             ))}
           </div>
+
+          {/* Subtotal de insumos */}
+          {(() => {
+            const products = form.watch('products') || [];
+            const area = form.watch('areaHectares') || 0;
+            const subtotal = products.reduce((acc: number, p: any) => acc + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
+            if (subtotal <= 0) return null;
+            return (
+              <div className="mt-3 pt-3 border-t border-dashed border-border/50 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Custo Total dos Insumos</p>
+                  <p className="text-sm font-black text-foreground">R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                </div>
+                {area > 0 && (
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground">Custo/ha</p>
+                    <p className="text-sm font-black text-primary">R$ {(subtotal / area).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/ha</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         <FormField control={form.control} name="notes" render={({ field }) => (
@@ -364,7 +410,12 @@ export default function Atividades() {
   const stats = useMemo(() => {
     const totalArea = filteredRecords.reduce((acc, r) => acc + r.areaHectares, 0);
     const count = filteredRecords.length;
-    return { totalArea, count };
+    const totalCost = filteredRecords.reduce((acc, r) => {
+      const activityCost = (r.products || []).reduce((sum, p) => sum + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
+      return acc + activityCost;
+    }, 0);
+    const avgCostPerHa = totalArea > 0 ? totalCost / totalArea : 0;
+    return { totalArea, count, totalCost, avgCostPerHa };
   }, [filteredRecords]);
 
   const closeForm = () => {
@@ -487,7 +538,7 @@ export default function Atividades() {
         </div>
 
         {/* Estatísticas Rápidas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="rounded-2xl border bg-primary/5">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -510,6 +561,19 @@ export default function Atividades() {
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Área Trabalhada</p>
                 <p className="text-xl font-black text-foreground">{stats.totalArea.toLocaleString()} Hectares</p>
                 <p className="text-[10px] text-muted-foreground font-medium uppercase">Soma das atividades filtradas</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border bg-[hsl(var(--warning-subtle))]">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--warning)/0.15)] flex items-center justify-center text-[hsl(var(--warning-text))]">
+                <DollarSign className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[hsl(var(--warning-text))]/60 uppercase tracking-wider">Custo Total</p>
+                <p className="text-xl font-black text-[hsl(var(--warning-text))]">R$ {stats.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase">Média: R$ {stats.avgCostPerHa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/ha</p>
               </div>
             </CardContent>
           </Card>
@@ -574,6 +638,8 @@ export default function Atividades() {
               <TableHead>Talhão</TableHead>
               <TableHead>Área</TableHead>
               <TableHead>Insumos</TableHead>
+              <TableHead className="text-right">Valor Total</TableHead>
+              <TableHead className="text-right">R$/ha</TableHead>
               <TableHead>Máquina / Operador</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
@@ -581,7 +647,7 @@ export default function Atividades() {
           <TableBody>
             {filteredRecords.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-40 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-40 text-center text-muted-foreground">
                   Nenhuma atividade registrada para os filtros selecionados.
                 </TableCell>
               </TableRow>
@@ -607,7 +673,7 @@ export default function Atividades() {
                   </TableCell>
                   <TableCell className="font-medium text-foreground">{r.areaHectares} ha</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                    <div className="flex flex-wrap gap-1 max-w-[180px]">
                       {r.products?.slice(0, 2).map((p, idx) => (
                         <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
                           {p.name}
@@ -620,6 +686,19 @@ export default function Atividades() {
                       )}
                       {!r.products?.length && <span className="text-muted-foreground text-xs">—</span>}
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-foreground">
+                    {(() => {
+                      const total = (r.products || []).reduce((sum, p) => sum + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
+                      return total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
+                    })()}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-primary">
+                    {(() => {
+                      const total = (r.products || []).reduce((sum, p) => sum + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
+                      const costHa = r.areaHectares > 0 ? total / r.areaHectares : 0;
+                      return costHa > 0 ? `R$ ${costHa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
@@ -683,32 +762,49 @@ export default function Atividades() {
             </div>
             
             <p className="font-bold text-foreground text-base mb-1">{r.talhaoName}</p>
-            
-            <div className="flex justify-between items-end pt-3 border-t border-dashed border-muted/60 mt-2">
-              <div className="flex items-center justify-between w-full mt-3 pt-3 border-t border-border/60">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Tractor className="w-3 h-3" /> {r.machineName}
+
+            {/* Pricing info */}
+            {(() => {
+              const total = (r.products || []).reduce((sum, p) => sum + ((p.quantity || 0) * (p.unitPrice || 0)), 0);
+              const costHa = r.areaHectares > 0 ? total / r.areaHectares : 0;
+              return total > 0 ? (
+                <div className="flex items-center gap-3 mt-2 mb-2">
+                  <div className="bg-[hsl(var(--warning-subtle))] px-2.5 py-1 rounded-lg border border-[hsl(var(--warning)/0.2)]">
+                    <p className="text-[9px] uppercase font-bold text-[hsl(var(--warning-text))]/60">Valor Total</p>
+                    <p className="text-xs font-black text-[hsl(var(--warning-text))]">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   </div>
-                  <span className="text-muted-foreground/30">|</span>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate max-w-[100px]">
-                    <UserIcon className="w-3 h-3" /> {r.operatorName}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
-                  {r.products?.slice(0, 1).map((p, idx) => (
-                    <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
-                      {p.name}
-                    </Badge>
-                  ))}
-                  {r.products && r.products.length > 1 && (
-                    <Badge variant="outline" className="text-[9px] font-bold text-primary">
-                      +{r.products.length - 1}
-                    </Badge>
+                  {costHa > 0 && (
+                    <div className="bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/10">
+                      <p className="text-[9px] uppercase font-bold text-primary/60">Custo/ha</p>
+                      <p className="text-xs font-black text-primary">R$ {costHa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
                   )}
                 </div>
+              ) : null;
+            })()}
+            
+            <div className="flex items-center justify-between w-full mt-3 pt-3 border-t border-border/60">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Tractor className="w-3 h-3" /> {r.machineName}
+                </div>
+                <span className="text-muted-foreground/30">|</span>
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate max-w-[100px]">
+                  <UserIcon className="w-3 h-3" /> {r.operatorName}
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+              <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
+                {r.products?.slice(0, 1).map((p, idx) => (
+                  <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
+                    {p.name}
+                  </Badge>
+                ))}
+                {r.products && r.products.length > 1 && (
+                  <Badge variant="outline" className="text-[9px] font-bold text-primary">
+                    +{r.products.length - 1}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         ))}

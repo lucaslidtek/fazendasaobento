@@ -9,7 +9,6 @@ import { useEffect } from "react";
 const PAGE_TITLES: Record<string, string> = {
   "/": "Visão Geral",
   "/colheita": "Colheita",
-  "/transporte": "Transporte",
   "/maquinas": "Máquinas",
   "/abastecimento": "Abastecimento",
   "/estoque": "Estoque",
