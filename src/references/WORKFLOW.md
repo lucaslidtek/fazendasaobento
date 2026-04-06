@@ -1,7 +1,7 @@
-# Documentação de Processo — Metodologia Deborah Felloni
+# Metodologia Spec-Driven — Deborah Felloni
 
 **Fonte:** Transcrição do vídeo "Workflow completo para criar aplicações profissionais com Cloud Code" — Deborah Felloni
-**Aplicado a:** Ajustes Locações São Bento (Pedro Lima), reunião 26/03/2026
+**Adotado em:** 2026-03-26
 
 ---
 
@@ -116,13 +116,14 @@ Implementar o planejamento da issue. Durante a execução:
 
 ## 4. Documentos de Apoio
 
-| Documento | Propósito |
-|---|---|
-| **Architecture** (`ARCHITECTURE.md`) | Organização do projeto, padrões de isolamento, regra thin client/fat server |
-| **Design System** (`DESIGN_SYSTEM.md`) | Tokens de cor, tipografia, componentes visuais, regras de UI |
-| **Spec** (`spec.md`) | Especificação completa de páginas, componentes e comportamentos |
-| **Issues** (`issues/`) | Tarefinhas atômicas derivadas do Spec |
-| **Plans** (`plans/`) | Planejamento detalhado de cada issue |
+| Documento | Propósito | Caminho |
+|---|---|---|
+| **Architecture** | Organização do projeto, padrões de isolamento, thin client/fat server | `src/references/ARCHITECTURE.md` |
+| **Design System** | Tokens de cor, tipografia, componentes visuais, regras de UI | `src/references/DESIGN.md` |
+| **Business Rules** | Regras de negócio do domínio, decisões dos stakeholders | `src/references/BUSINESS_RULES.md` |
+| **Spec** | Especificação de páginas, componentes e comportamentos | Gerado por requisição |
+| **Issues** | Tarefinhas atômicas derivadas do Spec | Gerado por requisição |
+| **Plans** | Planejamento detalhado de cada issue | Gerado por requisição |
 
 > Esses documentos dizem para a IA como o projeto está organizado, onde estão as coisas, onde ela deve buscar coisas — para ela não fazer besteira e não criar bagunça.
 
@@ -136,17 +137,3 @@ Implementar o planejamento da issue. Durante a execução:
 4. **Isolamento de comportamentos.** Cada funcionalidade fica na sua "pastinha" — mexer numa coisa não pode quebrar outra.
 5. **Thin Client, Fat Server.** Frontend só captura intenções do usuário e renderiza respostas. Toda lógica fica no backend. Nenhuma chave ou segredo no frontend.
 6. **Se não está no plan, não mexe.** A documentação é a lei.
-
----
-
-## 6. Aplicação neste Projeto (Locações São Bento)
-
-| Fase | Status | Documento |
-|---|---|---|
-| Spec | ✅ Completo | `spec.md` — 11 requisitos extraídos da transcrição da reunião |
-| Break | ⏳ Aguardando aprovação do Spec | `issues/` — será criado após aprovação |
-| Plan | ⏳ Após Break | `plans/` — um por issue |
-| Execute | ⏳ Após Plan | Código — uma issue por vez |
-
-**Origem dos requisitos:** Transcrição completa da reunião de 26/03/2026 (Pedro Lima, Rafael Barbosa, Lucas Pires).
-**Design System:** `DESIGN_SYSTEM.md v1.5.0` — Zero Shadow, Tokens HSL, Mobile-First, Hyper-Rounded.
