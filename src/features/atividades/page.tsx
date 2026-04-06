@@ -6,7 +6,7 @@ import {
   DEMO_MACHINES, 
   DEMO_USERS,
   DEMO_PRODUCTS,
-  type ActivityRecord 
+  type ActivityRecord
 } from "@/lib/demo-data";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
@@ -415,6 +415,15 @@ export default function Atividades() {
         products: values.products,
         createdAt: new Date().toISOString(),
       };
+      
+      // Simulação de Baixa de Estoque
+      values.products.forEach(p => {
+        const product = DEMO_PRODUCTS.find(dp => dp.name === p.name);
+        if (product) {
+          product.currentStock = Math.max(0, (product.currentStock || 0) - (p.quantity || 0));
+        }
+      });
+
       setRecords([newRecord, ...records]);
       toast({ 
         title: "Atividade registrada!",
@@ -453,7 +462,7 @@ export default function Atividades() {
               <Download className="w-4 h-4" /> Exportar CSV
             </Button>
             
-            <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeForm()}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(!open) closeForm(); }}>
               <DialogTrigger asChild>
                 <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl">
                   <Plus className="w-4 h-4" /> Nova Atividade
@@ -707,7 +716,7 @@ export default function Atividades() {
 
       {/* FAB Mobile */}
       <div className="sm:hidden">
-        <Sheet open={isSheetOpen} onOpenChange={(open) => !open && closeForm()}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { setIsSheetOpen(open); if(!open) closeForm(); }}>
           <SheetTrigger asChild>
             <button
               className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"

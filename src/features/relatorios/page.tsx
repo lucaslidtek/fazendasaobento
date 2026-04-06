@@ -24,7 +24,8 @@ import {
   DollarSign, 
   AlertCircle,
   Download,
-  Filter
+  Filter,
+  Printer
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -157,27 +158,31 @@ export default function Relatorios() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Button variant="outline" className="h-10 px-5 gap-2 rounded-xl border-primary/20 hover:bg-primary/5 transition-all shadow-sm">
-            <Download className="w-4 h-4" /> Exportar Relatório
+        <div className="flex items-center gap-2 w-full md:w-auto no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl">
+            <Printer className="w-4 h-4" />
+            <span className="hidden md:inline">Imprimir PDF</span>
           </Button>
-          <Button className="h-10 px-5 gap-2 rounded-xl shadow-md shadow-primary/20">
-            <Filter className="w-4 h-4" /> Filtrar Avançado
+          <Button variant="outline" className="h-10 px-5 gap-2 rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
+            <Download className="w-4 h-4" /> <span className="hidden md:inline">Exportar CSV</span>
+          </Button>
+          <Button className="h-10 px-5 gap-2 rounded-xl">
+            <Filter className="w-4 h-4" /> <span className="hidden md:inline">Filtrar</span>
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="produtividade" className="w-full space-y-8">
         <TabsList className="bg-muted/50 p-1 rounded-xl h-12 w-full sm:w-auto justify-start border overflow-x-auto overflow-y-hidden">
-          <TabsTrigger value="produtividade" className="rounded-lg px-8 py-2 data-[state=active]:bg-card data-[state=active]:shadow-sm">Monitor de Produtividade</TabsTrigger>
-          <TabsTrigger value="rentabilidade" className="rounded-lg px-8 py-2 data-[state=active]:bg-card data-[state=active]:shadow-sm">Análise Financeira</TabsTrigger>
-          <TabsTrigger value="custos" className="rounded-lg px-8 py-2 data-[state=active]:bg-card data-[state=active]:shadow-sm">Custos Realizados</TabsTrigger>
+          <TabsTrigger value="produtividade" className="rounded-lg px-8 py-2 data-[state=active]:bg-card">Monitor de Produtividade</TabsTrigger>
+          <TabsTrigger value="rentabilidade" className="rounded-lg px-8 py-2 data-[state=active]:bg-card">Análise Financeira</TabsTrigger>
+          <TabsTrigger value="custos" className="rounded-lg px-8 py-2 data-[state=active]:bg-card">Custos Realizados</TabsTrigger>
         </TabsList>
 
         {/* --- Aba 1: Produtividade --- */}
         <TabsContent value="produtividade" className="mt-0 space-y-8 animate-in fade-in duration-500">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="rounded-2xl border bg-[hsl(var(--info-subtle))] shadow-sm border-info/20">
+            <Card className="rounded-2xl border bg-[hsl(var(--info-subtle))] border-info/20">
               <CardContent className="p-6 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-info/10 flex items-center justify-center text-info-foreground">
                   <Target className="w-7 h-7" />
@@ -192,7 +197,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border bg-[hsl(var(--success-subtle))] shadow-sm border-success/20">
+            <Card className="rounded-2xl border bg-[hsl(var(--success-subtle))] border-success/20">
               <CardContent className="p-6 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center text-success-foreground">
                   <Wheat className="w-7 h-7" />
@@ -207,7 +212,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border bg-muted/20 shadow-sm sm:col-span-2 lg:col-span-1">
+            <Card className="rounded-2xl border bg-muted/20 sm:col-span-2 lg:col-span-1">
               <CardContent className="p-6 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center text-muted-foreground">
                   <BarChart3 className="w-7 h-7" />
@@ -224,7 +229,7 @@ export default function Relatorios() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden">
               <CardHeader className="bg-muted/10 pb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-lg"><Target className="w-5 h-5 text-primary" /></div>
@@ -242,7 +247,7 @@ export default function Relatorios() {
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} dy={10} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} dx={-10} />
                       <Tooltip 
-                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', padding: '12px' }}
+                        contentStyle={{ borderRadius: '16px', border: '1px solid hsl(var(--border))', padding: '12px' }}
                         itemStyle={{ fontSize: '12px', fontWeight: 800 }}
                         cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                       />
@@ -253,7 +258,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden">
               <CardHeader className="bg-muted/10 pb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-success/10 rounded-lg"><Wheat className="w-5 h-5 text-success" /></div>
@@ -277,7 +282,7 @@ export default function Relatorios() {
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} dy={10} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} dx={-10} />
                       <Tooltip 
-                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px' }}
+                         contentStyle={{ borderRadius: '16px', border: '1px solid hsl(var(--border))', padding: '12px' }}
                       />
                       <Area type="monotone" dataKey="sacks" name="Total Sacos" stroke="hsl(var(--success))" fillOpacity={1} fill="url(#colorSacks)" strokeWidth={4} />
                     </AreaChart>
@@ -291,9 +296,9 @@ export default function Relatorios() {
         {/* --- Aba 2: Rentabilidade --- */}
         <TabsContent value="rentabilidade" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="rounded-2xl border bg-muted/20 shadow-sm">
+            <Card className="rounded-2xl border bg-muted/20">
               <CardContent className="p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-card border shadow-inner flex items-center justify-center text-muted-foreground">
+                <div className="w-12 h-12 rounded-2xl bg-card border flex items-center justify-center text-muted-foreground">
                   <DollarSign className="w-6 h-6" />
                 </div>
                 <div>
@@ -303,7 +308,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border bg-amber-50/50 border-amber-200/50 shadow-sm">
+            <Card className="rounded-2xl border bg-amber-50/50 border-amber-200/50">
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100/50 flex items-center justify-center text-amber-600">
                   <TrendingDown className="w-6 h-6" />
@@ -315,7 +320,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border bg-indigo-50/50 border-indigo-200/50 shadow-sm">
+            <Card className="rounded-2xl border bg-indigo-50/50 border-indigo-200/50">
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-100/50 flex items-center justify-center text-indigo-600">
                   <AlertCircle className="w-6 h-6" />
@@ -327,7 +332,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border bg-primary/5 border-primary/20 shadow-sm">
+            <Card className="rounded-2xl border bg-primary/5 border-primary/20">
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                   <TrendingUp className="w-6 h-6" />
@@ -341,7 +346,7 @@ export default function Relatorios() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden shadow-sm lg:col-span-2">
+            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden lg:col-span-2">
               <CardHeader className="bg-muted/10 pb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-lg"><DollarSign className="w-5 h-5 text-primary" /></div>
@@ -358,7 +363,7 @@ export default function Relatorios() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600 }} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} hide />
-                      <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                      <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid hsl(var(--border))' }} />
                       <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 600 }} />
                       <Bar dataKey="receita" name="Receita" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} barSize={24} />
                       <Bar dataKey="despesa" name="Despesa" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} barSize={24} />
@@ -368,7 +373,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden shadow-sm">
+            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden">
               <CardHeader className="bg-muted/10 pb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-amber-100 rounded-lg"><Filter className="w-5 h-5 text-amber-600" /></div>
@@ -420,7 +425,7 @@ export default function Relatorios() {
         {/* --- Aba 3: Custos Realizados --- */}
         <TabsContent value="custos" className="mt-0 space-y-8 animate-in fade-in duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden lg:col-span-1 shadow-sm">
+            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden lg:col-span-1">
               <CardHeader className="bg-muted/10 pb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-secondary/10 rounded-lg"><Filter className="w-5 h-5 text-secondary" /></div>
@@ -454,7 +459,7 @@ export default function Relatorios() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-6 w-full px-2">
                   {financialData.categoryData.map((entry, index) => (
                     <div key={entry.name} className="flex items-center gap-2 overflow-hidden bg-muted/20 p-2 rounded-xl border border-border/40">
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                       <span className="text-[10px] font-black text-muted-foreground uppercase truncate tracking-tight">{entry.name}</span>
                     </div>
                   ))}
@@ -462,7 +467,7 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden lg:col-span-2 shadow-sm">
+            <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden lg:col-span-2">
               <CardHeader className="bg-muted/10 pb-6 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-destructive/10 rounded-lg"><AlertCircle className="w-5 h-5 text-destructive" /></div>
@@ -513,4 +518,5 @@ export default function Relatorios() {
     </AppLayout>
   );
 }
+
 

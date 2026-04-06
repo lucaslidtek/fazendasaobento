@@ -31,7 +31,7 @@ export type CropFormData = z.infer<typeof schema>;
 
 const STATUS_STYLES = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
-  inativo: "bg-destructive/10 text-destructive border-destructive/20",
+  inativo: "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -44,10 +44,10 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
-          <FormItem><FormLabel>Nome da Cultura</FormLabel><FormControl><Input placeholder="Ex: Milho, Soja..." {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Nome da Cultura</FormLabel><FormControl><Input placeholder="Ex: Milho, Soja..." {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="description" render={({ field }) => (
-          <FormItem><FormLabel>Descrição / Variedade (Opcional)</FormLabel><FormControl><Input placeholder="Ex: Milho Safrinha" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Descrição / Variedade (Opcional)</FormLabel><FormControl><Input placeholder="Ex: Milho Safrinha" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="status" render={({ field }) => (
           <FormItem><FormLabel>Status</FormLabel>
@@ -60,9 +60,9 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
             </Select>
           <FormMessage /></FormItem>
         )} />
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={isPending} className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="h-12 rounded-xl order-2 sm:order-1 sm:flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="h-12 rounded-xl order-1 sm:order-2 sm:flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEditing ? "Salvar alterações" : "Cadastrar"}
           </Button>
@@ -167,7 +167,7 @@ export default function Culturas() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
             <Sprout className="hidden md:block w-7 h-7 text-primary" />
-            Culturas {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
+            Culturas {records && <span className="text-[hsl(var(--primary)/0.6)] text-xl md:text-2xl">({records.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Gestão dos tipos de culturas plantadas (Milho, Soja, etc).
@@ -177,12 +177,12 @@ export default function Culturas() {
         <div className="hidden md:block">
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
+              <Button className="h-10 px-5 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Cultura
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[400px]">
+            <DialogContent className="sm:max-w-[400px] sm:rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl">{editingRecord ? "Editar Cultura" : "Nova Cultura"}</DialogTitle>
               </DialogHeader>
@@ -213,7 +213,7 @@ export default function Culturas() {
                 <TableRow><TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Nenhuma cultura cadastrada.</TableCell></TableRow>
               )}
               {records?.map((r: any) => (
-                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setLocation(`/culturas/${r.id}`)}>
+                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer border-b border-border/50 transition-colors" onClick={() => setLocation(`/culturas/${r.id}`)}>
                   <TableCell className="font-bold">{r.name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.description || "—"}</TableCell>
                   <TableCell>

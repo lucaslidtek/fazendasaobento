@@ -142,17 +142,17 @@ export default function UsuarioDetalhes() {
       // Se não tiver dados reais, gera mock para não deixar a aba vazia
       if (userHarvests.length === 0) {
         userHarvests = [
-          { id: 991, date: "2024-03-01T10:00:00Z", cultures: ["soja"], area: "Fazenda Principal", areaHectares: 100, quantitySacks: 540, productivity: 5.4, driverName: user.name, machineId: 1, machineName: "TC 5090", createdAt: "2024-03-01T10:00:00Z" }
+          { id: 991, date: "2024-03-01T10:00:00Z", cultures: ["soja"], area: "Talhão A1", talhaoId: 1, areaHectares: 100, quantitySacks: 540, productivity: 5.4, driverName: user.name, machineId: 1, machineName: "TC 5090", createdAt: "2024-03-01T10:00:00Z" }
         ];
       }
       if (userTransports.length === 0) {
         userTransports = [
-          { id: 992, date: "2024-03-02T14:30:00Z", truckPlate: "ABC-1234", truckId: 1, driverName: user.name, origin: "Silo Norte", destination: "Porto", cargoTons: 32, createdAt: "2024-03-02T14:30:00Z" }
+          { id: 992, date: "2024-03-02T14:30:00Z", truckPlate: "ABC-1234", truckId: 1, driverName: user.name, origin: "Silo Norte", destination: "Porto", cargoTons: 32, freightValue: 1200, createdAt: "2024-03-02T14:30:00Z" }
         ];
       }
       if (userFuelings.length === 0) {
         userFuelings = [
-          { id: 993, date: "2024-03-03T08:15:00Z", machineId: 2, machineName: "Trator Valtra", operatorName: user.name, responsavelName: "Carlos Gerente", pump: "Bomba Interna", liters: 150, servico: "Preparo de Solo", createdAt: "2024-03-03T08:15:00Z" }
+          { id: 993, date: "2024-03-03T08:15:00Z", machineId: 2, machineName: "Trator Valtra", operatorName: user.name, responsavelName: "Carlos Gerente", fuelType: "Diesel S10", volumeLiters: 150, servico: "Preparo de Solo", talhaoName: "Talhão B1", createdAt: "2024-03-03T08:15:00Z" } as any
         ];
       }
   
@@ -165,7 +165,7 @@ export default function UsuarioDetalhes() {
   
       const totalHarvestSacks = userHarvests.reduce((acc, h) => acc + h.quantitySacks, 0);
       const totalTransportTons = userTransports.reduce((acc, t) => acc + t.cargoTons, 0);
-      const totalFuelingLiters = userFuelings.reduce((acc, f) => acc + f.liters, 0);
+      const totalFuelingLiters = userFuelings.reduce((acc, f) => acc + (f.volumeLiters || 0), 0);
   
       // Mock data for the performance chart
       const operationalPerformance = [
@@ -228,9 +228,9 @@ export default function UsuarioDetalhes() {
           </FormItem>
         )} />
 
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => { setIsEditProfileOpen(false); setIsEditProfileSheetOpen(false); }} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">Salvar Alterações</Button>
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={() => { setIsEditProfileOpen(false); setIsEditProfileSheetOpen(false); }} className="h-12 rounded-xl order-2 sm:order-1 sm:flex-1">Cancelar</Button>
+          <Button type="submit" className="h-12 rounded-xl order-1 sm:order-2 sm:flex-1">Salvar Alterações</Button>
         </div>
       </form>
     </Form>
@@ -307,7 +307,7 @@ export default function UsuarioDetalhes() {
                       Editar Perfil
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[450px]">
+                  <DialogContent className="sm:max-w-[450px] sm:rounded-2xl">
                     <DialogHeader>
                       <DialogTitle className="text-xl">Editar Perfil</DialogTitle>
                     </DialogHeader>
@@ -365,7 +365,7 @@ export default function UsuarioDetalhes() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-card border flex flex-col justify-between">
+        <Card className="bg-card border rounded-2xl flex flex-col justify-between">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
@@ -379,7 +379,7 @@ export default function UsuarioDetalhes() {
           </CardContent>
         </Card>
         
-        <Card className="bg-card border flex flex-col justify-between">
+        <Card className="bg-card border rounded-2xl flex flex-col justify-between">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
@@ -393,7 +393,7 @@ export default function UsuarioDetalhes() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border flex flex-col justify-between">
+        <Card className="bg-card border rounded-2xl flex flex-col justify-between">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
@@ -410,16 +410,16 @@ export default function UsuarioDetalhes() {
 
       {/* Tabs Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto">
-          <TabsTrigger value="overview" className="px-6 py-2 whitespace-nowrap">Resumo Geral</TabsTrigger>
-          <TabsTrigger value="harvests" className="px-6 py-2 whitespace-nowrap">Apontamentos Colheita</TabsTrigger>
-          <TabsTrigger value="transports" className="px-6 py-2 whitespace-nowrap">Histórico de Transportes</TabsTrigger>
-          <TabsTrigger value="fuelings" className="px-6 py-2 whitespace-nowrap">Histórico Abastecimentos</TabsTrigger>
+        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto rounded-xl">
+          <TabsTrigger value="overview" className="px-6 py-2 whitespace-nowrap rounded-lg">Resumo Geral</TabsTrigger>
+          <TabsTrigger value="harvests" className="px-6 py-2 whitespace-nowrap rounded-lg">Apontamentos Colheita</TabsTrigger>
+          <TabsTrigger value="transports" className="px-6 py-2 whitespace-nowrap rounded-lg">Histórico de Transportes</TabsTrigger>
+          <TabsTrigger value="fuelings" className="px-6 py-2 whitespace-nowrap rounded-lg">Histórico Abastecimentos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-card border">
+            <Card className="bg-card border rounded-2xl">
               <CardHeader className="pb-3 border-b border-border">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" /> Atividade Recente
@@ -455,9 +455,9 @@ export default function UsuarioDetalhes() {
                               {item._type === 'fueling' && `Abastecimento: ${item.machineName}`}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {item._type === 'harvest' && `${item.quantitySacks} sacas · ${item.talhao}`}
+                              {item._type === 'harvest' && `${item.quantitySacks} sacas · ${item.area}`}
                               {item._type === 'transport' && `${item.cargoTons} ton · ${item.truckPlate}`}
-                              {item._type === 'fueling' && `${item.liters} L · ${item.talhao || item.servico}`}
+                              {item._type === 'fueling' && `${item.volumeLiters} L · ${item.talhaoName || item.servico}`}
                             </p>
                           </div>
                         </div>
@@ -477,7 +477,7 @@ export default function UsuarioDetalhes() {
               </CardContent>
             </Card>
             
-            <Card className="bg-card border overflow-hidden hidden lg:block border-dashed border-2">
+            <Card className="bg-card border overflow-hidden hidden lg:block border-dashed border-2 rounded-2xl">
               <CardHeader className="pb-2 border-b border-border">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <Activity className="w-4 h-4 text-primary" /> Desempenho Operacional
@@ -545,7 +545,7 @@ export default function UsuarioDetalhes() {
 
           <div className="sm:hidden space-y-3">
             {stats?.harvests.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+              <div className="py-20 text-center border-2 border-dashed border-border rounded-2xl bg-muted/30">
                 <Tractor className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
                 <p className="text-muted-foreground font-medium">Nenhum apontamento registrado.</p>
               </div>
@@ -621,7 +621,7 @@ export default function UsuarioDetalhes() {
 
           <div className="sm:hidden space-y-3">
             {stats?.transports.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+              <div className="py-20 text-center border-2 border-dashed border-border rounded-2xl bg-muted/30">
                 <Truck className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
                 <p className="text-muted-foreground font-medium">Nenhum transporte registrado.</p>
               </div>
@@ -684,8 +684,8 @@ export default function UsuarioDetalhes() {
                         {f.servico || '--'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm font-semibold">{f.talhao || '--'}</TableCell>
-                    <TableCell className="text-right font-black font-mono text-[hsl(var(--warning-text))]">{f.liters} L</TableCell>
+                    <TableCell className="text-sm font-semibold">{f.talhaoName || '--'}</TableCell>
+                    <TableCell className="text-right font-black font-mono text-[hsl(var(--warning-text))]">{f.volumeLiters} L</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -694,7 +694,7 @@ export default function UsuarioDetalhes() {
 
           <div className="sm:hidden space-y-3">
             {stats?.fuelings.length === 0 && (
-              <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+              <div className="py-20 text-center border-2 border-dashed border-border rounded-2xl bg-muted/30">
                 <Droplet className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
                 <p className="text-muted-foreground font-medium">Nenhum abastecimento registrado.</p>
               </div>
@@ -712,7 +712,7 @@ export default function UsuarioDetalhes() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black font-mono text-[hsl(var(--warning-text))]">{f.liters} L</div>
+                    <div className="text-sm font-black font-mono text-[hsl(var(--warning-text))]">{f.volumeLiters} L</div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-border/50">
@@ -724,7 +724,7 @@ export default function UsuarioDetalhes() {
                   </div>
                   <div className="flex items-center justify-between text-xs mt-1">
                     <span className="text-muted-foreground">Talhão:</span>
-                    <span className="font-semibold">{f.talhao || '--'}</span>
+                    <span className="font-semibold">{f.talhaoName || '--'}</span>
                   </div>
                 </div>
               </div>
@@ -742,7 +742,7 @@ export default function UsuarioDetalhes() {
       </Sheet>
 
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] hidden sm:block">
+        <DialogContent className="sm:max-w-[400px] hidden sm:block sm:rounded-2xl">
           <DialogHeader><DialogTitle>Editar Acesso</DialogTitle></DialogHeader>
           <FormContent form={userForm} onSubmit={onUpdateUser} isPending={updateMutation.isPending} onClose={closeUserForm} isEditing={true} />
         </DialogContent>

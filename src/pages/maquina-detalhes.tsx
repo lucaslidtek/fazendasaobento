@@ -33,7 +33,8 @@ import {
   Plus,
   Pencil,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Printer
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormContent, schema } from "./maquinas";
@@ -75,7 +76,7 @@ const chartConfig = {
 const STATUS_STYLES: Record<string, string> = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
   manutencao: "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]",
-  inativo: "bg-destructive/10 text-destructive border-destructive/20",
+  inativo: "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]",
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -203,14 +204,14 @@ export default function MaquinaDetalhes() {
     <Form {...maintenanceForm}>
       <form onSubmit={maintenanceForm.handleSubmit(onAddMaintenance)} className="space-y-4 pt-4">
         <FormField control={maintenanceForm.control} name="description" render={({ field }) => (
-          <FormItem><FormLabel>Descrição do Serviço/Peça</FormLabel><FormControl><Input placeholder="Ex: Troca de óleo" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Descrição do Serviço/Peça</FormLabel><FormControl><Input placeholder="Ex: Troca de óleo" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="grid grid-cols-2 gap-4">
           <FormField control={maintenanceForm.control} name="date" render={({ field }) => (
-            <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={maintenanceForm.control} name="cost" render={({ field }) => (
-            <FormItem><FormLabel>Custo Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Custo Total (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -238,11 +239,11 @@ export default function MaquinaDetalhes() {
           )} />
         </div>
         <FormField control={maintenanceForm.control} name="providerName" render={({ field }) => (
-          <FormItem><FormLabel>Fornecedor/Oficina (Opcional)</FormLabel><FormControl><Input placeholder="Nome da oficina ou OS" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Fornecedor/Oficina (Opcional)</FormLabel><FormControl><Input placeholder="Nome da oficina ou OS" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
-        <div className="flex justify-end gap-3 mt-4">
-          <Button type="button" variant="outline" onClick={() => { setIsMaintenanceDialogOpen(false); setIsMaintenanceSheetOpen(false); }}>Cancelar</Button>
-          <Button type="submit">Salvar Manutenção</Button>
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+          <Button type="button" variant="outline" onClick={() => { setIsMaintenanceDialogOpen(false); setIsMaintenanceSheetOpen(false); }} className="h-12 rounded-xl order-2 sm:order-1 flex-1 sm:flex-none">Cancelar</Button>
+          <Button type="submit" className="h-12 rounded-xl order-1 sm:order-2 flex-1 sm:flex-none">Salvar Manutenção</Button>
         </div>
       </form>
     </Form>
@@ -256,7 +257,6 @@ export default function MaquinaDetalhes() {
     let transports = DEMO_TRANSPORTS.filter(t => t.machineId === machine.id);
     let revenues = DEMO_MACHINE_REVENUES.filter(r => r.machineId === machine.id);
     
-    // Integração Etapa 9: Buscar despesas do financeiro vinculadas a esta máquina
     const financialMaintenances = DEMO_FINANCIAL_RECORDS
       .filter(r => r.machineId === machine.id && r.type === "despesa")
       .map(r => ({
@@ -350,7 +350,7 @@ export default function MaquinaDetalhes() {
   return (
     <AppLayout title={machine.name} showBack={true} backTo="/maquinas">
       {/* Breadcrumbs */}
-      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6 no-print">
         <Link href="/maquinas" className="hover:text-primary transition-colors">Máquinas</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{machine.name}</span>
@@ -365,7 +365,7 @@ export default function MaquinaDetalhes() {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-3xl font-bold font-display text-foreground leading-tight">{machine.name}</h1>
-              <Badge variant="outline" className={cn("font-semibold", STATUS_STYLES[machine.status as string])}>
+              <Badge variant="outline" className={cn("font-semibold uppercase text-[10px] tracking-widest px-3", STATUS_STYLES[machine.status as string])}>
                 {machine.status}
               </Badge>
             </div>
@@ -381,7 +381,7 @@ export default function MaquinaDetalhes() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 no-print">
           <div className="flex flex-col items-end hidden lg:flex mr-4">
             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Custo de Aquisição</span>
             <span className="text-xl font-bold text-[hsl(var(--success-text))]">
@@ -390,6 +390,10 @@ export default function MaquinaDetalhes() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
+            <Button variant="outline" onClick={() => window.print()} className="h-9 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+              <Printer className="w-4 h-4" />
+              Relatório
+            </Button>
             <Button variant="outline" size="sm" onClick={openMachineEdit} className="h-9 px-4 border-border hover:bg-muted/40">
               <Pencil className="w-4 h-4 mr-2 text-muted-foreground" /> Editar
             </Button>
@@ -405,6 +409,7 @@ export default function MaquinaDetalhes() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => window.print()}><Printer className="w-4 h-4 mr-2"/> Imprimir</DropdownMenuItem>
               <DropdownMenuItem onClick={openMachineEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
               <DropdownMenuItem onClick={confirmMachineDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
             </DropdownMenuContent>
@@ -439,7 +444,7 @@ export default function MaquinaDetalhes() {
           { icon: Truck, label: "Transporte", value: stats?.totalTons.toLocaleString(), unit: "ton" },
           { icon: TrendingUp, label: "Rendimento", value: stats?.avgProductivity, unit: "sc/ha", primary: true },
         ].map((kpi, idx) => (
-          <Card key={idx} className={cn("bg-card border", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
+          <Card key={idx} className={cn("bg-card border rounded-2xl", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
                 <kpi.icon className={cn("w-3.5 h-3.5", kpi.primary ? "text-primary" : "text-muted-foreground")} /> {kpi.label}
@@ -455,7 +460,7 @@ export default function MaquinaDetalhes() {
       {/* KPI Cards Grid - Financeiro */}
       <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3 mt-6">Indicadores Financeiros</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="bg-card border">
+        <Card className="bg-card border rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
               <TrendingUp className="w-3.5 h-3.5 text-[hsl(var(--info-text))]" /> Receita Bruta / Valor Agregado
@@ -465,7 +470,7 @@ export default function MaquinaDetalhes() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card border">
+        <Card className="bg-card border rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
               <Wrench className="w-3.5 h-3.5 text-[hsl(var(--warning-text))]" /> Custos de Manutenção
@@ -475,7 +480,7 @@ export default function MaquinaDetalhes() {
             </div>
           </CardContent>
         </Card>
-        <Card className={cn("border-border", stats?.operatingProfit && stats.operatingProfit >= 0 ? "bg-[hsl(var(--success-subtle))] border-[hsl(var(--success)/0.2)]" : "bg-destructive/10 border-destructive/20")}>
+        <Card className={cn("border-border rounded-2xl", stats?.operatingProfit && stats.operatingProfit >= 0 ? "bg-[hsl(var(--success-subtle))] border-[hsl(var(--success)/0.2)]" : "bg-[hsl(var(--destructive-subtle))] border-[hsl(var(--destructive)/0.2)]")}>
           <CardContent className="p-5">
             <div className={cn("flex items-center gap-2 text-[10px] mb-2 uppercase font-bold tracking-wider", stats?.operatingProfit && stats.operatingProfit >= 0 ? "text-[hsl(var(--success-text))]" : "text-destructive")}>
               <DollarSign className="w-3.5 h-3.5" /> Lucro Operacional
@@ -489,18 +494,18 @@ export default function MaquinaDetalhes() {
 
       {/* Charts and Lists Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto flex-nowrap hide-scrollbar">
-          <TabsTrigger value="overview" className="px-6 py-2">Dashboard</TabsTrigger>
-          <TabsTrigger value="harvests" className="px-6 py-2">Colheita</TabsTrigger>
-          <TabsTrigger value="fuelings" className="px-6 py-2">Abastecimento</TabsTrigger>
-          <TabsTrigger value="transports" className="px-6 py-2">Transporte</TabsTrigger>
-          <TabsTrigger value="profits" className="px-6 py-2">Lucros/Receitas</TabsTrigger>
-          <TabsTrigger value="maintenance" className="px-6 py-2">Manutenção</TabsTrigger>
+        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto flex-nowrap hide-scrollbar rounded-xl">
+          <TabsTrigger value="overview" className="px-6 py-2 rounded-lg">Dashboard</TabsTrigger>
+          <TabsTrigger value="harvests" className="px-6 py-2 rounded-lg">Colheita</TabsTrigger>
+          <TabsTrigger value="fuelings" className="px-6 py-2 rounded-lg">Abastecimento</TabsTrigger>
+          <TabsTrigger value="transports" className="px-6 py-2 rounded-lg">Transporte</TabsTrigger>
+          <TabsTrigger value="profits" className="px-6 py-2 rounded-lg">Lucros/Receitas</TabsTrigger>
+          <TabsTrigger value="maintenance" className="px-6 py-2 rounded-lg">Manutenção</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-card border">
+            <Card className="bg-card border rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-primary" /> Volume de Colheita por Operação
@@ -528,7 +533,7 @@ export default function MaquinaDetalhes() {
               </CardContent>
             </Card>
 
-            <Card className="bg-card border">
+            <Card className="bg-card border rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <Fuel className="w-5 h-5 text-primary" /> Histórico de Consumo
@@ -562,7 +567,7 @@ export default function MaquinaDetalhes() {
           {stats?.machineHarvests.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {stats.machineHarvests.map((h: any) => (
-                <Card key={h.id} className="bg-card border hover:border-primary/30 transition-all">
+                <Card key={h.id} className="bg-card border rounded-2xl hover:border-primary/30 transition-all">
                   <CardContent className="p-5">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -605,7 +610,7 @@ export default function MaquinaDetalhes() {
           {stats?.machineFuelings.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {stats.machineFuelings.map((f: any) => (
-                <Card key={f.id} className="bg-card border hover:border-primary/30 transition-all">
+                <Card key={f.id} className="bg-card border rounded-2xl hover:border-primary/30 transition-all">
                   <CardContent className="p-5 flex items-center gap-5">
                     <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--warning-subtle))] flex items-center justify-center text-[hsl(var(--warning-text))] flex-shrink-0">
                       <Fuel className="w-6 h-6" />
@@ -633,11 +638,11 @@ export default function MaquinaDetalhes() {
           {stats?.machineTransports.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {stats.machineTransports.map((t: any) => (
-                <Card key={t.id} className="bg-card border hover:border-primary/30 transition-all">
+                <Card key={t.id} className="bg-card border rounded-2xl hover:border-primary/30 transition-all">
                   <CardContent className="p-5">
                     <div className="flex justify-between items-center mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <div className="w-10 h-10 rounded-xl bg-[hsl(var(--info-subtle))] flex items-center justify-center text-[hsl(var(--info-text))]">
                           <Truck className="w-5 h-5" />
                         </div>
                         <div>
@@ -675,7 +680,7 @@ export default function MaquinaDetalhes() {
               {/* Mobile View - Cards */}
               <div className="grid grid-cols-1 gap-4 md:hidden">
                 {stats.machineRevenues.map((r: any) => (
-                  <Card key={r.id} className="bg-card border hover:border-primary/30 transition-all cursor-pointer" onClick={() => setLocation(getRevenueRedirect(r))}>
+                  <Card key={r.id} className="bg-card border rounded-2xl hover:border-primary/30 transition-all cursor-pointer" onClick={() => setLocation(getRevenueRedirect(r))}>
                     <CardContent className="p-5 flex items-center gap-4">
                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0", r.type === 'lucro' ? "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))]" : "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))]")}>
                         <TrendingUp className="w-6 h-6" />
@@ -729,7 +734,7 @@ export default function MaquinaDetalhes() {
               </div>
             </>
           ) : (
-            <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl bg-muted/30">
+            <div className="py-20 text-center border-2 border-dashed border-border rounded-2xl bg-muted/30">
               <DollarSign className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
               <p className="text-muted-foreground font-medium">Nenhum registro de lucro encontrado.</p>
             </div>
@@ -739,10 +744,10 @@ export default function MaquinaDetalhes() {
         <TabsContent value="maintenance" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-foreground">Histórico de Manutenções</h3>
-            <div className="hidden md:block">
+            <div className="hidden md:block no-print">
               <Dialog open={isMaintenanceDialogOpen} onOpenChange={setIsMaintenanceDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2"><Plus className="w-4 h-4" /> Nova Manutenção</Button>
+                  <Button className="gap-2 rounded-xl"><Plus className="w-4 h-4" /> Nova Manutenção</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
@@ -752,10 +757,10 @@ export default function MaquinaDetalhes() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="md:hidden">
+            <div className="md:hidden no-print">
               <Sheet open={isMaintenanceSheetOpen} onOpenChange={setIsMaintenanceSheetOpen}>
                 <SheetTrigger asChild>
-                  <Button className="gap-2"><Plus className="w-4 h-4" /> Nova Manutenção</Button>
+                  <Button className="gap-2 rounded-xl"><Plus className="w-4 h-4" /> Nova Manutenção</Button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
                   <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
@@ -775,9 +780,9 @@ export default function MaquinaDetalhes() {
               {/* Mobile View - Cards */}
               <div className="grid grid-cols-1 gap-4 md:hidden">
                 {stats.machineMaintenances.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((m: any) => (
-                  <Card key={m.id} className="bg-card border hover:border-[hsl(var(--warning)/0.3)] transition-all">
+                  <Card key={m.id} className="bg-card border rounded-2xl hover:border-[hsl(var(--warning)/0.3)] transition-all">
                     <CardContent className="p-5 flex items-start gap-4">
-                       <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0", m.type === 'preventiva' ? "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))]" : "bg-destructive/10 text-destructive")}>
+                       <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0", m.type === 'preventiva' ? "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))]" : "bg-[hsl(var(--destructive-subtle))] text-destructive")}>
                         <Wrench className="w-6 h-6" />
                        </div>
                        <div className="flex-1 min-w-0">
@@ -787,10 +792,10 @@ export default function MaquinaDetalhes() {
                          </div>
                          <p className="text-sm text-muted-foreground font-medium mb-3">{m.description}</p>
                          <div className="flex flex-wrap gap-2">
-                           <Badge variant="outline" className={cn("text-[10px] uppercase font-bold", m.type === 'preventiva' ? "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]" : "bg-destructive/10 text-destructive border-destructive/20")}>{m.type}</Badge>
-                           <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">{m.category}</Badge>
-                           <Badge variant="outline" className={cn("text-[10px] uppercase font-bold", m.source === 'Financeiro' ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground")}>{m.source}</Badge>
-                         </div>
+                            <Badge variant="outline" className={cn("text-[10px] uppercase font-bold", m.type === 'preventiva' ? "bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]" : "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]")}>{m.type}</Badge>
+                            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground font-semibold">{m.category}</Badge>
+                            <Badge variant="outline" className={cn("text-[10px] uppercase font-bold", m.source === 'Financeiro' ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground font-semibold")}>{m.source}</Badge>
+                          </div>
                          {m.providerName && <p className="text-xs text-muted-foreground font-medium mt-3 flex items-center gap-1.5"><MapPin className="w-3 h-3"/> {m.providerName}</p>}
                        </div>
                     </CardContent>

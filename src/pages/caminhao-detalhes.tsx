@@ -18,7 +18,8 @@ import {
   ArrowRight,
   Pencil,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Printer
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -53,7 +54,7 @@ const chartConfig = {
 const STATUS_STYLES: Record<string, string> = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
   manutencao: "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]",
-  inativo: "bg-destructive/10 text-destructive border-destructive/20",
+  inativo: "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]",
 };
 
 export default function CaminhaoDetalhes() {
@@ -167,7 +168,7 @@ export default function CaminhaoDetalhes() {
   return (
     <AppLayout title={truck.plate} showBack={true} backTo="/caminhoes">
       {/* Breadcrumbs */}
-      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6 no-print">
         <Link href="/caminhoes" className="hover:text-primary transition-colors">Caminhões</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{truck.plate}</span>
@@ -176,8 +177,8 @@ export default function CaminhaoDetalhes() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-2xl">
-            <Truck className="w-8 h-8 text-primary" />
+          <div className="p-3 bg-[hsl(var(--info-subtle))] rounded-2xl border border-[hsl(var(--info)/0.2)]">
+            <Truck className="w-8 h-8 text-[hsl(var(--info-text))]" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -192,7 +193,11 @@ export default function CaminhaoDetalhes() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+            <Printer className="w-4 h-4" />
+            Relatório
+          </Button>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-[180px] bg-card border">
               <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -208,10 +213,10 @@ export default function CaminhaoDetalhes() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" onClick={openEdit} className="hidden md:flex">
+          <Button variant="outline" size="sm" onClick={openEdit} className="hidden md:flex h-10 px-4 rounded-xl">
             <Pencil className="w-4 h-4 mr-2" /> Editar
           </Button>
-          <Button variant="outline" size="sm" onClick={confirmDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+          <Button variant="outline" size="sm" onClick={confirmDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10 h-10 px-4 rounded-xl">
             <Trash2 className="w-4 h-4 mr-2" /> Excluir
           </Button>
 
@@ -222,6 +227,7 @@ export default function CaminhaoDetalhes() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => window.print()}><Printer className="w-4 h-4 mr-2"/> Imprimir</DropdownMenuItem>
               <DropdownMenuItem onClick={openEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
               <DropdownMenuItem onClick={confirmDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
             </DropdownMenuContent>
@@ -236,7 +242,7 @@ export default function CaminhaoDetalhes() {
           { icon: Map, label: "Viagens Realizadas", value: stats?.totalTrips, unit: "viagens" },
           { icon: TrendingUp, label: "Média por Viagem", value: stats?.totalTrips ? (stats.totalTons / stats.totalTrips).toFixed(1).replace('.', ',') : "0", unit: "ton/viagem", primary: true },
         ].map((kpi, idx) => (
-          <Card key={idx} className={cn("bg-card border", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
+          <Card key={idx} className={cn("bg-card border rounded-2xl", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
                 <kpi.icon className={cn("w-3.5 h-3.5", kpi.primary ? "text-primary" : "text-muted-foreground")} /> {kpi.label}
@@ -251,13 +257,13 @@ export default function CaminhaoDetalhes() {
 
       {/* Charts and Lists Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px]">
-          <TabsTrigger value="overview" className="px-6 py-2">Dashboard</TabsTrigger>
-          <TabsTrigger value="transports" className="px-6 py-2">Histórico de Transportes</TabsTrigger>
+        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] rounded-xl overflow-x-auto hide-scrollbar">
+          <TabsTrigger value="overview" className="px-6 py-2 rounded-lg">Dashboard</TabsTrigger>
+          <TabsTrigger value="transports" className="px-6 py-2 rounded-lg">Histórico de Transportes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <Card className="bg-card border max-w-4xl">
+          <Card className="bg-card border max-w-4xl rounded-2xl">
             <CardHeader>
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" /> Volume Diário de Transporte (ton)
@@ -372,7 +378,7 @@ export default function CaminhaoDetalhes() {
       </Sheet>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] hidden sm:block">
+        <DialogContent className="sm:max-w-[500px] hidden sm:block sm:rounded-2xl">
           <DialogHeader><DialogTitle>Editar Caminhão</DialogTitle></DialogHeader>
           <FormContent form={form} onSubmit={onUpdate} isPending={updateMutation.isPending} onClose={closeForm} isEditing={true} />
         </DialogContent>

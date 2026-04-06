@@ -31,25 +31,17 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
-          <FormItem>
-            <FormLabel>Nome Completo</FormLabel>
-            <FormControl><Input placeholder="Ex: João da Silva" {...field} /></FormControl>
-            <FormMessage />
-          </FormItem>
+          <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Ex: João Silva" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="email" render={({ field }) => (
-          <FormItem>
-            <FormLabel>E-mail (Login)</FormLabel>
-            <FormControl><Input placeholder="Ex: email@fazenda.com" type="email" {...field} /></FormControl>
-            <FormMessage />
-          </FormItem>
+          <FormItem><FormLabel>E-mail / Login</FormLabel><FormControl><Input type="email" placeholder="usuario@fazenda.com" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="grid grid-cols-1 gap-4">
           <FormField control={form.control} name="role" render={({ field }) => (
             <FormItem>
               <FormLabel>Perfil</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || "operador"}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o perfil" /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Selecione o perfil" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="operador">Operador</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
@@ -59,11 +51,11 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
             </FormItem>
           )} />
         </div>
-        <div className="flex gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={isPending} className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="h-12 rounded-xl order-2 sm:order-1 sm:flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="h-12 rounded-xl order-1 sm:order-2 sm:flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isEditing ? "Salvar alterações" : "Cadastrar"}
+            {isEditing ? "Salvar alterações" : "Conceder Acesso"}
           </Button>
         </div>
       </form>
@@ -152,7 +144,6 @@ export default function Usuarios() {
   };
 
   const handleSubmit = (data: z.infer<typeof schema>) => {
-    // In real scenario, password handling is done via backend
     if (editingRecord) {
       updateMutation.mutate({ id: editingRecord.id, data: { ...data } });
     } else {
@@ -184,12 +175,12 @@ export default function Usuarios() {
         <div className="hidden md:block">
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
+              <Button className="h-10 px-5 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Usuário
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[450px]">
+            <DialogContent className="sm:max-w-[450px] rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl">{editingRecord ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
               </DialogHeader>
@@ -201,7 +192,6 @@ export default function Usuarios() {
         </div>
       </div>
 
-      {/* TABELA — desktop */}
       <div className="hidden md:block bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
@@ -281,7 +271,6 @@ export default function Usuarios() {
         )}
       </div>
 
-      {/* CARDS — mobile */}
       <div className="md:hidden space-y-3">
         {isLoading && (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>

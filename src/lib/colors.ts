@@ -7,8 +7,8 @@ const BADGE_COLORS = [
   "border-chart-4/40 text-chart-4 bg-chart-4/10",
   "border-chart-5/40 text-chart-5 bg-chart-5/10",
   "border-info/40 text-info bg-info/10",
-  "border-purple-500/40 text-purple-600 bg-purple-500/10",
-  "border-emerald-500/40 text-emerald-600 bg-emerald-500/10",
+  "border-primary/40 text-primary bg-primary/10", // substituto para purple-500
+  "border-[hsl(var(--success)/0.4)] text-[hsl(var(--success-text))] bg-[hsl(var(--success-subtle))]", // substituto para emerald-500
 ];
 
 const HSL_COLORS = [
@@ -20,8 +20,8 @@ const HSL_COLORS = [
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
   "hsl(var(--info))",
-  "#8b5cf6", // purple-500
-  "#10b981", // emerald-500
+  "hsl(var(--primary))", // substituto para purple-500
+  "hsl(var(--success))", // substituto para emerald-500
 ];
 
 const forcedIndex: Record<string, number> = {

@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { DEMO_HARVESTS, DEMO_TRANSPORTS, DEMO_FUELINGS, DEMO_MACHINES, DEMO_TRUCKS, DEMO_PRODUCTS } from "@/lib/demo-data";
-import { Loader2, Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp } from "lucide-react";
+import { DEMO_HARVESTS, DEMO_TRANSPORTS, DEMO_FUELINGS, DEMO_MACHINES, DEMO_TRUCKS, DEMO_PRODUCTS, type FuelingRecord } from "@/lib/demo-data";
+import { Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { format } from "date-fns";
@@ -31,10 +32,10 @@ export default function Dashboard() {
   const totalHarvestSacks = harvests.reduce((acc, h) => acc + (h.quantitySacks || 0), 0);
   const totalHarvestHectares = harvests.reduce((acc, h) => acc + (h.areaHectares || 0), 0);
   const totalTransportTons = transports.reduce((acc, t) => acc + (t.cargoTons || 0), 0);
-  const totalFuelingLiters = fuelings.reduce((acc, f) => acc + (f.liters || 0), 0);
+  const totalFuelingLiters = fuelings.reduce((acc, f: FuelingRecord) => acc + (f.volumeLiters || 0), 0);
   
   const activeMachines = DEMO_MACHINES.filter(m => m.status === 'ativo').length;
-  const activeTrucks = DEMO_TRUCKS.filter(t => t.status === 'ativo').length;
+  const activeTrucks = (DEMO_TRUCKS as any[]).filter(t => t.status === 'ativo').length;
   const lowStockProducts = DEMO_PRODUCTS.filter(p => p.currentStock <= (p.minStock || 0)).length;
 
   const harvestByCultureMap = harvests.reduce((acc: any, h) => {
@@ -47,9 +48,9 @@ export default function Dashboard() {
   }, {});
   const harvestByCulture = Object.entries(harvestByCultureMap).map(([culture, vals]: any) => ({ culture, ...vals }));
 
-  const fuelingByMachineMap = fuelings.reduce((acc: any, f) => {
+  const fuelingByMachineMap = fuelings.reduce((acc: any, f: FuelingRecord) => {
     if (!acc[f.machineName]) acc[f.machineName] = 0;
-    acc[f.machineName] += f.liters || 0;
+    acc[f.machineName] += f.volumeLiters || 0;
     return acc;
   }, {});
   const fuelingByMachine = Object.entries(fuelingByMachineMap).map(([machineName, totalLiters]) => ({ machineName, totalLiters }));
@@ -76,8 +77,8 @@ export default function Dashboard() {
       value: (data.totalHarvestSacks ?? 0).toLocaleString("pt-BR"),
       unit: "sacas",
       icon: Wheat,
-      colorClass: "text-[hsl(var(--accent))]",
-      bgClass: "bg-[hsl(var(--accent)/0.12)]",
+      colorClass: "text-[hsl(var(--success-text))]",
+      bgClass: "bg-[hsl(var(--success-subtle))]",
     },
     {
       title: "Área Colhida",
@@ -92,16 +93,16 @@ export default function Dashboard() {
       value: (data.totalTransportTons ?? 0).toLocaleString("pt-BR"),
       unit: "toneladas",
       icon: Truck,
-      colorClass: "text-[hsl(var(--info))]",
-      bgClass: "bg-[hsl(var(--info)/0.1)]",
+      colorClass: "text-[hsl(var(--info-text))]",
+      bgClass: "bg-[hsl(var(--info-subtle))]",
     },
     {
       title: "Diesel Consumido",
       value: (data.totalFuelingLiters ?? 0).toLocaleString("pt-BR"),
       unit: "litros",
       icon: Droplet,
-      colorClass: "text-[hsl(var(--muted-foreground))]",
-      bgClass: "bg-[hsl(var(--muted)/1)]",
+      colorClass: "text-[hsl(var(--warning-text))]",
+      bgClass: "bg-[hsl(var(--warning-subtle))]",
     },
     {
       title: "Máquinas Ativas",
@@ -125,21 +126,29 @@ export default function Dashboard() {
     <AppLayout>
       <div className="space-y-6 md:space-y-8">
         {/* Cabeçalho — visível apenas no desktop */}
-        <div className="hidden md:block">
-          <h1 className="text-3xl font-bold font-display tracking-tight">Visão Geral</h1>
-          <p className="text-muted-foreground mt-1">
-            Acompanhe os principais indicadores da fazenda.
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
+          <div>
+            <h1 className="text-3xl font-bold font-display tracking-tight">Visão Geral</h1>
+            <p className="text-muted-foreground mt-1">
+              Acompanhe os principais indicadores da fazenda.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
+          </Button>
         </div>
 
         {/* Saudação mobile */}
-        <div className="md:hidden">
+        <div className="md:hidden no-print">
           <p className="text-sm text-muted-foreground font-medium">
             Olá, {user?.name?.split(" ")[0]} 👋
           </p>
-          <h2 className="text-xl font-bold text-foreground mt-0.5">
-            Resumo da fazenda
-          </h2>
+          <div className="flex items-center justify-between gap-2 mt-0.5">
+            <h2 className="text-xl font-bold text-foreground">
+              Resumo da fazenda
+            </h2>
+          </div>
         </div>
 
         {/* KPI Grid — 2 colunas no mobile, 3 no sm, 6 no xl */}

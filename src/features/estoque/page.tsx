@@ -30,7 +30,6 @@ export const productSchema = z.object({
   category: z.string().min(2, "Categoria obrigatória"),
   unit: z.enum(["L", "KG", "UN", "SC"]),
   currentStock: z.coerce.number().min(0, "Estoque inicial inválido"),
-  minStock: z.coerce.number().min(0, "Estoque mínimo inválido"),
 });
 
 export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
@@ -58,14 +57,9 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
             </FormItem>
           )} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField control={form.control as any} name="currentStock" render={({ field }) => (
-            <FormItem><FormLabel>Estoque Inicial/Atual</FormLabel><FormControl><Input type="number" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control as any} name="minStock" render={({ field }) => (
-            <FormItem><FormLabel>Estoque Mínimo</FormLabel><FormControl><Input type="number" placeholder="Ex: 10" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-        </div>
+        <FormField control={form.control as any} name="currentStock" render={({ field }) => (
+          <FormItem><FormLabel>Estoque Inicial/Atual</FormLabel><FormControl><Input type="number" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" disabled={isPending} className="flex-1">
@@ -110,7 +104,7 @@ export default function Estoque() {
 
   const productForm = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema) as any,
-    defaultValues: { name: "", category: "Sementes", unit: "KG", currentStock: 0, minStock: 10 },
+    defaultValues: { name: "", category: "Sementes", unit: "KG", currentStock: 0 },
   });
 
   const uniqueCategories = useMemo(() => {
@@ -233,18 +227,14 @@ export default function Estoque() {
                   <TableHead className="w-12"></TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead>Categoria</TableHead>
-                  <TableHead className="text-right">Mínimo</TableHead>
                   <TableHead className="text-right">Saldo Atual</TableHead>
-                  <TableHead className="text-center w-[120px]">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts?.length === 0 && (
                   <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nenhum produto encontrado.</TableCell></TableRow>
                 )}
-                {filteredProducts?.map((p) => {
-                  const isCritical = p.minStock !== undefined && p.currentStock <= p.minStock;
-                  return (
+                {filteredProducts?.map((p) => (
                     <TableRow 
                       key={p.id} 
                       className="hover:bg-muted/30 cursor-pointer group"
@@ -261,26 +251,11 @@ export default function Estoque() {
                           {p.category}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-xs font-mono">
-                        {p.minStock} {p.unit}
-                      </TableCell>
                       <TableCell className="text-right font-mono font-black text-foreground">
                         {p.currentStock} {p.unit}
                       </TableCell>
-                      <TableCell className="text-center">
-                        {isCritical ? (
-                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 h-6 px-2 text-[10px] uppercase font-black">
-                            <AlertTriangle className="w-3 h-3 mr-1" /> Crítico
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] h-6 px-2 text-[10px] uppercase font-black">
-                            Normal
-                          </Badge>
-                        )}
-                      </TableCell>
                     </TableRow>
-                  );
-                })}
+                ))}
               </TableBody>
             </Table>
           )}
@@ -302,39 +277,26 @@ export default function Estoque() {
             <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">Nenhum produto encontrado.</div>
           )}
           
-          {filteredProducts?.map((p) => {
-            const isCritical = p.minStock !== undefined && p.currentStock <= p.minStock;
-            return (
+          {filteredProducts?.map((p) => (
               <div 
                 key={p.id} 
-                className={`bg-card rounded-2xl border p-4 touch-card cursor-pointer transition-all ${isCritical ? 'border-destructive/30 bg-destructive/[0.02]' : ''}`}
+                className="bg-card rounded-2xl border p-4 touch-card cursor-pointer transition-all"
                 onClick={() => setLocation(`/estoque/${p.id}`)}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{p.category}</p>
-                      {isCritical && (
-                        <Badge variant="outline" className="bg-destructive/10 text-destructive border-transparent p-0 px-1.5 h-4 text-[8px] font-black uppercase">
-                          Estoque Baixo
-                        </Badge>
-                      )}
-                    </div>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">{p.category}</p>
                     <p className="font-bold text-foreground text-base leading-tight">{p.name}</p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30 flex-shrink-0" />
                 </div>
-                <div className="flex items-center justify-between pt-3 border-t border-border/60">
-                  <div className="text-[10px] text-muted-foreground font-medium">
-                    Mínimo: <span className="font-bold">{p.minStock} {p.unit}</span>
-                  </div>
-                  <div className={`font-mono font-black text-lg leading-none ${isCritical ? 'text-destructive' : 'text-primary'}`}>
+                <div className="flex items-center justify-end pt-3 border-t border-border/60">
+                  <div className="font-mono font-black text-lg leading-none text-primary">
                     {p.currentStock} <span className="text-[10px] uppercase ml-0.5">{p.unit}</span>
                   </div>
                 </div>
               </div>
-            );
-          })}
+          ))}
         </div>
       </div>
 

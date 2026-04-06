@@ -17,7 +17,8 @@ import {
   Activity, 
   Pencil, 
   Trash2, 
-  MoreHorizontal 
+  MoreHorizontal,
+  Printer
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -215,7 +216,7 @@ export default function SafraDetalhes() {
   return (
     <AppLayout title={safra.name} showBack={true} backTo="/safras">
       {/* Breadcrumbs */}
-      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6 no-print">
         <Link href="/safras" className="hover:text-primary transition-colors">Safras</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{safra.name}</span>
@@ -244,11 +245,15 @@ export default function SafraDetalhes() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0">
-          <Button variant="outline" size="sm" onClick={openSafraEdit} className="hidden md:flex">
+        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0 no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={openSafraEdit} className="hidden md:flex h-10 px-4 rounded-xl">
             <Pencil className="w-4 h-4 mr-2" /> Editar
           </Button>
-          <Button variant="outline" size="sm" onClick={confirmSafraDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+          <Button variant="outline" size="sm" onClick={confirmSafraDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10 h-10 px-4 rounded-xl">
             <Trash2 className="w-4 h-4 mr-2" /> Excluir
           </Button>
 
@@ -295,8 +300,8 @@ export default function SafraDetalhes() {
           <TabsTrigger value="insumos" className="px-6 py-2">Estoque Aplicado</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="w-full xl:w-2/3">
+        <TabsContent value="fuelings" className="mt-0">
+          <div className="bg-card rounded-2xl border overflow-hidden">
             <Card className="bg-card border">
               <CardHeader>
                 <CardTitle className="text-base font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -310,7 +315,7 @@ export default function SafraDetalhes() {
                   {plantedAreaAndCultures.culturas.map((c: any, i: number) => (
                     <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/30 hover:bg-muted/40 transition-colors gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] font-bold border border-emerald-200 uppercase text-xs flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] font-bold border border-[hsl(var(--success)/0.2)] uppercase text-xs flex-shrink-0">
                           {c.culture.substring(0, 2)}
                         </div>
                         <div>
@@ -318,7 +323,7 @@ export default function SafraDetalhes() {
                           <p className="text-xs font-medium text-muted-foreground">Colhido: {c.totalSacks.toLocaleString()} sc</p>
                         </div>
                       </div>
-                      <div className="sm:text-right bg-card p-3 rounded-lg border border-border sm:bg-transparent sm:p-0 sm:border-0 w-full sm:w-auto">
+                      <div className="sm:text-right bg-card p-3 rounded-xl border border-border sm:bg-transparent sm:p-0 sm:border-0 w-full sm:w-auto">
                         <p className="font-bold text-foreground">{c.totalArea.toLocaleString()} ha</p>
                         <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Área Destinada</p>
                       </div>
@@ -360,7 +365,7 @@ export default function SafraDetalhes() {
                       <TableRow key={i} className="hover:bg-muted/30 cursor-pointer" onClick={() => window.location.href = `/colheita`}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] font-bold uppercase text-xs">
+                            <div className="w-8 h-8 rounded-xl bg-[hsl(var(--success-subtle))] flex items-center justify-center text-[hsl(var(--success-text))] font-bold uppercase text-xs">
                               {c.culture.substring(0, 2)}
                             </div>
                             <span className="font-bold text-foreground capitalize">{c.culture}</span>
@@ -434,7 +439,7 @@ export default function SafraDetalhes() {
                       <TableRow key={p.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => window.location.href = `/estoque/${p.id}`}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                            <div className="w-8 h-8 rounded-xl bg-[hsl(var(--info-subtle))] flex items-center justify-center text-[hsl(var(--info-text))] shrink-0">
                               <Activity className="w-4 h-4" />
                             </div>
                             <span className="font-bold text-foreground">{p.name}</span>
@@ -453,7 +458,7 @@ export default function SafraDetalhes() {
                 {usedProducts.map((p: any) => (
                   <Card key={p.id} className="bg-card border hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/estoque/${p.id}`}>
                     <CardContent className="p-5 flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--info-subtle))] flex items-center justify-center text-[hsl(var(--info-text))] flex-shrink-0">
                         <Activity className="w-6 h-6" />
                       </div>
                       <div className="flex-1">

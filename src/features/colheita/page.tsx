@@ -538,6 +538,8 @@ export default function Colheita() {
                 <TableHead className="text-right">Peso Bruto</TableHead>
                 <TableHead className="text-right">Peso Líquido</TableHead>
                 <TableHead className="text-right">Sacas</TableHead>
+                <TableHead className="text-right">Umidade</TableHead>
+                <TableHead className="text-right">Impureza</TableHead>
                 <TableHead className="text-right">Produtividade</TableHead>
                 <TableHead>Logística</TableHead>
                 <TableHead>Máquina</TableHead>
@@ -547,7 +549,7 @@ export default function Colheita() {
             <TableBody>
               {filteredRecords.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-10 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-10 text-muted-foreground">
                     {activeFilterCount > 0 ? "Nenhum registro para os filtros aplicados." : "Nenhum registro de colheita ainda."}
                   </TableCell>
                 </TableRow>
@@ -568,6 +570,8 @@ export default function Colheita() {
                   <TableCell className="text-right">{r.weightGross ? `${Number(r.weightGross).toLocaleString()} kg` : "—"}</TableCell>
                   <TableCell className="text-right font-medium">{r.weightNet ? `${Number(r.weightNet).toLocaleString()} kg` : "—"}</TableCell>
                   <TableCell className="text-right font-bold">{r.quantitySacks} sc</TableCell>
+                  <TableCell className="text-right text-muted-foreground text-xs">{r.moisture ? `${r.moisture}%` : "—"}</TableCell>
+                  <TableCell className="text-right text-muted-foreground text-xs">{r.impurity ? `${r.impurity}%` : "—"}</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{(Number(r.productivity) || 0).toFixed(1)} sc/ha</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">

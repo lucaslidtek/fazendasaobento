@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, CalendarDays, Loader2, Pencil, Trash2, MoreHorizontal, ChevronRight } from "lucide-react";
+import { Plus, CalendarDays, Loader2, Pencil, Trash2, MoreHorizontal, ChevronRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -231,10 +231,14 @@ export default function Safras() {
           </p>
         </div>
 
-        <div className="hidden md:block">
+        <div className="flex items-center gap-2 w-full sm:w-auto no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
+              <Button className="h-10 px-5 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Safra
               </Button>
@@ -284,7 +288,7 @@ export default function Safras() {
                       {STATUS_LABELS[r.status] ?? r.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="no-print">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigateToDetails(r.id); }} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
                         <ChevronRight className="w-5 h-5" />

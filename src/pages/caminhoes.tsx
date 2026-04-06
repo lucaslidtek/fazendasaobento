@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Truck, Loader2, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Plus, Truck, Loader2, Pencil, Trash2, MoreHorizontal, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,10 +26,10 @@ export const schema = z.object({
   status: z.enum(["ativo", "manutencao", "inativo"]),
 });
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<string, string> = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
   manutencao: "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]",
-  inativo: "bg-destructive/10 text-destructive border-destructive/20",
+  inativo: "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -41,7 +41,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_DOT: Record<string, string> = {
   ativo: "bg-[hsl(var(--success))]",
   manutencao: "bg-[hsl(var(--warning))]",
-  inativo: "bg-destructive",
+  inativo: "bg-[hsl(var(--destructive))]",
 };
 
 export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
@@ -49,20 +49,20 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="plate" render={({ field }) => (
-          <FormItem><FormLabel>Placa</FormLabel><FormControl><Input placeholder="ABC-1234" className="uppercase" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Placa</FormLabel><FormControl><Input placeholder="ABC-1234" className="uppercase h-12 rounded-xl" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="model" render={({ field }) => (
-          <FormItem><FormLabel>Modelo / Marca</FormLabel><FormControl><Input placeholder="Ex: Scania R450" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Modelo / Marca</FormLabel><FormControl><Input placeholder="Ex: Scania R450" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="capacity" render={({ field }) => (
-            <FormItem><FormLabel>Capacidade (ton)</FormLabel><FormControl><Input type="number" placeholder="Ex: 35.5" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Capacidade (ton)</FormLabel><FormControl><Input type="number" placeholder="Ex: 35.5" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="status" render={({ field }) => (
             <FormItem><FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
-                <SelectContent>
+                <FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="manutencao">Em Manutenção</SelectItem>
                   <SelectItem value="inativo">Inativo</SelectItem>
@@ -71,9 +71,9 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
             <FormMessage /></FormItem>
           )} />
         </div>
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={isPending} className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="h-12 rounded-xl order-2 sm:order-1 sm:flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="h-12 rounded-xl order-1 sm:order-2 sm:flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEditing ? "Salvar alterações" : "Cadastrar"}
           </Button>
@@ -180,22 +180,30 @@ export default function Caminhoes() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
             <Truck className="hidden md:block w-7 h-7 text-[hsl(var(--info))]" />
-            Caminhões Externos {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
+            Caminhões Externos {records && <span className="text-[hsl(var(--info)/0.6)] text-xl md:text-2xl">({records.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Gestão de frota de transporte rodoviário.
           </p>
         </div>
 
-        <div className="hidden md:block">
+        <div className="flex items-center gap-2 w-full sm:w-auto no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
+          </Button>
+          <Button variant="outline" className="hidden md:flex h-10 px-4 gap-2 rounded-xl">
+            <Download className="w-4 h-4" />
+            CSV
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
+              <Button className="h-10 px-5 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Cadastrar Caminhão
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[400px]">
+            <DialogContent className="sm:max-w-[400px] sm:rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl">{editingRecord ? "Editar Caminhão" : "Novo Caminhão"}</DialogTitle>
               </DialogHeader>
@@ -227,9 +235,9 @@ export default function Caminhoes() {
                 <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Nenhum caminhão cadastrado.</TableCell></TableRow>
               )}
               {records?.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => setLocation(`/caminhoes/${r.id}`)}>
+                <TableRow key={r.id} className="hover:bg-muted/30 cursor-pointer transition-colors border-b border-border/50" onClick={() => setLocation(`/caminhoes/${r.id}`)}>
                   <TableCell>
-                    <span className="font-mono bg-muted px-2 py-1 rounded text-sm border font-bold tracking-widest">{r.plate}</span>
+                    <span className="font-mono bg-muted px-2.5 py-1 rounded-lg text-xs border border-border/50 font-bold tracking-widest">{r.plate}</span>
                   </TableCell>
                   <TableCell className="font-medium">{r.model || "—"}</TableCell>
                   <TableCell className="text-right">{r.capacity ? `${r.capacity} t` : "—"}</TableCell>
@@ -238,7 +246,7 @@ export default function Caminhoes() {
                       {STATUS_LABELS[r.status] ?? r.status}
                     </Badge>
                   </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="no-print">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
                         <Pencil className="w-4 h-4" />

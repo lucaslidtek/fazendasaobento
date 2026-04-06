@@ -3,7 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DEMO_CROPS, DEMO_HARVESTS, DEMO_STOCK_MOVEMENTS, DEMO_PRODUCTS } from "@/lib/demo-data";
-import { Loader2, Sprout, ChevronRight, TrendingUp, Tractor, Box, Map, Package, Activity, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Loader2, Sprout, ChevronRight, TrendingUp, Tractor, Box, Map, Package, Activity, Pencil, Trash2, MoreHorizontal, Printer } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 
 const STATUS_STYLES: Record<string, string> = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
-  inativo: "bg-destructive/10 text-destructive border-destructive/20",
+  inativo: "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -184,7 +184,7 @@ export default function CulturaDetalhes() {
   return (
     <AppLayout title={cultura.name} showBack={true} backTo="/culturas">
       {/* Breadcrumbs */}
-      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
+      <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6 no-print">
         <Link href="/culturas" className="hover:text-primary transition-colors">Culturas</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-medium text-foreground">{cultura.name}</span>
@@ -193,13 +193,13 @@ export default function CulturaDetalhes() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-[hsl(var(--success-subtle))] rounded-2xl border border-emerald-200">
+          <div className="p-3 bg-[hsl(var(--success-subtle))] rounded-2xl border border-[hsl(var(--success)/0.2)]">
             <Sprout className="w-8 h-8 text-[hsl(var(--success-text))]" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-3xl font-bold font-display text-foreground leading-tight">{cultura.name}</h1>
-              <Badge variant="outline" className={cn("font-semibold uppercase text-[10px] tracking-wider", STATUS_STYLES[cultura.status as string])}>
+              <Badge variant="outline" className={cn("font-semibold uppercase text-[10px] tracking-widest px-3", STATUS_STYLES[cultura.status as string])}>
                 {STATUS_LABELS[cultura.status] ?? cultura.status}
               </Badge>
             </div>
@@ -211,11 +211,15 @@ export default function CulturaDetalhes() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0">
-          <Button variant="outline" size="sm" onClick={openEdit} className="hidden md:flex">
+        <div className="flex items-center justify-end gap-3 mt-4 md:mt-0 no-print">
+          <Button variant="outline" onClick={() => window.print()} className="h-10 px-4 gap-2 border-primary/20 hover:bg-primary/5 text-primary rounded-xl overflow-hidden">
+            <Printer className="w-4 h-4" />
+            Imprimir PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={openEdit} className="hidden md:flex h-10 px-4 rounded-xl">
             <Pencil className="w-4 h-4 mr-2" /> Editar
           </Button>
-          <Button variant="outline" size="sm" onClick={confirmDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10">
+          <Button variant="outline" size="sm" onClick={confirmDelete} className="hidden md:flex text-destructive border-destructive/20 hover:bg-destructive/10 h-10 px-4 rounded-xl">
             <Trash2 className="w-4 h-4 mr-2" /> Excluir
           </Button>
 
@@ -226,6 +230,7 @@ export default function CulturaDetalhes() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => window.print()}><Printer className="w-4 h-4 mr-2"/> Imprimir</DropdownMenuItem>
               <DropdownMenuItem onClick={openEdit}><Pencil className="w-4 h-4 mr-2"/> Editar</DropdownMenuItem>
               <DropdownMenuItem onClick={confirmDelete} className="text-destructive"><Trash2 className="w-4 h-4 mr-2"/> Excluir</DropdownMenuItem>
             </DropdownMenuContent>
@@ -241,7 +246,7 @@ export default function CulturaDetalhes() {
           { icon: TrendingUp, label: "Média Produt.", value: harvestStats.productivityAvg, unit: "sc/ha", primary: true },
           { icon: Package, label: "Insumos (Tipos)", value: usedProducts.length, unit: "un" },
         ].map((kpi, idx) => (
-          <Card key={idx} className={cn("bg-card border", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
+          <Card key={idx} className={cn("bg-card border rounded-2xl", kpi.primary && "border-primary/20 bg-primary/[0.02]")}>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 text-muted-foreground text-[10px] mb-2 uppercase font-bold tracking-wider">
                 <kpi.icon className={cn("w-3.5 h-3.5", kpi.primary ? "text-primary" : "text-muted-foreground")} /> {kpi.label}
@@ -256,7 +261,7 @@ export default function CulturaDetalhes() {
 
       {/* Tabs and Content Section */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto flex-nowrap">
+        <TabsList className="bg-muted p-1 w-full justify-start gap-1 h-auto min-h-[44px] overflow-x-auto flex-nowrap rounded-xl">
           <TabsTrigger value="overview" className="px-6 py-2">Dashboard</TabsTrigger>
           <TabsTrigger value="colheitas" className="px-6 py-2">Histórico de Colheitas</TabsTrigger>
           <TabsTrigger value="insumos" className="px-6 py-2">Insumos Aplicados</TabsTrigger>
@@ -264,7 +269,7 @@ export default function CulturaDetalhes() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="w-full xl:w-2/3">
-            <Card className="bg-card border">
+            <Card className="bg-card border rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-base font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
@@ -391,7 +396,7 @@ export default function CulturaDetalhes() {
                       <TableRow key={p.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => window.location.href = `/estoque/${p.id}`}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-[hsl(var(--info-subtle))] flex items-center justify-center text-[hsl(var(--info-text))] shrink-0">
                               <Activity className="w-4 h-4" />
                             </div>
                             <span className="font-bold text-foreground">{p.name}</span>
@@ -408,9 +413,9 @@ export default function CulturaDetalhes() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4">
                 {usedProducts.map((p: any) => (
-                  <Card key={p.id} className="bg-card border hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/estoque/${p.id}`}>
+                  <Card key={p.id} className="bg-card border rounded-2xl hover:border-primary/30 transition-all cursor-pointer touch-card" onClick={() => window.location.href = `/estoque/${p.id}`}>
                     <CardContent className="p-5 flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--info-subtle))] flex items-center justify-center text-[hsl(var(--info-text))] flex-shrink-0">
                         <Activity className="w-6 h-6" />
                       </div>
                       <div className="flex-1">
@@ -446,7 +451,7 @@ export default function CulturaDetalhes() {
       </Sheet>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] hidden sm:block">
+        <DialogContent className="sm:max-w-[500px] hidden sm:block sm:rounded-2xl">
           <DialogHeader><DialogTitle>Editar Cultura</DialogTitle></DialogHeader>
           <FormContent form={form} onSubmit={onUpdate} isPending={updateMutation.isPending} onClose={closeForm} isEditing={true} />
         </DialogContent>

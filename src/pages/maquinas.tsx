@@ -32,13 +32,13 @@ export const schema = z.object({
 const STATUS_STYLES = {
   ativo: "bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)]",
   manutencao: "bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)]",
-  inativo: "bg-destructive/10 text-destructive border-destructive/20",
+  inativo: "bg-[hsl(var(--destructive-subtle))] text-[hsl(var(--destructive-text))] border-[hsl(var(--destructive)/0.2)]",
 };
 
 const STATUS_DOT: Record<string, string> = {
   ativo: "bg-[hsl(var(--success))]",
   manutencao: "bg-[hsl(var(--warning))]",
-  inativo: "bg-destructive",
+  inativo: "bg-[hsl(var(--destructive))]",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -59,15 +59,15 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="name" render={({ field }) => (
-          <FormItem><FormLabel>Nome / Identificação</FormLabel><FormControl><Input placeholder="Ex: Trator JD-01" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Nome / Identificação</FormLabel><FormControl><Input placeholder="Ex: Trator JD-01" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="model" render={({ field }) => (
-            <FormItem><FormLabel>Modelo</FormLabel><FormControl><Input placeholder="Ex: John Deere 8R" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Modelo</FormLabel><FormControl><Input placeholder="Ex: John Deere 8R" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={form.control} name="purchase_cost" render={({ field }) => (
-            <FormItem><FormLabel>Custo de Compra (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="Ex: 500000.00" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Custo de Compra (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="Ex: 500000.00" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
 
@@ -103,9 +103,9 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
           <FormItem><FormLabel>Localização / Galpão</FormLabel><FormControl><Input placeholder="Ex: Galpão Central" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
 
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" disabled={isPending} className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Button type="button" variant="outline" onClick={onClose} className="h-12 rounded-xl order-2 sm:order-1 sm:flex-1">Cancelar</Button>
+          <Button type="submit" disabled={isPending} className="h-12 rounded-xl order-1 sm:order-2 sm:flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEditing ? "Salvar alterações" : "Cadastrar"}
           </Button>
@@ -257,7 +257,7 @@ export default function Maquinas() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
             <Tractor className="hidden md:block w-7 h-7 text-primary" />
-            Frota e Máquinas {filteredRecords && <span className="text-muted-foreground/60 text-xl md:text-2xl">({filteredRecords.length})</span>}
+            Frota e Máquinas {filteredRecords && <span className="text-[hsl(var(--primary)/0.6)] text-xl md:text-2xl">({filteredRecords.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Inventário e status operacional do maquinário.
@@ -283,12 +283,12 @@ export default function Maquinas() {
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
-              <Button className="h-10 px-5">
+              <Button className="h-10 px-5 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Máquina
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] sm:rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl">{editingRecord ? "Editar Máquina" : "Cadastrar Máquina"}</DialogTitle>
               </DialogHeader>
@@ -382,7 +382,7 @@ export default function Maquinas() {
                 <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nenhuma máquina cadastrada ou encontrada nos filtros.</TableCell></TableRow>
               )}
               {filteredRecords.map((r) => (
-                <TableRow key={r.id} onClick={() => handleRowClick(r)} className="hover:bg-muted/30 cursor-pointer transition-colors group">
+                <TableRow key={r.id} onClick={() => handleRowClick(r)} className="hover:bg-muted/30 cursor-pointer transition-colors group border-b border-border/50">
                   <TableCell className="font-bold text-foreground group-hover:text-primary transition-colors">{r.name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.model || "—"}</TableCell>
                   <TableCell>{TYPE_LABELS[r.type] ?? r.type}</TableCell>
@@ -432,38 +432,38 @@ export default function Maquinas() {
         
         {/* Painel de filtros mobile */}
         {showFilters && (
-          <div className="bg-card border rounded-2xl p-4 space-y-3">
+          <div className="bg-card border rounded-2xl p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filtros</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Filtros Ativos</span>
               {activeFilterCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 gap-1 text-xs text-muted-foreground">
-                  <X className="w-3 h-3" /> Limpar
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 gap-2 text-xs text-primary hover:bg-primary/5 rounded-full px-3">
+                  <X className="w-3.5 h-3.5" /> Limpar Filtros
                 </Button>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-3">
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Todos</SelectItem>
+                <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-transparent focus:ring-0 text-sm font-medium"><SelectValue placeholder="Tipo de Máquina" /></SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value={ALL}>Todos os Tipos</SelectItem>
                   {Object.entries(TYPE_LABELS).map(([val, label]) => (
                     <SelectItem key={val} value={val}>{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Todos</SelectItem>
+                <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-transparent focus:ring-0 text-sm font-medium"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value={ALL}>Todos os Status</SelectItem>
                   {Object.entries(STATUS_LABELS).map(([val, label]) => (
                     <SelectItem key={val} value={val}>{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={filterLocation} onValueChange={setFilterLocation}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Localização" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Todas</SelectItem>
+                <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-transparent focus:ring-0 text-sm font-medium"><SelectValue placeholder="Localização" /></SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value={ALL}>Todas as Localidades</SelectItem>
                   {uniqueLocations.map(l => (
                     <SelectItem key={l as string} value={l as string}>{l}</SelectItem>
                   ))}
@@ -471,8 +471,8 @@ export default function Maquinas() {
               </Select>
             </div>
             {activeFilterCount > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {filteredRecords.length} de {records?.length ?? 0} registros
+              <p className="text-[10px] text-muted-foreground uppercase font-black text-center tracking-tighter opacity-50">
+                {filteredRecords.length} de {records?.length ?? 0} registros encontrados
               </p>
             )}
           </div>
