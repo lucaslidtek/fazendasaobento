@@ -27,6 +27,7 @@
     "@tanstack/react-query": "latest",
     "class-variance-authority": "latest",
     "clsx": "latest",
+    "cmdk": "^1.1.1",
     "date-fns": "latest",
     "framer-motion": "^12.38.0",
     "lucide-react": "latest",
@@ -41,9 +42,6 @@
     "zod": "latest"
   },
   "devDependencies": {
-    "@replit/vite-plugin-cartographer": "latest",
-    "@replit/vite-plugin-dev-banner": "latest",
-    "@replit/vite-plugin-runtime-error-modal": "latest",
     "@tailwindcss/vite": "latest",
     "@types/node": "latest",
     "@types/react": "latest",

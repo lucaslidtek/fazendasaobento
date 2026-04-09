@@ -30,7 +30,10 @@ import {
   Search,
   ClipboardList,
   Printer,
-  DollarSign
+  DollarSign,
+  Leaf,
+  FlaskConical,
+  Fuel
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -119,6 +122,24 @@ const getActivityIcon = (type: string) => {
     case "Pulverização": return <Droplets className="w-3 h-3" />;
     case "Adubação": return <Hammer className="w-3 h-3" />;
     default: return <Activity className="w-3 h-3" />;
+  }
+};
+
+// Helper para cor/ícone das tags de insumos por categoria de produto
+const getProductTagStyle = (productName: string) => {
+  const product = DEMO_PRODUCTS.find(p => p.name === productName);
+  const category = product?.category || "";
+  switch (category) {
+    case "Sementes":
+      return { className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800", icon: <Leaf className="w-2.5 h-2.5" /> };
+    case "Defensivos":
+      return { className: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800", icon: <FlaskConical className="w-2.5 h-2.5" /> };
+    case "Fertilizantes":
+      return { className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800", icon: <Droplets className="w-2.5 h-2.5" /> };
+    case "Combustível":
+      return { className: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800", icon: <Fuel className="w-2.5 h-2.5" /> };
+    default:
+      return { className: "bg-muted text-muted-foreground border-border", icon: null };
   }
 };
 
@@ -673,14 +694,18 @@ export default function Atividades() {
                   </TableCell>
                   <TableCell className="font-medium text-foreground">{r.areaHectares} ha</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-[180px]">
-                      {r.products?.slice(0, 2).map((p, idx) => (
-                        <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
-                          {p.name}
-                        </Badge>
-                      ))}
+                    <div className="flex flex-wrap gap-1.5 max-w-[220px]">
+                      {r.products?.slice(0, 2).map((p, idx) => {
+                        const style = getProductTagStyle(p.name);
+                        return (
+                          <Badge key={idx} variant="outline" className={`text-[10px] font-semibold border rounded-md px-2 py-0.5 flex items-center gap-1 ${style.className}`}>
+                            {style.icon}
+                            {p.name}
+                          </Badge>
+                        );
+                      })}
                       {r.products && r.products.length > 2 && (
-                        <Badge variant="outline" className="text-[9px] font-bold text-primary">
+                        <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/20 bg-primary/5 rounded-md px-1.5 py-0.5">
                           +{r.products.length - 2}
                         </Badge>
                       )}
@@ -793,14 +818,18 @@ export default function Atividades() {
                   <UserIcon className="w-3 h-3" /> {r.operatorName}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
-                {r.products?.slice(0, 1).map((p, idx) => (
-                  <Badge key={idx} variant="outline" className="text-[9px] bg-muted/40 font-medium">
-                    {p.name}
-                  </Badge>
-                ))}
+              <div className="flex flex-wrap gap-1 justify-end max-w-[160px]">
+                {r.products?.slice(0, 1).map((p, idx) => {
+                  const style = getProductTagStyle(p.name);
+                  return (
+                    <Badge key={idx} variant="outline" className={`text-[9px] font-semibold border rounded-md px-1.5 py-0.5 flex items-center gap-1 ${style.className}`}>
+                      {style.icon}
+                      {p.name}
+                    </Badge>
+                  );
+                })}
                 {r.products && r.products.length > 1 && (
-                  <Badge variant="outline" className="text-[9px] font-bold text-primary">
+                  <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/20 bg-primary/5 rounded-md px-1.5 py-0.5">
                     +{r.products.length - 1}
                   </Badge>
                 )}

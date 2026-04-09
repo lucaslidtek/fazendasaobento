@@ -7,10 +7,66 @@
 ## Pipeline Obrigatório
 
 ```
-SPEC → BREAK → PLAN → EXECUTE → VERIFY
+BOOTSTRAP → SPEC → BREAK → PLAN → EXECUTE → VERIFY
 ```
 
 **Cada fase produz um entregável.** O agent não avança para a próxima fase sem aprovação do usuário (exceto quando o usuário explicitamente autoriza execução autônoma).
+
+---
+
+## Fase 0: BOOTSTRAP (Garantir Documentação Base)
+
+**Trigger:** Início de qualquer trabalho no projeto. Executar **uma única vez** — se os 3 docs já existem em `src/references/`, pular para Fase 1.
+
+**Os 3 docs obrigatórios:**
+
+| Doc | Arquivo | O que contém |
+|---|---|---|
+| **Architecture** | `ARCHITECTURE.md` | Stack tecnológica, estrutura de pastas, padrões de código, convenções |
+| **Design System** | `DESIGN.md` | Paleta de cores, tipografia, componentes UI, tokens, regras visuais |
+| **Business Rules** | `BUSINESS_RULES.md` | Regras de negócio do domínio, fluxos de dados, decisões dos stakeholders |
+
+**Execução em 3 passos (na ordem):**
+
+### Passo 1 — Verificar `src/references/`
+Checar se os 3 arquivos já existem no caminho canônico. Se todos existem → **pular para Fase 1**.
+
+### Passo 2 — Buscar no projeto inteiro
+Para cada doc que **não** foi encontrado no passo 1, fazer `grep_search` e `list_dir` pelo repositório procurando arquivos com nomes similares (ex: `ARCHITECTURE`, `DESIGN`, `BUSINESS`, `rules`, `stack`, `design-system`, `tech-stack`, etc.) em qualquer pasta — raiz, `docs/`, `.agent/`, `_docs/`, etc.
+
+- **Se encontrar:** mover/copiar para `src/references/` com o nome padronizado
+- **Se o conteúdo estiver espalhado em múltiplos arquivos:** consolidar em um único doc
+
+### Passo 3 — Criar o que falta
+Para cada doc que **não** foi encontrado nos passos 1 e 2:
+
+1. **Primeiro, inferir** o máximo possível do código existente (`package.json`, estrutura de pastas, configs, CSS vars, componentes)
+2. **Depois, perguntar** ao usuário apenas o que não conseguiu deduzir:
+
+**Para `ARCHITECTURE.md`:**
+- Qual a stack? (framework, linguagem, banco, infra)
+- Como as pastas estão organizadas? (ou: "analise e documente")
+- Padrões de código? (naming, imports, testes)
+- Separação frontend/backend?
+
+**Para `DESIGN.md`:**
+- Referência visual? (Figma, brand guide, site de inspiração)
+- Cores principais da marca?
+- Tipografia? (fontes, tamanhos)
+- Componentes UI padronizados?
+
+**Para `BUSINESS_RULES.md`:**
+- Domínio do sistema — o que ele resolve?
+- Quem são os usuários e papéis?
+- Fluxos principais? (cadastro, processamento, relatórios)
+- Regras de cálculo, validação ou automação?
+- Decisões de negócio já tomadas que não devem mudar?
+
+3. Com as respostas, **gerar os docs** e apresentar ao usuário para revisão.
+
+**Entregável:** Os 3 docs criados/validados em `src/references/`
+
+**Gate:** ✅ Usuário confirma que os docs refletem a realidade do projeto
 
 ---
 

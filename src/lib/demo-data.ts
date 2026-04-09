@@ -86,7 +86,10 @@ export interface DieselTransaction {
 export interface BankAccount {
   id: number;
   name: string;
-  icon: string; // "bb" | "cef" | "santander" | "sicoob" | "card" | "store" | "cash"
+  icon: string;
+  logoUrl?: string;
+  color?: string;
+  bankCode?: string;
 }
 
 export interface FinancialRecord {
@@ -226,21 +229,29 @@ export const DEMO_USERS: ExtendedUser[] = [
 ];
 
 export const DEMO_BANK_ACCOUNTS: BankAccount[] = [
-  { id: 1, name: "Banco do Brasil", icon: "bb" },
-  { id: 2, name: "Sicoob", icon: "sicoob" },
-  { id: 3, name: "Santander", icon: "santander" },
-  { id: 4, name: "Caixa", icon: "cef" },
-  { id: 5, name: "Dinheiro (Caixa)", icon: "cash" },
+  { id: 1, name: "Banco do Brasil", icon: "BB", bankCode: "001", logoUrl: "https://www.google.com/s2/favicons?domain=bb.com.br&sz=64", color: "#FECE07" },
+  { id: 2, name: "Sicoob", icon: "SIC", bankCode: "756", logoUrl: "https://www.google.com/s2/favicons?domain=sicoob.com.br&sz=64", color: "#003641" },
+  { id: 3, name: "Santander", icon: "SAN", bankCode: "033", logoUrl: "https://www.google.com/s2/favicons?domain=santander.com.br&sz=64", color: "#EC0000" },
+  { id: 4, name: "Caixa", icon: "CEF", bankCode: "104", logoUrl: "https://www.google.com/s2/favicons?domain=caixa.gov.br&sz=64", color: "#005CA9" },
+  { id: 5, name: "Dinheiro (Caixa)", icon: "R$", bankCode: "000", color: "#2E7D32" },
 ];
 
 export const DEMO_FINANCIAL_RECORDS: FinancialRecord[] = [
-  { id: 1, date: "2026-03-12", type: "despesa", category: "Insumos", description: "Compra de Fertilizante NPK", value: 45600, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Agropecuária Central", paymentMethod: "Boleto", dueDate: "2026-04-12", nfNumber: "88901", createdAt: "2026-03-12T09:00:00Z" },
-  { id: 2, date: "2026-03-11", type: "receita", category: "Vendas", description: "Venda Safra Soja - 500sc", value: 87500, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Cooperativa ABC", paymentMethod: "Pix", dueDate: "2026-03-11", nfNumber: "NF-992", createdAt: "2026-03-11T14:30:00Z" },
-  { id: 3, date: "2026-03-11", type: "despesa", category: "Máquinas", description: "Manutenção Trator JD 8R", value: 3450, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "JD Peças", paymentMethod: "Cartão", dueDate: "2026-03-25", nfNumber: "12234", machineId: 5, machineName: "John Deere 8R 370", createdAt: "2026-03-11T10:00:00Z" },
-  { id: 4, date: "2026-03-10", type: "despesa", category: "Combustível", description: "Abastecimento Diesel S10", value: 12500, status: "aberto", bankAccountId: 3, bankAccountName: "Santander", supplier: "Posto do Campo", paymentMethod: "Boleto", dueDate: "2026-03-30", createdAt: "2026-03-10T16:00:00Z" },
-  { id: 5, date: "2026-03-10", type: "despesa", category: "Administrativo", description: "Energia Elétrica", value: 890, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Copel", paymentMethod: "Débito Automático", dueDate: "2026-03-10", createdAt: "2026-03-10T08:00:00Z" },
-  { id: 6, date: "2026-03-08", type: "despesa", category: "Máquinas", description: "Troca de Óleo - Colheitadeira", value: 1850, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Mecânica Agrícola", paymentMethod: "Pix", machineId: 1, machineName: "John Deere S790", createdAt: "2026-03-08T09:00:00Z" },
-  { id: 7, date: "2026-03-05", type: "despesa", category: "Máquinas", description: "Reparo Barra de Corte", value: 4200, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Peças & Cia", paymentMethod: "Boleto", machineId: 1, machineName: "John Deere S790", createdAt: "2026-03-05T15:00:00Z" },
+  { id: 1, date: "2026-03-12", type: "despesa", category: "Insumos", description: "Compra de Fertilizante NPK", value: 45600, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Agropecuária Central", paymentMethod: "Boleto", dueDate: "2026-04-12", nfNumber: "88901", safraId: 4, createdAt: "2026-03-12T09:00:00Z" },
+  { id: 2, date: "2026-03-11", type: "receita", category: "Vendas", description: "Venda Safra Soja - 500sc", value: 87500, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Cooperativa ABC", paymentMethod: "Pix", dueDate: "2026-03-11", nfNumber: "NF-992", safraId: 4, createdAt: "2026-03-11T14:30:00Z" },
+  { id: 3, date: "2026-03-11", type: "despesa", category: "Máquinas", description: "Manutenção Trator JD 8R", value: 3450, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "JD Peças", paymentMethod: "Cartão", dueDate: "2026-03-25", nfNumber: "12234", machineId: 5, machineName: "John Deere 8R 370", safraId: 4, createdAt: "2026-03-11T10:00:00Z" },
+  { id: 4, date: "2026-03-10", type: "despesa", category: "Combustível", description: "Abastecimento Diesel S10", value: 12500, status: "aberto", bankAccountId: 3, bankAccountName: "Santander", supplier: "Posto do Campo", paymentMethod: "Boleto", dueDate: "2026-03-30", safraId: 4, createdAt: "2026-03-10T16:00:00Z" },
+  { id: 5, date: "2026-03-10", type: "despesa", category: "Administrativo", description: "Energia Elétrica", value: 890, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Copel", paymentMethod: "Débito Automático", dueDate: "2026-03-10", safraId: 4, createdAt: "2026-03-10T08:00:00Z" },
+  { id: 6, date: "2026-03-08", type: "despesa", category: "Máquinas", description: "Troca de Óleo - Colheitadeira", value: 1850, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Mecânica Agrícola", paymentMethod: "Pix", machineId: 1, machineName: "John Deere S790", safraId: 4, createdAt: "2026-03-08T09:00:00Z" },
+  { id: 7, date: "2026-03-05", type: "despesa", category: "Máquinas", description: "Reparo Barra de Corte", value: 4200, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Peças & Cia", paymentMethod: "Boleto", machineId: 1, machineName: "John Deere S790", safraId: 4, createdAt: "2026-03-05T15:00:00Z" },
+  { id: 8, date: "2026-02-20", type: "despesa", category: "Insumos", description: "Compra de Sementes Soja RR - 800sc", value: 144000, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "SeedCorp Brasil", paymentMethod: "Boleto", dueDate: "2026-03-20", nfNumber: "NF-4401", safraId: 4, createdAt: "2026-02-20T10:00:00Z" },
+  { id: 9, date: "2026-01-15", type: "receita", category: "Vendas", description: "Venda Milho Safrinha - 1200sc", value: 108000, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Cargill S/A", paymentMethod: "TED", dueDate: "2026-01-15", nfNumber: "NF-3890", safraId: 4, createdAt: "2026-01-15T11:00:00Z" },
+  { id: 10, date: "2026-02-05", type: "despesa", category: "Combustível", description: "Diesel S10 - Tanque 10.000L", value: 58000, status: "pago", bankAccountId: 3, bankAccountName: "Santander", supplier: "Rodoil Distribuidora", paymentMethod: "Boleto", dueDate: "2026-03-05", nfNumber: "NF-55432", safraId: 4, createdAt: "2026-02-05T08:30:00Z" },
+  { id: 11, date: "2026-01-28", type: "despesa", category: "Insumos", description: "Defensivos - Glifosato 480 (2.400L)", value: 108000, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "AgroQuímica Ltda", paymentMethod: "Boleto", dueDate: "2026-02-28", nfNumber: "NF-7721", safraId: 4, createdAt: "2026-01-28T14:00:00Z" },
+  { id: 12, date: "2026-03-01", type: "despesa", category: "Máquinas", description: "Revisão Completa Colheitadeira S790", value: 28500, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Concessionária JD", paymentMethod: "Cartão", machineId: 1, machineName: "John Deere S790", safraId: 4, createdAt: "2026-03-01T09:00:00Z" },
+  { id: 13, date: "2026-02-10", type: "despesa", category: "Administrativo", description: "Seguro Safra 2025/2026", value: 32000, status: "pago", bankAccountId: 4, bankAccountName: "Caixa", supplier: "Allianz Seguros", paymentMethod: "Débito Automático", dueDate: "2026-02-10", safraId: 4, createdAt: "2026-02-10T10:00:00Z" },
+  { id: 14, date: "2026-03-18", type: "receita", category: "Vendas", description: "Venda Soja — 800sc Cooperativa", value: 142400, status: "pago", bankAccountId: 2, bankAccountName: "Sicoob", supplier: "Cooperativa Agroinova", paymentMethod: "Pix", dueDate: "2026-03-18", nfNumber: "NF-1055", safraId: 4, createdAt: "2026-03-18T16:00:00Z" },
+  { id: 15, date: "2026-01-10", type: "despesa", category: "Insumos", description: "Cloreto de Potássio — 20 ton", value: 90000, status: "pago", bankAccountId: 1, bankAccountName: "Banco do Brasil", supplier: "Fertipar", paymentMethod: "Boleto", dueDate: "2026-02-10", nfNumber: "NF-6612", safraId: 4, createdAt: "2026-01-10T08:00:00Z" },
 ];
 
 export const DEMO_ACTIVITIES: ActivityRecord[] = [

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { 
   DEMO_FINANCIAL_RECORDS, 
@@ -7,6 +7,7 @@ import {
   type FinancialRecord,
   type BankAccount
 } from "@/lib/demo-data";
+import { BRAZILIAN_BANKS, getBankLogoUrl, type BrazilianBank } from "@/lib/brazilian-banks";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +32,10 @@ import {
   ChevronRight,
   Search,
   Copy,
-  Printer
+  Printer,
+  ChevronsUpDown,
+  Check,
+  Landmark
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -79,14 +83,229 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { MobileListControls } from "@/components/ui/MobileListControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFarm } from "@/contexts/FarmContext";
+import { cn } from "@/lib/utils";
 
 const ALL = "all";
+
+function BankLogo({ account, size = 40 }: { account: Pick<BankAccount, 'icon' | 'logoUrl' | 'color'>; size?: number }) {
+  const [imgError, setImgError] = useState(false);
+  
+  if (account.logoUrl && !imgError) {
+    return (
+      <div 
+        className="rounded-xl bg-card border flex items-center justify-center overflow-hidden"
+        style={{ width: size, height: size }}
+      >
+        <img 
+          src={account.logoUrl} 
+          alt={account.icon}
+          className="w-6 h-6 object-contain"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+  
+  return (
+    <div 
+      className="rounded-xl border flex items-center justify-center font-bold text-[10px] uppercase overflow-hidden"
+      style={{ 
+        width: size, 
+        height: size, 
+        backgroundColor: account.color ? `${account.color}15` : undefined,
+        color: account.color || 'hsl(var(--primary))',
+        borderColor: account.color ? `${account.color}30` : undefined,
+      }}
+    >
+      {account.icon?.slice(0, 3)}
+    </div>
+  );
+}
+
+function AddBankAccountContent({ onAdd, onClose }: { onAdd: (bank: BankAccount) => void; onClose: () => void }) {
+  const [selectedBank, setSelectedBank] = useState<BrazilianBank | null>(null);
+  const [customName, setCustomName] = useState("");
+  const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSelect = (bank: BrazilianBank) => {
+    setSelectedBank(bank);
+    setCustomName(bank.name);
+    setComboboxOpen(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBank) return;
+
+    const newAccount: BankAccount = {
+      id: Date.now(),
+      name: customName || selectedBank.name,
+      icon: selectedBank.abbr,
+      bankCode: selectedBank.code,
+      logoUrl: selectedBank.domain ? getBankLogoUrl(selectedBank.domain) : undefined,
+      color: selectedBank.color,
+    };
+    onAdd(newAccount);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+      {/* Bank Selector */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Selecione o Banco</label>
+        <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              role="combobox"
+              aria-expanded={comboboxOpen}
+              className="w-full justify-between h-12 rounded-xl text-left font-normal"
+            >
+              {selectedBank ? (
+                <div className="flex items-center gap-3">
+                  {selectedBank.domain ? (
+                    <img 
+                      src={getBankLogoUrl(selectedBank.domain)} 
+                      alt={selectedBank.abbr}
+                      className="w-5 h-5 rounded-sm"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div 
+                      className="w-5 h-5 rounded-sm flex items-center justify-center text-[8px] font-bold text-white"
+                      style={{ backgroundColor: selectedBank.color }}
+                    >
+                      {selectedBank.abbr.slice(0, 2)}
+                    </div>
+                  )}
+                  <span>{selectedBank.name}</span>
+                  <Badge variant="outline" className="text-[9px] ml-auto">{selectedBank.code}</Badge>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Buscar banco...</span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 rounded-xl" align="start">
+            <Command>
+              <CommandInput 
+                placeholder="Buscar por nome ou código..." 
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+              />
+              <CommandList className="max-h-[250px]">
+                <CommandEmpty>Nenhum banco encontrado.</CommandEmpty>
+                <CommandGroup>
+                  {BRAZILIAN_BANKS.map((bank) => (
+                    <CommandItem
+                      key={bank.code}
+                      value={`${bank.name} ${bank.code} ${bank.abbr}`}
+                      onSelect={() => handleSelect(bank)}
+                      className="cursor-pointer py-2.5"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        {bank.domain ? (
+                          <img 
+                            src={getBankLogoUrl(bank.domain)} 
+                            alt={bank.abbr}
+                            className="w-5 h-5 rounded-sm shrink-0"
+                            onError={(e) => { 
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className={cn("w-5 h-5 rounded-sm flex items-center justify-center text-[7px] font-bold text-white shrink-0", bank.domain ? "hidden" : "")}
+                          style={{ backgroundColor: bank.color }}
+                        >
+                          {bank.abbr.slice(0, 2)}
+                        </div>
+                        <span className="text-sm font-medium truncate">{bank.name}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{bank.code}</span>
+                      </div>
+                      <Check className={cn("ml-2 h-4 w-4 shrink-0", selectedBank?.code === bank.code ? "opacity-100" : "opacity-0")} />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Selected Bank Preview */}
+      {selectedBank && (
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/30 border border-muted">
+          {selectedBank.domain ? (
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden border"
+              style={{ borderColor: `${selectedBank.color}30` }}
+            >
+              <img 
+                src={getBankLogoUrl(selectedBank.domain)} 
+                alt={selectedBank.abbr}
+                className="w-7 h-7 object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+          ) : (
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold text-white border"
+              style={{ backgroundColor: selectedBank.color }}
+            >
+              {selectedBank.abbr}
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="font-bold text-foreground">{selectedBank.name}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+              Código COMPE: {selectedBank.code}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Account Name */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Nome da Conta</label>
+        <Input
+          value={customName}
+          onChange={(e) => setCustomName(e.target.value)}
+          placeholder="Ex: Banco do Brasil - Conta PJ"
+          className="h-11 rounded-xl"
+          disabled={!selectedBank}
+        />
+        <p className="text-[10px] text-muted-foreground">
+          Personalize o nome para identificar a conta mais facilmente.
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-xl">
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={!selectedBank} className="flex-1 rounded-xl gap-2">
+          <Landmark className="w-4 h-4" />
+          Adicionar Conta
+        </Button>
+      </div>
+    </form>
+  );
+}
 
 const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
@@ -279,11 +498,37 @@ export default function Financeiro() {
   const { selectedSafraId, selectedTalhaoId, safras, talhoes } = useFarm();
   
   const [records, setRecords] = useState<FinancialRecord[]>(DEMO_FINANCIAL_RECORDS);
-  const [bankAccounts] = useState<BankAccount[]>(DEMO_BANK_ACCOUNTS);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(DEMO_BANK_ACCOUNTS);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<FinancialRecord | null>(null);
+
+  const [isBankDialogOpen, setIsBankDialogOpen] = useState(false);
+  const [isBankSheetOpen, setIsBankSheetOpen] = useState(false);
+  
+  const closeBankForm = useCallback(() => {
+    setIsBankDialogOpen(false);
+    setIsBankSheetOpen(false);
+  }, []);
+
+  const handleAddBank = useCallback((newAccount: BankAccount) => {
+    setBankAccounts(prev => [...prev, newAccount]);
+    closeBankForm();
+    toast({ title: "Conta adicionada!", description: `${newAccount.name} foi adicionada com sucesso.` });
+  }, [closeBankForm, toast]);
+
+  const handleDeleteBank = useCallback((id: number) => {
+    const hasRecords = records.some(r => r.bankAccountId === id);
+    if (hasRecords) {
+      toast({ title: "Não é possível excluir", description: "Esta conta possui lançamentos vinculados.", variant: "destructive" });
+      return;
+    }
+    if (confirm("Tem certeza que deseja excluir esta conta bancária?")) {
+      setBankAccounts(prev => prev.filter(a => a.id !== id));
+      toast({ title: "Conta excluída." });
+    }
+  }, [records, toast]);
   
   const [activeTab, setActiveTab] = useState("movimentacoes");
   const [filterType, setFilterType] = useState<string>("all");
@@ -803,6 +1048,34 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="contas" className="mt-0">
+          <div className="flex justify-end mb-4">
+            {/* Desktop: Nova Conta Button */}
+            <Dialog open={isBankDialogOpen} onOpenChange={(open) => !open && closeBankForm()}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="hidden sm:flex h-10 px-5 gap-2 rounded-xl"
+                  onClick={() => setIsBankDialogOpen(true)}
+                >
+                  <Plus className="w-4 h-4" /> Nova Conta
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px] rounded-3xl">
+                <DialogHeader>
+                  <DialogTitle>Adicionar Conta Bancária</DialogTitle>
+                </DialogHeader>
+                <AddBankAccountContent onAdd={handleAddBank} onClose={closeBankForm} />
+              </DialogContent>
+            </Dialog>
+
+            {/* Mobile: Nova Conta Button */}
+            <Button 
+              className="sm:hidden h-10 px-5 gap-2 rounded-xl"
+              onClick={() => setIsBankSheetOpen(true)}
+            >
+              <Plus className="w-4 h-4" /> Nova Conta
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {bankAccounts.map(acc => {
               const balance = records
@@ -818,9 +1091,7 @@ export default function Financeiro() {
                   <CardHeader className="p-4 pb-2 border-b border-muted/40 bg-muted/10">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-card border flex items-center justify-center font-bold text-primary uppercase">
-                          {acc.icon}
-                        </div>
+                        <BankLogo account={acc} />
                         <div>
                           <CardTitle className="text-sm font-bold">{acc.name}</CardTitle>
                           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Conta Corrente</p>
@@ -830,9 +1101,20 @@ export default function Financeiro() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="w-7 h-7 rounded-lg"><MoreHorizontal className="w-4 h-4"/></Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem className="text-xs">Extrato Detalhado</DropdownMenuItem>
-                          <DropdownMenuItem className="text-xs">Editar Conta</DropdownMenuItem>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuItem className="text-xs gap-2 cursor-pointer">
+                            <Search className="w-3.5 h-3.5" /> Extrato Detalhado
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs gap-2 cursor-pointer">
+                            <Pencil className="w-3.5 h-3.5" /> Editar Conta
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-xs gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5"
+                            onClick={() => handleDeleteBank(acc.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Excluir Conta
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -884,6 +1166,17 @@ export default function Financeiro() {
               onClose={closeForm}
               isEditing={!!editingRecord}
             />
+          </SheetContent>
+        </Sheet>
+
+        {/* Mobile Bank Account Sheet */}
+        <Sheet open={isBankSheetOpen} onOpenChange={(open) => !open && closeBankForm()}>
+          <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 h-[85vh] max-h-[85vh] overflow-y-auto">
+            <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6" />
+            <SheetHeader className="text-left mb-4">
+              <SheetTitle className="text-xl font-bold">Adicionar Conta Bancária</SheetTitle>
+            </SheetHeader>
+            <AddBankAccountContent onAdd={handleAddBank} onClose={closeBankForm} />
           </SheetContent>
         </Sheet>
       </div>
