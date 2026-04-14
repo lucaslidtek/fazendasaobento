@@ -33,7 +33,8 @@ import {
   DollarSign,
   Leaf,
   FlaskConical,
-  Fuel
+  Fuel,
+  Package
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -247,48 +248,49 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
 
           <div className="space-y-3">
             {fields.map((field, index) => (
-              <div key={field.id} className="flex flex-col sm:flex-row gap-3 bg-card p-3 rounded-xl border relative">
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => remove(index)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border shadow-sm text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-                
-                <div className="flex-1">
-                  <FormField control={form.control} name={`products.${index}.name`} render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Produto</FormLabel>
-                      <Select 
-                        onValueChange={(val) => {
-                          field.onChange(val);
-                          const p = DEMO_PRODUCTS.find(prod => prod.name === val);
-                          if (p) {
-                            form.setValue(`products.${index}.unit`, p.unit);
-                            if (p.unitPrice) form.setValue(`products.${index}.unitPrice`, p.unitPrice);
-                          }
-                        }} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {DEMO_PRODUCTS.map(p => (
-                            <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-[10px]" />
-                    </FormItem>
-                  )} />
+              <div key={field.id} className="bg-card p-3 rounded-xl border space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <FormField control={form.control} name={`products.${index}.name`} render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Produto</FormLabel>
+                        <Select 
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                            const p = DEMO_PRODUCTS.find(prod => prod.name === val);
+                            if (p) {
+                              form.setValue(`products.${index}.unit`, p.unit);
+                              if (p.unitPrice) form.setValue(`products.${index}.unitPrice`, p.unitPrice);
+                            }
+                          }} 
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {DEMO_PRODUCTS.map(p => (
+                              <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => remove(index)}
+                    className="h-7 w-7 rounded-lg mt-5 shrink-0 text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
                 
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <div className="w-[80px]">
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
                     <FormField control={form.control} name={`products.${index}.quantity`} render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Qtde</FormLabel>
@@ -297,7 +299,7 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                       </FormItem>
                     )} />
                   </div>
-                  <div className="w-[70px]">
+                  <div>
                     <FormField control={form.control} name={`products.${index}.unit`} render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">Unid</FormLabel>
@@ -316,7 +318,7 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                       </FormItem>
                     )} />
                   </div>
-                  <div className="w-[90px]">
+                  <div>
                     <FormField control={form.control} name={`products.${index}.unitPrice`} render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground/60">R$/un</FormLabel>
@@ -332,7 +334,7 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
                   const price = form.watch(`products.${index}.unitPrice`) || 0;
                   const total = qty * price;
                   return total > 0 ? (
-                    <div className="w-full text-right text-[10px] font-bold text-primary mt-1">
+                    <div className="text-right text-[10px] font-bold text-primary">
                       = R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                   ) : null;
@@ -710,6 +712,11 @@ export default function Atividades() {
                         </Badge>
                       )}
                       {!r.products?.length && <span className="text-muted-foreground text-xs">—</span>}
+                      {r.products && r.products.length > 0 && (
+                        <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)] gap-0.5">
+                          <Package className="w-2.5 h-2.5" /> Estoque ↓
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-bold text-foreground">
@@ -782,6 +789,11 @@ export default function Atividades() {
                   {r.type}
                 </Badge>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase">{format(new Date(r.date), "dd/MM/yyyy")}</span>
+                {r.products && r.products.length > 0 && (
+                  <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)] gap-0.5">
+                    <Package className="w-2.5 h-2.5" /> Estoque ↓
+                  </Badge>
+                )}
               </div>
               <p className="font-black text-primary text-sm">{r.areaHectares} ha</p>
             </div>

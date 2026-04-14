@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Fuel, Loader2, Droplets, Pencil, Trash2, Filter, X, ArrowUpRight, ArrowDownLeft, FileText, Search, Download, MoreHorizontal, Printer } from "lucide-react";
+import { Plus, Fuel, Loader2, Droplets, Pencil, Trash2, Filter, X, ArrowUpRight, ArrowDownLeft, FileText, Search, Download, MoreHorizontal, Printer, Package } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -761,7 +761,14 @@ export default function Abastecimento() {
                           {r.fuelType || "Diesel"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-black font-mono text-primary">{r.volumeLiters} L</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="font-black font-mono text-primary">{r.volumeLiters} L</span>
+                          <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)] gap-0.5">
+                            <Package className="w-2.5 h-2.5" /> Estoque ↓
+                          </Badge>
+                        </div>
+                      </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()} className="no-print">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8">

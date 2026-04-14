@@ -194,6 +194,21 @@ export const DEMO_TRUCKS = [
   { id: 3, plate: "GHI-9012", model: "Mercedes Actros", capacity: 50, status: "ativo" },
 ];
 
+export interface Silo {
+  id: number;
+  name: string;
+  location: string;
+  capacityTons: number;
+  status: "ativo" | "inativo";
+}
+
+export const DEMO_SILOS: Silo[] = [
+  { id: 1, name: "Silo Principal", location: "Sede - Fazenda São Bento", capacityTons: 5000, status: "ativo" },
+  { id: 2, name: "Silo Norte", location: "Área Norte - Km 12", capacityTons: 3000, status: "ativo" },
+  { id: 3, name: "Silo Sul", location: "Área Sul - Divisa", capacityTons: 2000, status: "ativo" },
+  { id: 4, name: "Cooperativa", location: "Cooperativa Agroinova - Cidade", capacityTons: 10000, status: "ativo" },
+];
+
 export const DEMO_TALHOES: Talhao[] = [
   { id: 1, name: "Talhão A1", property: "Fazenda São Bento", areaHectares: 20, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },
   { id: 2, name: "Talhão A2", property: "Fazenda São Bento", areaHectares: 18, cultureId: 1, status: "ativo", safraId: 4, createdAt: "2024-01-01T00:00:00Z" },

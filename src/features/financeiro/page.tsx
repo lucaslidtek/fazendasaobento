@@ -4,6 +4,7 @@ import {
   DEMO_FINANCIAL_RECORDS, 
   DEMO_BANK_ACCOUNTS, 
   DEMO_MACHINES,
+  DEMO_SILOS,
   type FinancialRecord,
   type BankAccount
 } from "@/lib/demo-data";
@@ -35,7 +36,8 @@ import {
   Printer,
   ChevronsUpDown,
   Check,
-  Landmark
+  Landmark,
+  Package
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -322,6 +324,7 @@ const schema = z.object({
   dueDate: z.string().optional(),
   paymentMethod: z.string().optional(),
   machineId: z.coerce.number().optional().or(z.literal(0)),
+  siloName: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -480,6 +483,36 @@ function FormContent({ form, bankAccounts, safras, talhoes, onSubmit, isPending,
             <FormItem><FormLabel>Fornecedor / Cliente</FormLabel><FormControl><Input placeholder="Ex: Cooperativa X" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
+
+        <FormField control={form.control} name="nfNumber" render={({ field }) => (
+          <FormItem><FormLabel>Nº Nota Fiscal (Opcional)</FormLabel><FormControl><Input placeholder="Ex: NF-00123456" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+
+        {/* Silo selection — only for Receita + Vendas */}
+        {form.watch("type") === "receita" && form.watch("category") === "Vendas" && (
+          <FormField control={form.control} name="siloName" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Origem do Grão (Silo)</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o silo de saída" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">Nenhum (sem baixa)</SelectItem>
+                  {DEMO_SILOS.filter(s => s.status === "ativo").map(s => (
+                    <SelectItem key={s.id} value={s.name}>{s.name} — {s.location}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Ao selecionar um silo, a baixa no estoque será automática.
+              </p>
+              <FormMessage />
+            </FormItem>
+          )} />
+        )}
 
         <div className="flex gap-3 pt-4 border-t">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-xl">Cancelar</Button>
@@ -749,7 +782,7 @@ export default function Financeiro() {
               <Download className="w-4 h-4" /> Exportar CSV
             </Button>
             
-            <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeForm()}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (open) setIsDialogOpen(true); else closeForm(); }}>
               <DialogTrigger asChild>
                 <Button className="hidden sm:flex h-10 px-5 gap-2 rounded-xl">
                   <Plus className="w-4 h-4" /> Novo Lançamento
@@ -941,6 +974,16 @@ export default function Financeiro() {
                             <Badge variant="outline" className="text-[9px] h-4 font-semibold bg-muted text-muted-foreground border-border uppercase">
                               {r.category}
                             </Badge>
+                            {r.type === "despesa" && (r.category === "Insumos" || r.category === "Combustível") && r.status === "pago" && (
+                              <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] gap-0.5">
+                                <Package className="w-2.5 h-2.5" /> Estoque ↑
+                              </Badge>
+                            )}
+                            {r.type === "receita" && r.category === "Vendas" && (r as any).siloName && (
+                              <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)] gap-0.5">
+                                <Package className="w-2.5 h-2.5" /> Silo ↓ {(r as any).siloName}
+                              </Badge>
+                            )}
                             {r.supplier && <span className="text-[10px] text-muted-foreground truncate uppercase">{r.supplier}</span>}
                           </div>
                         </div>
@@ -1035,6 +1078,16 @@ export default function Financeiro() {
                 <div className="flex justify-between items-end pt-3 border-t border-dashed border-muted/60">
                   <div className="flex flex-col gap-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-bold leading-none">{r.category}</p>
+                    {r.type === "despesa" && (r.category === "Insumos" || r.category === "Combustível") && r.status === "pago" && (
+                      <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] gap-0.5 w-fit">
+                        <Package className="w-2.5 h-2.5" /> Estoque ↑
+                      </Badge>
+                    )}
+                    {r.type === "receita" && r.category === "Vendas" && (r as any).siloName && (
+                      <Badge variant="outline" className="text-[9px] h-4 font-bold bg-[hsl(var(--warning-subtle))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.2)] gap-0.5 w-fit">
+                        <Package className="w-2.5 h-2.5" /> Silo ↓ {(r as any).siloName}
+                      </Badge>
+                    )}
                     <div className="flex items-center gap-1.5 text-muted-foreground/60">
                       <Building2 className="w-3 h-3" />
                       <span className="text-[11px] font-medium truncate max-w-[150px]">{r.bankAccountName}</span>

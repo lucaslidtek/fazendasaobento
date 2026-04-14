@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListHarvest, useCreateHarvest, useDeleteHarvest, useUpdateHarvest, getListHarvestQueryKey, useListMachines } from "@workspace/api-client-react";
-import { DEMO_HARVESTS, DEMO_MACHINES } from "@/lib/demo-data";
+import { DEMO_HARVESTS, DEMO_MACHINES, DEMO_TRUCKS, DEMO_SILOS } from "@/lib/demo-data";
 import { apiFetchCrops } from "@/lib/api-crops";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Wheat, Loader2, X, Filter, MoreHorizontal, Pencil, Trash2, Download, Truck, Printer } from "lucide-react";
+import { Plus, Wheat, Loader2, X, Filter, MoreHorizontal, Pencil, Trash2, Download, Truck, Printer, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +19,8 @@ import { getCultureBadgeStyle as getBadgeStyle } from "@/lib/colors";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { MobileListControls } from "@/components/ui/MobileListControls";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -127,10 +129,42 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField control={form.control} name="truck" render={({ field }) => (
-                <FormItem><FormLabel>Caminhão / Placa</FormLabel><FormControl><Input placeholder="Ex: ABC-1234" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Caminhão / Placa</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o caminhão" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Nenhum</SelectItem>
+                      {DEMO_TRUCKS.map(t => (
+                        <SelectItem key={t.id} value={t.plate}>{t.plate} — {t.model}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="destination" render={({ field }) => (
-                <FormItem><FormLabel>Destino / Silo</FormLabel><FormControl><Input placeholder="Ex: Silo Central" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Destino / Silo</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o destino" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Nenhum</SelectItem>
+                      {DEMO_SILOS.filter(s => s.status === "ativo").map(s => (
+                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )} />
             </div>
             
@@ -179,6 +213,7 @@ export default function Colheita() {
   const [filterArea, setFilterArea] = useState<string>(ALL);
   const [filterTruck, setFilterTruck] = useState<string>(ALL);
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("colheitas");
 
   const { data: apiRecords, isLoading } = useListHarvest();
   const { data: apiMachines } = useListMachines();
@@ -253,7 +288,7 @@ export default function Colheita() {
       if (selectedSafraId && r.safraId !== selectedSafraId) return false;
       if (selectedTalhaoId && r.talhaoId !== selectedTalhaoId) return false;
 
-      if (filterCulture !== ALL && (!r.cultures || !r.cultures.includes(filterCulture))) return false;
+      if (filterCulture !== ALL && (!r.cultures || !r.cultures.some((c: string) => c.toLowerCase() === filterCulture.toLowerCase()))) return false;
       if (filterMachine !== ALL && r.machineName !== filterMachine) return false;
       const matchesDriver = filterDriver === ALL || r.driverName === filterDriver;
       const matchesArea = filterArea === ALL || r.area === filterArea;
@@ -270,6 +305,39 @@ export default function Colheita() {
     (filterTruck !== ALL ? 1 : 0) +
     (filterArea !== ALL ? 1 : 0)
   ].filter(Boolean).length;
+
+  // Silo stock computed from harvest records
+  const siloStock = useMemo(() => {
+    const stock: Record<string, { siloName: string; cultures: Record<string, { sacks: number; weightKg: number; entries: number }> }> = {};
+    (records || []).forEach((r: any) => {
+      if (!r.destination) return;
+      if (!stock[r.destination]) {
+        stock[r.destination] = { siloName: r.destination, cultures: {} };
+      }
+      (r.cultures || []).forEach((culture: string) => {
+        if (!stock[r.destination].cultures[culture]) {
+          stock[r.destination].cultures[culture] = { sacks: 0, weightKg: 0, entries: 0 };
+        }
+        stock[r.destination].cultures[culture].sacks += Number(r.quantitySacks) || 0;
+        stock[r.destination].cultures[culture].weightKg += Number(r.weightNet) || Number(r.weightGross) || 0;
+        stock[r.destination].cultures[culture].entries += 1;
+      });
+    });
+    return Object.values(stock).map(s => {
+      const silo = DEMO_SILOS.find(ds => ds.name === s.siloName);
+      const totalSacks = Object.values(s.cultures).reduce((acc, c) => acc + c.sacks, 0);
+      const totalWeight = Object.values(s.cultures).reduce((acc, c) => acc + c.weightKg, 0);
+      const totalEntries = Object.values(s.cultures).reduce((acc, c) => acc + c.entries, 0);
+      return {
+        ...s,
+        location: silo?.location || "—",
+        capacityTons: silo?.capacityTons || 0,
+        totalSacks,
+        totalWeight,
+        totalEntries,
+      };
+    });
+  }, [records]);
 
   const clearFilters = () => {
     setFilterCulture(ALL);
@@ -373,10 +441,10 @@ export default function Colheita() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
             <Wheat className="hidden sm:block w-7 h-7 text-primary" />
-            Registro de Colheita {filteredRecords && <span className="text-muted-foreground/60 text-xl md:text-2xl">({filteredRecords.length})</span>}
+            Colheita & Armazenagem
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Gerencie os volumes colhidos por área e cultura.
+            Gerencie os volumes colhidos e acompanhe o estoque dos silos.
           </p>
         </div>
 
@@ -420,6 +488,14 @@ export default function Colheita() {
         </div>
 
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-muted/50 p-1 rounded-xl h-11 mb-4">
+          <TabsTrigger value="colheitas" className="rounded-lg px-6">Colheitas ({filteredRecords.length})</TabsTrigger>
+          <TabsTrigger value="silos" className="rounded-lg px-6">Silos ({siloStock.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="colheitas" className="mt-0">
 
       {/* Painel de Filtros — desktop */}
       {showFilters && (
@@ -793,6 +869,142 @@ export default function Colheita() {
           </SheetContent>
         </Sheet>
       </div>
+        </TabsContent>
+
+        {/* ===== TAB: SILOS ===== */}
+        <TabsContent value="silos" className="mt-0">
+          {siloStock.length === 0 ? (
+            <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
+              Nenhuma colheita foi destinada a um silo ainda.
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="hidden sm:block bg-card rounded-2xl border overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/40">
+                    <TableRow>
+                      <TableHead>Silo</TableHead>
+                      <TableHead>Localização</TableHead>
+                      <TableHead>Culturas Armazenadas</TableHead>
+                      <TableHead className="text-right">Sacas</TableHead>
+                      <TableHead className="text-right">Peso (kg)</TableHead>
+                      <TableHead className="text-right">Entradas</TableHead>
+                      <TableHead className="text-right">Capacidade</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {siloStock.map(silo => (
+                      <TableRow key={silo.siloName} className="hover:bg-muted/30">
+                        <TableCell className="font-bold text-foreground">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                              <Warehouse className="w-4 h-4" />
+                            </div>
+                            {silo.siloName}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{silo.location}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {Object.entries(silo.cultures).map(([culture, data]) => (
+                              <Badge key={culture} variant="outline" className={`capitalize text-[10px] ${getBadgeStyle(culture)}`}>
+                                {culture} ({data.sacks} sc)
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-bold">{silo.totalSacks.toLocaleString()} sc</TableCell>
+                        <TableCell className="text-right font-medium">{silo.totalWeight.toLocaleString()} kg</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{silo.totalEntries}</TableCell>
+                        <TableCell className="text-right">
+                          {silo.capacityTons > 0 ? (
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-xs text-muted-foreground">{silo.capacityTons.toLocaleString()} t</span>
+                              <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    (silo.totalWeight / (silo.capacityTons * 1000)) > 0.8
+                                      ? 'bg-destructive'
+                                      : (silo.totalWeight / (silo.capacityTons * 1000)) > 0.5
+                                        ? 'bg-[hsl(var(--warning))]'
+                                        : 'bg-primary'
+                                  }`}
+                                  style={{ width: `${Math.min(100, (silo.totalWeight / (silo.capacityTons * 1000)) * 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="sm:hidden space-y-3">
+                {siloStock.map(silo => (
+                  <Card key={silo.siloName} className="rounded-2xl border">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                            <Warehouse className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-foreground">{silo.siloName}</p>
+                            <p className="text-[10px] text-muted-foreground">{silo.location}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-primary text-lg leading-tight">{silo.totalSacks.toLocaleString()} sc</p>
+                          <p className="text-[10px] text-muted-foreground">{silo.totalEntries} entradas</p>
+                        </div>
+                      </div>
+
+                      {/* Culture breakdown */}
+                      <div className="flex gap-1.5 flex-wrap mb-3">
+                        {Object.entries(silo.cultures).map(([culture, data]) => (
+                          <Badge key={culture} variant="outline" className={`capitalize text-xs ${getBadgeStyle(culture)}`}>
+                            {culture}: {data.sacks} sc
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* Capacity bar */}
+                      {silo.capacityTons > 0 && (
+                        <div className="bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Capacidade</span>
+                            <span className="text-xs font-mono font-bold text-foreground">
+                              {silo.totalWeight.toLocaleString()} / {(silo.capacityTons * 1000).toLocaleString()} kg
+                            </span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                (silo.totalWeight / (silo.capacityTons * 1000)) > 0.8
+                                  ? 'bg-destructive'
+                                  : (silo.totalWeight / (silo.capacityTons * 1000)) > 0.5
+                                    ? 'bg-[hsl(var(--warning))]'
+                                    : 'bg-primary'
+                              }`}
+                              style={{ width: `${Math.min(100, (silo.totalWeight / (silo.capacityTons * 1000)) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </AppLayout>
   );
 }
