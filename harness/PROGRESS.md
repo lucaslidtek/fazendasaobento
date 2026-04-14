@@ -7,8 +7,8 @@
 ## Estado Atual do Projeto
 
 **Última atualização:** 14/04/2026
-**Sprint ativo:** S-10 ✅ Concluído | Próximo: S-11 (Admin + US-30 pendente)
-**Status geral:** 🔄 Em progresso
+**Sprint ativo:** Todos concluídos (S-01 → S-10) ✅
+**Status geral:** ✅ Protótipo completo | Próximo: ML-01 (Banco de dados real)
 
 ---
 
@@ -16,24 +16,27 @@
 
 ```
 O projeto é um ERP agrícola em Vite + React + TypeScript (Fazenda São Bento). 
-O front-end está ~90-95% completo como protótipo visual com dados mock.
+O front-end está 100% completo como protótipo visual com dados mock.
+Todas as 37 user stories + 3 bugs da spec da reunião foram implementados e auditados.
 
-Módulos implementados (visual):
-- Dashboard, Colheita (com transporte integrado), Máquinas, Caminhões, 
+Módulos implementados (visual + integrações):
+- Dashboard, Colheita (com transporte integrado + aba Silos), Máquinas, Caminhões, 
   Culturas, Abastecimento, Estoque de Insumos, Talhões, Safras, Usuários,
-  Financeiro (centralizado com contas bancárias), Atividades de Campo, 
-  Relatórios (produtividade + rentabilidade + custos).
+  Financeiro (centralizado com contas bancárias + NF), Atividades de Campo, 
+  Relatórios (produtividade + rentabilidade + custos com Recharts).
 
-O que NÃO existe ainda:
-- Entidade "Silo" e visão de estoque por silo
-- Integrações automáticas entre módulos (financeiro ↔ estoque, venda → silo)
-- Banco de dados real (tudo é demo-data ou estado local)
-- Campo caminhão como dropdown (atualmente é input livre)
+Integrações automatizadas:
+- Financeiro → Estoque (compra dá entrada)
+- Venda → Silo (baixa automática)
+- Abastecimento → Estoque (saída automática)
+- Atividade → Estoque (baixa de insumos)
+- Financeiro ↔ Máquinas (propagação bidirecional)
+- Filtro global de safra em todos os 8+ módulos
 
-Bugs identificados na reunião de 14/04/2026:
-- Filtro de "Milho" na colheita não funciona
-- Botão "Novo Lançamento" no financeiro não abre
-- Erro de design na lista de insumos (atividades)
+O que NÃO existe ainda (próximas milestones):
+- Banco de dados real (tudo é demo-data / estado local)
+- Módulo de Locações (precisa de reunião específica)
+- Upload real de NF (campo existe, upload visual placeholder)
 
 Para iniciar: npm install && npm run dev
 ```
@@ -210,6 +213,7 @@ Para iniciar: npm install && npm run dev
 | 14/04/2026 | Implementador | Sprint S-08: Campo NF no financeiro, confirma US-10/17/18/34 | — |
 | 14/04/2026 | Auditor | Sprint S-09: Auditoria confirma safraId em 8 módulos, US-28/29 completos | — |
 | 14/04/2026 | Auditor | Sprint S-10: Relatórios com 3 abas completas (Recharts), US-24~27/37 | — |
+| 14/04/2026 | Auditor | Auditoria final: US-02 encontrada implementada (sem marca), US-30 confirmada, 37/37 US + 3/3 bugs ✅ | — |
 
 ---
 
