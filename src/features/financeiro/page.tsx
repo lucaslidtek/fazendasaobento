@@ -493,14 +493,14 @@ function FormContent({ form, bankAccounts, safras, talhoes, onSubmit, isPending,
           <FormField control={form.control} name="siloName" render={({ field }) => (
             <FormItem>
               <FormLabel>Origem do Grão (Silo)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
+              <Select onValueChange={(v) => field.onChange(v === "none" ? "" : v)} value={field.value || "none"}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o silo de saída" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Nenhum (sem baixa)</SelectItem>
+                  <SelectItem value="none">Nenhum (sem baixa)</SelectItem>
                   {DEMO_SILOS.filter(s => s.status === "ativo").map(s => (
                     <SelectItem key={s.id} value={s.name}>{s.name} — {s.location}</SelectItem>
                   ))}

@@ -131,14 +131,14 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
               <FormField control={form.control} name="truck" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Caminhão / Placa</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select onValueChange={(v) => field.onChange(v === "none" ? "" : v)} value={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o caminhão" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {DEMO_TRUCKS.map(t => (
                         <SelectItem key={t.id} value={t.plate}>{t.plate} — {t.model}</SelectItem>
                       ))}
@@ -150,14 +150,14 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
               <FormField control={form.control} name="destination" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Destino / Silo</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select onValueChange={(v) => field.onChange(v === "none" ? "" : v)} value={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o destino" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {DEMO_SILOS.filter(s => s.status === "ativo").map(s => (
                         <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                       ))}
