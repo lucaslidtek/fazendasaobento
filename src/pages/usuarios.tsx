@@ -109,7 +109,7 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
         {/* Bonificações */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <FormLabel className="text-sm font-medium">Bonificações</FormLabel>
+            <label className="text-sm font-medium leading-none">Bonificações</label>
             <Button type="button" variant="outline" size="sm" onClick={() => append({ description: "" })} className="h-8 gap-1 rounded-xl text-xs">
               <Plus className="w-3 h-3" /> Adicionar
             </Button>
