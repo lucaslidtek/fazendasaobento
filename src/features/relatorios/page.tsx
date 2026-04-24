@@ -291,7 +291,56 @@ export default function Relatorios() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Comparativo: Produção vs Produtividade */}
+          <Card className="rounded-3xl border border-muted-foreground/10 bg-card overflow-hidden">
+            <CardHeader className="bg-muted/10 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/10 rounded-lg"><BarChart3 className="w-5 h-5 text-amber-600" /></div>
+                <div>
+                  <CardTitle className="text-lg font-black">Comparativo: Produção e Produtividade</CardTitle>
+                  <CardDescription className="text-xs font-medium">Volume total de sacas vs eficiência (sc/ha) por área</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-8">
+              <div className="h-[340px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={productivityData.chartData} margin={{ top: 5, right: 30, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.05} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }} dy={10} />
+                    <YAxis
+                      yAxisId="left"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }}
+                      dx={-10}
+                      label={{ value: 'Sacas', angle: -90, position: 'insideLeft', offset: 12, style: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' } }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }}
+                      dx={10}
+                      label={{ value: 'sc/ha', angle: 90, position: 'insideRight', offset: 12, style: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' } }}
+                    />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '16px', border: '1px solid hsl(var(--border))', padding: '12px' }}
+                      itemStyle={{ fontSize: '12px', fontWeight: 800 }}
+                      cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 600, paddingTop: '16px' }} />
+                    <Bar yAxisId="left" dataKey="sacks" name="Produção (sacas)" fill="hsl(var(--success))" radius={[8, 8, 0, 0]} barSize={28} />
+                    <Bar yAxisId="right" dataKey="prod" name="Produtividade (sc/ha)" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} barSize={28} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
+
 
         {/* --- Aba 2: Rentabilidade --- */}
         <TabsContent value="rentabilidade" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -41,7 +41,17 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
           <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Ex: João Silva" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="email" render={({ field }) => (
-          <FormItem><FormLabel>E-mail / Login</FormLabel><FormControl><Input type="email" placeholder="usuario@fazenda.com" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
+          <FormItem>
+            <FormLabel className="flex items-center gap-1.5">
+              E-mail de Acesso
+              <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                Login da plataforma
+              </span>
+            </FormLabel>
+            <FormControl><Input type="email" placeholder="usuario@fazenda.com" {...field} className="h-12 rounded-xl" /></FormControl>
+            <p className="text-[11px] text-muted-foreground">Este e-mail será usado para o funcionário acessar o sistema.</p>
+            <FormMessage />
+          </FormItem>
         )} />
 
         {/* Perfil e Status */}

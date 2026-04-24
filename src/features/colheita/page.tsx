@@ -108,22 +108,32 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
               )} />
             </div>
 
-            {/* Sacas — read-only when weightNet is filled, manual otherwise */}
+            {/* Sacas — sempre visível: calculado se Peso Líq. preenchido, manual caso contrário */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium leading-none">Sacas</label>
+              <label className="text-sm font-medium leading-none flex items-center gap-2">
+                Sacas
+                {computedSacks !== null && (
+                  <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    calculado: Peso Líq. ÷ 60
+                  </span>
+                )}
+              </label>
               {computedSacks !== null ? (
-                <div className="flex items-center h-10 px-3 border rounded-md bg-muted/50 text-sm font-bold">
-                  {computedSacks} sc <span className="ml-2 text-xs text-muted-foreground font-normal">(calculado: Peso Líq. ÷ 60)</span>
+                <div className="flex items-center h-10 px-3 border rounded-md bg-muted/50 text-sm font-bold text-foreground">
+                  {computedSacks} sc
                 </div>
               ) : (
                 <FormField control={form.control} name="quantitySacks" render={({ field }) => (
                   <FormItem className="mb-0">
-                    <FormControl><Input type="number" step="0.1" placeholder="Ex: 100 (ou preencha Peso Líquido)" {...field} /></FormControl>
+                    <FormControl>
+                      <Input type="number" step="0.1" placeholder="Preencha o Peso Líquido para cálculo automático, ou informe manualmente" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
               )}
             </div>
+
 
             <FormField control={form.control} name="driverName" render={({ field }) => (
               <FormItem><FormLabel>Motorista</FormLabel><FormControl><Input placeholder="Nome completo do motorista" {...field} /></FormControl><FormMessage /></FormItem>

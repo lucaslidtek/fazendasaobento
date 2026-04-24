@@ -237,10 +237,11 @@ export const DEMO_TALHAO_CULTURAS: TalhaoCultura[] = [
 ];
 
 export const DEMO_USERS: ExtendedUser[] = [
-  { id: 1, name: "Lucas Almeida", email: "lucas@fazenda.com.br", role: "admin", avatar: "/avatars/lucas.png", lastActive: "2 minutes ago" },
-  { id: 2, name: "João Pedro", email: "joao@fazenda.com.br", role: "operador", avatar: "/avatars/joao.png", lastActive: "1 hour ago" },
-  { id: 3, name: "Marcos Lima", email: "marcos@fazenda.com.br", role: "operador", avatar: "/avatars/marcos.png", lastActive: "Yesterday" },
-  { id: 4, name: "Roberto Farias", email: "roberto@fazenda.com.br", role: "operador", lastActive: "3 hours ago" },
+  { id: 1, name: "Lucas Almeida", email: "lucas@fazenda.com.br", role: "admin", avatar: "/avatars/lucas.png", lastActive: "2 minutes ago", salary: 8500, bonifications: [{ description: "Bônus de performance Q1" }, { description: "PLR Safra 25/26" }], absences: 0, status: "ativo", createdAt: "2024-03-01T08:00:00Z" } as any,
+  { id: 2, name: "João Pedro", email: "joao@fazenda.com.br", role: "operador", avatar: "/avatars/joao.png", lastActive: "1 hour ago", salary: 3200, bonifications: [{ description: "Horas extras março" }], absences: 1, status: "ativo", createdAt: "2024-05-15T08:00:00Z" } as any,
+  { id: 3, name: "Marcos Lima", email: "marcos@fazenda.com.br", role: "operador", avatar: "/avatars/marcos.png", lastActive: "Yesterday", salary: 3500, bonifications: [], absences: 3, status: "ativo", createdAt: "2024-08-20T08:00:00Z" } as any,
+  { id: 4, name: "Roberto Farias", email: "roberto@fazenda.com.br", role: "operador", lastActive: "3 hours ago", salary: 3200, bonifications: [{ description: "Adicional noturno" }], absences: 0, status: "ativo", createdAt: "2025-01-10T08:00:00Z" } as any,
+  { id: 5, name: "Ana Rodrigues", email: "ana@fazenda.com.br", role: "operador", lastActive: "2 days ago", salary: 3800, bonifications: [], absences: 2, status: "inativo", createdAt: "2025-03-01T08:00:00Z" } as any,
 ];
 
 export const DEMO_BANK_ACCOUNTS: BankAccount[] = [

@@ -18,10 +18,11 @@ const originalFetch = window.fetch;
 
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  const method = (init?.method ?? "GET").toUpperCase();
   
   // Intercepting API calls
   if (url.includes("/api/")) {
-    console.log(`[Mock API Interceptor] Intercepting: ${url}`);
+    console.log(`[Mock API Interceptor] Intercepting: ${method} ${url}`);
     
     let data: any = null;
     
@@ -47,7 +48,23 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     } else if (url.endsWith("/trucks")) {
       data = DEMO_TRUCKS;
     } else if (url.includes("/users")) {
-      data = DEMO_USERS;
+      if (method === "GET") {
+        data = DEMO_USERS;
+      } else if (method === "POST") {
+        // Simulate user creation — parse body and return a new user object
+        try {
+          const body = JSON.parse(init?.body as string ?? "{}");
+          data = { id: Date.now(), createdAt: new Date().toISOString(), ...body };
+        } catch {
+          data = { id: Date.now(), createdAt: new Date().toISOString() };
+        }
+      } else {
+        // PUT / DELETE — simulate success with empty body
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
     } else if (url.endsWith("/auth/me")) {
       data = { id: 1, name: "Admin Demo", email: "admin@fazenda.com", role: "admin", createdAt: new Date().toISOString() };
     } else {
