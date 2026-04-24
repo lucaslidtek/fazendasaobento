@@ -1,6 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { DEMO_HARVESTS, DEMO_TRANSPORTS, DEMO_FUELINGS, DEMO_MACHINES, DEMO_TRUCKS, DEMO_PRODUCTS, type FuelingRecord } from "@/lib/demo-data";
-import { Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp, TrendingDown, Minus, Printer, RefreshCw, DollarSign, BarChart3, Sprout, Beef, Coffee, Leaf, Flower2 } from "lucide-react";
+import { DEMO_HARVESTS, DEMO_TRANSPORTS, DEMO_FUELINGS, type FuelingRecord } from "@/lib/demo-data";
+import { Wheat, TrendingUp, TrendingDown, Minus, Printer, RefreshCw, DollarSign, BarChart3, Sprout, Beef, Coffee, Leaf, Flower2, Candy, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -26,12 +26,16 @@ interface MarketTileData {
 }
 
 const MARKET_TILES: MarketTileData[] = [
-  { code: "soja",    label: "Soja",      icon: Sprout,    iconColor: "text-emerald-600", value: "136,50", change: +0.82, direction: "up",      prefix: "R$ ", suffix: "/sc",   highlighted: true  },
-  { code: "milho",   label: "Milho",     icon: Leaf,      iconColor: "text-yellow-600",  value: "62,40",  change: -0.31, direction: "down",    prefix: "R$ ", suffix: "/sc",   highlighted: true  },
-  { code: "USD",     label: "Dólar",     icon: DollarSign,iconColor: "text-emerald-600", value: "5,2240", change: +0.14, direction: "up",      prefix: "R$ "                                     },
-  { code: "IBOV",   label: "Ibovespa",  icon: BarChart3, iconColor: "text-amber-600",   value: "129.847",change: +0.56, direction: "up",      suffix: " pts"                                    },
-  { code: "boi",     label: "Boi Gordo", icon: Beef,      iconColor: "text-red-700",     value: "321,80", change: -0.20, direction: "down",    prefix: "R$ ", suffix: "/@"                       },
-  { code: "cafe",    label: "Café",      icon: Coffee,    iconColor: "text-amber-800",   value: "1.284,00",change:+1.05, direction: "up",     prefix: "R$ ", suffix: "/sc"                       },
+  { code: "soja",    label: "Soja",      icon: Sprout,    iconColor: "text-emerald-600", value: "136,50",   change: +0.82, direction: "up",      prefix: "R$ ", suffix: "/sc",  highlighted: true  },
+  { code: "milho",   label: "Milho",     icon: Leaf,      iconColor: "text-yellow-600",  value: "62,40",    change: -0.31, direction: "down",    prefix: "R$ ", suffix: "/sc",  highlighted: true  },
+  { code: "USD",     label: "Dólar",     icon: DollarSign,iconColor: "text-emerald-600", value: "5,2240",   change: +0.14, direction: "up",      prefix: "R$ "                                    },
+  { code: "EUR",     label: "Euro",      icon: Banknote,  iconColor: "text-blue-600",    value: "5,9380",   change: +0.09, direction: "up",      prefix: "R$ "                                    },
+  { code: "IBOV",    label: "Ibovespa",  icon: BarChart3, iconColor: "text-amber-600",   value: "129.847",  change: +0.56, direction: "up",      suffix: " pts"                                   },
+  { code: "boi",     label: "Boi Gordo", icon: Beef,      iconColor: "text-red-700",     value: "321,80",   change: -0.20, direction: "down",    prefix: "R$ ", suffix: "/@"                      },
+  { code: "cafe",    label: "Café",      icon: Coffee,    iconColor: "text-amber-800",   value: "1.284,00", change: +1.05, direction: "up",      prefix: "R$ ", suffix: "/sc"                      },
+  { code: "algodao", label: "Algodão",   icon: Flower2,   iconColor: "text-sky-600",     value: "4,85",     change: -0.62, direction: "down",    prefix: "R$ ", suffix: "/lb"                      },
+  { code: "trigo",   label: "Trigo",     icon: Wheat,     iconColor: "text-orange-600",  value: "74,30",    change: -0.15, direction: "down",    prefix: "R$ ", suffix: "/sc"                      },
+  { code: "acucar",  label: "Açúcar",    icon: Candy,     iconColor: "text-pink-600",    value: "2,38",     change: +0.42, direction: "up",      prefix: "R$ ", suffix: "/lb"                      },
 ];
 
 function MarketTile({ tile, highlighted }: { tile: MarketTileData; highlighted?: boolean }) {
@@ -94,15 +98,6 @@ export default function Dashboard() {
     (!selectedTalhaoId || f.talhaoId === selectedTalhaoId)
   );
 
-  const totalHarvestSacks = harvests.reduce((acc, h) => acc + (h.quantitySacks || 0), 0);
-  const totalHarvestHectares = harvests.reduce((acc, h) => acc + (h.areaHectares || 0), 0);
-  const totalTransportTons = transports.reduce((acc, t) => acc + (t.cargoTons || 0), 0);
-  const totalFuelingLiters = fuelings.reduce((acc, f: FuelingRecord) => acc + (f.volumeLiters || 0), 0);
-  
-  const activeMachines = DEMO_MACHINES.filter(m => m.status === 'ativo').length;
-  const activeTrucks = (DEMO_TRUCKS as any[]).filter(t => t.status === 'ativo').length;
-  const lowStockProducts = DEMO_PRODUCTS.filter(p => p.currentStock <= (p.minStock || 0)).length;
-
   const harvestByCultureMap = harvests.reduce((acc: any, h) => {
     h.cultures?.forEach((c: string) => {
       if (!acc[c]) acc[c] = { totalSacks: 0, totalHectares: 0 };
@@ -121,71 +116,11 @@ export default function Dashboard() {
   const fuelingByMachine = Object.entries(fuelingByMachineMap).map(([machineName, totalLiters]) => ({ machineName, totalLiters }));
 
   const data = {
-    totalHarvestSacks,
-    totalHarvestHectares,
-    totalTransportTons,
-    totalFuelingLiters,
-    activeMachines,
-    activeTrucks,
-    lowStockProducts,
     harvestByCulture,
     fuelingByMachine,
     recentHarvests: harvests.slice(0, 5),
     recentTransports: transports.slice(0, 5)
   };
-
-  if (!data) return null;
-
-  const kpis = [
-    {
-      title: "Total Colhido",
-      value: (data.totalHarvestSacks ?? 0).toLocaleString("pt-BR"),
-      unit: "sacas",
-      icon: Wheat,
-      colorClass: "text-[hsl(var(--success-text))]",
-      bgClass: "bg-[hsl(var(--success-subtle))]",
-    },
-    {
-      title: "Área Colhida",
-      value: (data.totalHarvestHectares ?? 0).toLocaleString("pt-BR"),
-      unit: "hectares",
-      icon: TrendingUp,
-      colorClass: "text-[hsl(var(--primary))]",
-      bgClass: "bg-[hsl(var(--primary)/0.1)]",
-    },
-    {
-      title: "Transportado",
-      value: (data.totalTransportTons ?? 0).toLocaleString("pt-BR"),
-      unit: "toneladas",
-      icon: Truck,
-      colorClass: "text-[hsl(var(--info-text))]",
-      bgClass: "bg-[hsl(var(--info-subtle))]",
-    },
-    {
-      title: "Diesel Consumido",
-      value: (data.totalFuelingLiters ?? 0).toLocaleString("pt-BR"),
-      unit: "litros",
-      icon: Droplet,
-      colorClass: "text-[hsl(var(--warning-text))]",
-      bgClass: "bg-[hsl(var(--warning-subtle))]",
-    },
-    {
-      title: "Máquinas Ativas",
-      value: String(data.activeMachines),
-      unit: "unidades",
-      icon: Tractor,
-      colorClass: "text-[hsl(var(--primary))]",
-      bgClass: "bg-[hsl(var(--primary)/0.1)]",
-    },
-    {
-      title: "Estoque Crítico",
-      value: String(data.lowStockProducts),
-      unit: "produtos",
-      icon: CircleAlert,
-      colorClass: "text-[hsl(var(--destructive))]",
-      bgClass: "bg-[hsl(var(--destructive)/0.1)]",
-    },
-  ];
 
   return (
     <AppLayout>
@@ -234,34 +169,14 @@ export default function Dashboard() {
           </div>
 
           {/* Tiles Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {MARKET_TILES.map((tile) => (
               <MarketTile key={tile.code} tile={tile} highlighted={tile.highlighted} />
             ))}
           </div>
         </div>
 
-        {/* ─── KPIs operacionais (linha compacta) ───────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
-          {kpis.map((kpi, i) => (
-            <Card key={i} className="card-interactive border-card-border">
-              <CardContent className="p-4 md:p-5">
-                <div className={`inline-flex p-2 rounded-xl mb-3 ${kpi.bgClass}`}>
-                  <kpi.icon className={`w-5 h-5 ${kpi.colorClass}`} />
-                </div>
-                <p className="text-xs font-semibold text-muted-foreground leading-tight mb-1">
-                  {kpi.title}
-                </p>
-                <p className="text-xl md:text-2xl font-bold text-foreground leading-none">
-                  {kpi.value}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-1 font-medium uppercase tracking-wide">
-                  {kpi.unit}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+
 
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
