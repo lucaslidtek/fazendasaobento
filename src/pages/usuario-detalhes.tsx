@@ -68,7 +68,6 @@ export default function UsuarioDetalhes() {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
   
-  const queryClient = useQueryClient();
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isUserSheetOpen, setIsUserSheetOpen] = useState(false);
   const { users: allUsers } = useUsersStore();
