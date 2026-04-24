@@ -147,12 +147,6 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
 export default function Usuarios() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-
-  if (user?.role !== "admin") {
-    setLocation("/");
-    return null;
-  }
-
   const { toast } = useToast();
   const { users: records } = useUsersStore();
 
@@ -164,6 +158,12 @@ export default function Usuarios() {
     resolver: zodResolver(schema) as any,
     defaultValues: { name: "", email: "", role: "operador", salary: undefined, bonifications: [], absences: 0, status: "ativo" },
   });
+
+  // Guard: só admin pode acessar esta página — APÓS todos os hooks
+  if (user?.role !== "admin") {
+    setLocation("/");
+    return null;
+  }
 
   const closeForm = () => {
     setIsDialogOpen(false);
