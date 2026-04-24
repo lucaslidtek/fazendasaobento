@@ -95,7 +95,7 @@ export function AppSidebar() {
     { title: "Talhões",   icon: Map,          path: "/talhoes" },
     { title: "Caminhões", icon: Container,    path: "/caminhoes" },
     { title: "Culturas",  icon: Sprout,       path: "/culturas" },
-    { title: "Usuários",  icon: Users,        path: "/usuarios" },
+    { title: "Funcionários", icon: Users,     path: "/usuarios" },
   ];
 
   return (

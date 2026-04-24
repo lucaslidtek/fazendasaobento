@@ -32,8 +32,8 @@ const schema = z.object({
   area: z.string().min(1, "Área é obrigatória"),
   driverName: z.string().min(1, "Nome do motorista é obrigatório"),
   machineId: z.coerce.number().min(1, "Selecione uma máquina"),
-  quantitySacks: z.coerce.number().min(0.1, "Quantidade inválida"),
-  areaHectares: z.coerce.number().min(0.1, "Área inválida"),
+  quantitySacks: z.coerce.number().optional(),
+  areaHectares: z.coerce.number().optional(),
   notes: z.string().optional(),
   truck: z.string().optional(),
   destination: z.string().optional(),
@@ -46,6 +46,9 @@ const schema = z.object({
 
 
 function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEditing }: any) {
+  // Auto-calculate sacas from weightNet / 60
+  const weightNetValue = form.watch("weightNet");
+  const computedSacks = weightNetValue ? Math.round(Number(weightNetValue) / 60 * 10) / 10 : null;
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pb-2">
@@ -105,13 +108,21 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
               )} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField control={form.control} name="areaHectares" render={({ field }) => (
-                <FormItem><FormLabel>Hectares (ha)</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 50.5" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="quantitySacks" render={({ field }) => (
-                <FormItem><FormLabel>Sacas</FormLabel><FormControl><Input type="number" step="0.1" placeholder="Ex: 100" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+            {/* Sacas — read-only when weightNet is filled, manual otherwise */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium leading-none">Sacas</label>
+              {computedSacks !== null ? (
+                <div className="flex items-center h-10 px-3 border rounded-md bg-muted/50 text-sm font-bold">
+                  {computedSacks} sc <span className="ml-2 text-xs text-muted-foreground font-normal">(calculado: Peso Líq. ÷ 60)</span>
+                </div>
+              ) : (
+                <FormField control={form.control} name="quantitySacks" render={({ field }) => (
+                  <FormItem className="mb-0">
+                    <FormControl><Input type="number" step="0.1" placeholder="Ex: 100 (ou preencha Peso Líquido)" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              )}
             </div>
 
             <FormField control={form.control} name="driverName" render={({ field }) => (
@@ -125,7 +136,7 @@ function FormContent({ form, machines, crops, onSubmit, isPending, onClose, isEd
         </div>
 
         <div className="bg-[hsl(var(--warning-subtle))] p-4 rounded-xl border border-[hsl(var(--warning)/0.2)]">
-          <h3 className="font-semibold text-[hsl(var(--warning-text))] mb-4 flex items-center gap-2"><Truck className="w-4 h-4 text-[hsl(var(--warning-text))]"/> Logística e Transporte (Opcional)</h3>
+          <h3 className="font-semibold text-[hsl(var(--warning-text))] mb-4 flex items-center gap-2"><Truck className="w-4 h-4 text-[hsl(var(--warning-text))]"/> Silo e Transporte (Opcional)</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField control={form.control} name="truck" render={({ field }) => (
@@ -476,7 +487,7 @@ export default function Colheita() {
                 Nova Colheita
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-xl">{editingRecord ? "Editar Colheita" : "Registrar Colheita"}</DialogTitle>
               </DialogHeader>
@@ -616,16 +627,15 @@ export default function Colheita() {
                 <TableHead className="text-right">Sacas</TableHead>
                 <TableHead className="text-right">Umidade</TableHead>
                 <TableHead className="text-right">Impureza</TableHead>
-                <TableHead className="text-right">Produtividade</TableHead>
-                <TableHead>Logística</TableHead>
-                <TableHead>Máquina</TableHead>
+                <TableHead>Silo</TableHead>
+                <TableHead>Caminhão</TableHead>
                 <TableHead className="w-[88px]" aria-label="Ações" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRecords.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-10 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-10 text-muted-foreground">
                     {activeFilterCount > 0 ? "Nenhum registro para os filtros aplicados." : "Nenhum registro de colheita ainda."}
                   </TableCell>
                 </TableRow>
@@ -648,7 +658,6 @@ export default function Colheita() {
                   <TableCell className="text-right font-bold">{r.quantitySacks} sc</TableCell>
                   <TableCell className="text-right text-muted-foreground text-xs">{r.moisture ? `${r.moisture}%` : "—"}</TableCell>
                   <TableCell className="text-right text-muted-foreground text-xs">{r.impurity ? `${r.impurity}%` : "—"}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">{(Number(r.productivity) || 0).toFixed(1)} sc/ha</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       {r.truck && (
@@ -664,7 +673,7 @@ export default function Colheita() {
                       {!r.truck && !r.destination && <span className="text-muted-foreground">—</span>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{r.machineName}</TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{r.truck || "—"}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">

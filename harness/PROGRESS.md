@@ -6,9 +6,9 @@
 
 ## Estado Atual do Projeto
 
-**Última atualização:** 14/04/2026
-**Sprint ativo:** Todos concluídos (S-01 → S-10) ✅
-**Status geral:** ✅ Protótipo completo | Próximo: ML-01 (Banco de dados real)
+**Última atualização:** 24/04/2026
+**Sprint ativo:** S-11 ✅ (Ajustes WhatsApp 15/04)
+**Status geral:** ✅ Protótipo completo | Sprint S-11 concluído
 
 ---
 
@@ -21,9 +21,18 @@ Todas as 37 user stories + 3 bugs da spec da reunião foram implementados e audi
 
 Módulos implementados (visual + integrações):
 - Dashboard, Colheita (com transporte integrado + aba Silos), Máquinas, Caminhões, 
-  Culturas, Abastecimento, Estoque de Insumos, Talhões, Safras, Usuários,
+  Culturas, Abastecimento, Estoque de Insumos, Talhões, Safras, Funcionários (ex-Usuários),
   Financeiro (centralizado com contas bancárias + NF), Atividades de Campo, 
   Relatórios (produtividade + rentabilidade + custos com Recharts).
+
+**Sprint S-11 (24/04/2026):**
+- T-AD-01: KPIs dashboard com cotações do dia ✅
+- T-AD-02: Colheita — removeu Produtividade, renomeou Logística→Silo, Máquina→Caminhão ✅
+- T-AD-03: Form Colheita — scroll modal, Sacas auto (PL÷60), removeu Hectares ✅
+- T-AD-04: Atividades — Tipo de Operação com "+ Adicionar Tipo" inline ✅
+- T-AD-05/06: Relatórios — filtros por talhão/cultura + gráfico comparativo ✅
+- T-AD-07: Abastecimento — filtro por Serviço ✅
+- T-AD-08: Funcionários — renome + salário, bonificações, faltas, status ✅
 
 Integrações automatizadas:
 - Financeiro → Estoque (compra dá entrada)

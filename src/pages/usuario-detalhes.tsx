@@ -71,8 +71,8 @@ export default function UsuarioDetalhes() {
   const [isUserSheetOpen, setIsUserSheetOpen] = useState(false);
 
   const userForm = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", role: "operador" }
+    resolver: zodResolver(schema) as any,
+    defaultValues: { name: "", email: "", role: "operador", salary: undefined, bonifications: [], absences: 0, status: "ativo" }
   });
 
   const updateMutation = useUpdateUser({
@@ -102,7 +102,11 @@ export default function UsuarioDetalhes() {
       userForm.reset({
         name: user.name,
         email: user.email,
-        role: user.role as "admin"|"operador"
+        role: user.role as "admin"|"operador",
+        salary: (user as any).salary ?? undefined,
+        bonifications: (user as any).bonifications ?? [],
+        absences: (user as any).absences ?? 0,
+        status: (user as any).status ?? "ativo",
       });
       if (window.innerWidth < 640) setIsUserSheetOpen(true);
       else setIsUserDialogOpen(true);

@@ -90,7 +90,7 @@ import { useFarm } from "@/contexts/FarmContext";
 
 const schema = z.object({
   date: z.string().min(1, "Data é obrigatória"),
-  type: z.enum(["Plantio", "Pulverização", "Adubação", "Incorporação", "Outro"]),
+  type: z.string().min(1, "Tipo é obrigatório"),
   talhaoId: z.coerce.number().min(1, "Selecione um talhão"),
   machineId: z.coerce.number().min(1, "Selecione uma máquina"),
   operatorId: z.coerce.number().min(1, "Selecione um operador"),
@@ -105,6 +105,8 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const DEFAULT_OPERATION_TYPES = ["Plantio", "Pulverização", "Adubação", "Incorporação", "Outro"];
 
 // Helper para cores de badges de atividade
 const getActivityColor = (type: string) => {
@@ -144,11 +146,13 @@ const getProductTagStyle = (productName: string) => {
   }
 };
 
-function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onClose, isEditing }: any) {
+function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onClose, isEditing, operationTypes, onAddType }: any) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "products"
   });
+  const [showAddType, setShowAddType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState("");
 
   return (
     <Form {...form}>
@@ -160,16 +164,49 @@ function FormContent({ form, talhoes, machines, users, onSubmit, isPending, onCl
           <FormField control={form.control} name="type" render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Operação</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                <SelectContent>
-                  <SelectItem value="Plantio">Plantio</SelectItem>
-                  <SelectItem value="Pulverização">Pulverização</SelectItem>
-                  <SelectItem value="Adubação">Adubação</SelectItem>
-                  <SelectItem value="Incorporação">Incorporação</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
+              {showAddType ? (
+                <div className="flex gap-2">
+                  <Input
+                    autoFocus
+                    placeholder="Nome do novo tipo..."
+                    value={newTypeName}
+                    onChange={e => setNewTypeName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const title = newTypeName.trim().charAt(0).toUpperCase() + newTypeName.trim().slice(1).toLowerCase();
+                        if (title) { onAddType(title); field.onChange(title); setShowAddType(false); setNewTypeName(""); }
+                      } else if (e.key === 'Escape') { setShowAddType(false); setNewTypeName(""); }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button type="button" size="sm" className="h-10 px-3"
+                    onClick={() => {
+                      const title = newTypeName.trim().charAt(0).toUpperCase() + newTypeName.trim().slice(1).toLowerCase();
+                      if (title) { onAddType(title); field.onChange(title); setShowAddType(false); setNewTypeName(""); }
+                    }}>
+                    OK
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-10 px-3" onClick={() => { setShowAddType(false); setNewTypeName(""); }}>
+                    ×
+                  </Button>
+                </div>
+              ) : (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {operationTypes.map((t: string) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                    <div
+                      className="flex items-center gap-2 px-2 py-1.5 text-sm text-primary cursor-pointer hover:bg-primary/5 rounded-sm transition-colors border-t mt-1"
+                      onClick={() => setShowAddType(true)}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar Tipo
+                    </div>
+                  </SelectContent>
+                </Select>
+              )}
               <FormMessage />
             </FormItem>
           )} />
@@ -395,6 +432,13 @@ export default function Atividades() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [operationTypes, setOperationTypes] = useState<string[]>(DEFAULT_OPERATION_TYPES);
+
+  const handleAddType = (newType: string) => {
+    if (!operationTypes.includes(newType)) {
+      setOperationTypes(prev => [...prev, newType]);
+    }
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as any,
@@ -554,6 +598,8 @@ export default function Atividades() {
                   onSubmit={onSubmit}
                   onClose={closeForm}
                   isEditing={!!editingRecord}
+                  operationTypes={operationTypes}
+                  onAddType={handleAddType}
                 />
               </DialogContent>
             </Dialog>
@@ -874,6 +920,8 @@ export default function Atividades() {
               onSubmit={onSubmit}
               onClose={closeForm}
               isEditing={!!editingRecord}
+              operationTypes={operationTypes}
+              onAddType={handleAddType}
             />
           </SheetContent>
         </Sheet>

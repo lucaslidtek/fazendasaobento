@@ -2,11 +2,11 @@ import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useListUsers, useCreateUser, useUpdateUser, useDeleteUser, getListUsersQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Users, Loader2, ShieldAlert, UserCircle2, Trash2, MoreHorizontal, Plus, Pencil } from "lucide-react";
+import { Users, Loader2, ShieldAlert, UserCircle2, Trash2, MoreHorizontal, Plus, Pencil, BadgeCheck, BadgeX, DollarSign, AlertTriangle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,24 +24,33 @@ export const schema = z.object({
   name: z.string().min(3, "Nome muito curto"),
   email: z.string().email("E-mail inválido"),
   role: z.enum(["admin", "operador"]),
+  salary: z.coerce.number().min(0).optional(),
+  bonifications: z.array(z.object({ description: z.string().min(1, "Descrição obrigatória") })).optional(),
+  absences: z.coerce.number().min(0).optional(),
+  status: z.enum(["ativo", "inativo"]).default("ativo"),
 });
 
 export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: any) {
+  const { fields, append, remove } = useFieldArray({ control: form.control, name: "bonifications" });
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Nome e E-mail */}
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Ex: João Silva" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem><FormLabel>E-mail / Login</FormLabel><FormControl><Input type="email" placeholder="usuario@fazenda.com" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>
         )} />
-        <div className="grid grid-cols-1 gap-4">
+
+        {/* Perfil e Status */}
+        <div className="grid grid-cols-2 gap-4">
           <FormField control={form.control} name="role" render={({ field }) => (
             <FormItem>
               <FormLabel>Perfil</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || "operador"}>
-                <FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Selecione o perfil" /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Perfil" /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="operador">Operador</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
@@ -50,12 +59,71 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
               <FormMessage />
             </FormItem>
           )} />
+          <FormField control={form.control} name="status" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || "ativo"}>
+                <FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Status" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
         </div>
+
+        {/* Salário e Faltas */}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="salary" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Salário (R$)</FormLabel>
+              <FormControl><Input type="number" step="0.01" placeholder="Ex: 3500.00" {...field} className="h-12 rounded-xl" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="absences" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Faltas (dias)</FormLabel>
+              <FormControl><Input type="number" min={0} placeholder="0" {...field} className="h-12 rounded-xl" /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        {/* Bonificações */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <FormLabel className="text-sm font-medium">Bonificações</FormLabel>
+            <Button type="button" variant="outline" size="sm" className="h-7 text-xs rounded-lg gap-1"
+              onClick={() => append({ description: "" })}>
+              <Plus className="w-3 h-3" /> Adicionar
+            </Button>
+          </div>
+          {fields.length === 0 && (
+            <p className="text-xs text-muted-foreground italic py-2 px-3 bg-muted/30 rounded-xl">Nenhuma bonificação cadastrada.</p>
+          )}
+          {fields.map((f, i) => (
+            <div key={f.id} className="flex gap-2 items-center">
+              <FormField control={form.control} name={`bonifications.${i}.description`} render={({ field }) => (
+                <FormItem className="flex-1 mb-0">
+                  <FormControl><Input placeholder="Ex: Bônus colheita" {...field} className="h-10 rounded-xl" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} className="w-10 h-10 text-destructive hover:text-destructive rounded-xl flex-shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose} className="h-12 rounded-xl order-2 sm:order-1 sm:flex-1">Cancelar</Button>
           <Button type="submit" disabled={isPending} className="h-12 rounded-xl order-1 sm:order-2 sm:flex-1">
             {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isEditing ? "Salvar alterações" : "Conceder Acesso"}
+            {isEditing ? "Salvar alterações" : "Cadastrar Funcionário"}
           </Button>
         </div>
       </form>
@@ -86,7 +154,7 @@ export default function Usuarios() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Usuário cadastrado com sucesso." });
+        toast({ title: "Funcionário cadastrado com sucesso." });
         closeForm();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -97,7 +165,7 @@ export default function Usuarios() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Usuário atualizado com sucesso." });
+        toast({ title: "Funcionário atualizado com sucesso." });
         closeForm();
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
@@ -108,22 +176,22 @@ export default function Usuarios() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Usuário excluído." });
+        toast({ title: "Funcionário excluído." });
       },
       onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
     },
   });
 
   const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", role: "operador" },
+    resolver: zodResolver(schema) as any,
+    defaultValues: { name: "", email: "", role: "operador", salary: undefined, bonifications: [], absences: 0, status: "ativo" },
   });
 
   const closeForm = () => {
     setIsDialogOpen(false);
     setIsSheetOpen(false);
     setEditingRecord(null);
-    form.reset({ name: "", email: "", role: "operador" });
+    form.reset({ name: "", email: "", role: "operador", salary: undefined, bonifications: [], absences: 0, status: "ativo" });
   };
 
   const handleEditOpen = (record: any, isMobile: boolean) => {
@@ -132,13 +200,17 @@ export default function Usuarios() {
       name: record.name,
       email: record.email,
       role: record.role,
+      salary: record.salary ?? undefined,
+      bonifications: record.bonifications ?? [],
+      absences: record.absences ?? 0,
+      status: record.status ?? "ativo",
     });
     if (isMobile) setIsSheetOpen(true);
     else setIsDialogOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Deseja realmente excluir este acesso?")) {
+    if (confirm("Deseja realmente excluir este funcionário?")) {
       deleteMutation.mutate({ id });
     }
   };
@@ -165,10 +237,10 @@ export default function Usuarios() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
             <Users className="hidden md:block w-7 h-7 text-primary" />
-            Controle de Acessos {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
+            Funcionários {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Gerencie os usuários do sistema e suas permissões.
+            Gerencie os funcionários, acessos e dados de RH.
           </p>
         </div>
         
@@ -177,12 +249,12 @@ export default function Usuarios() {
             <DialogTrigger asChild>
               <Button className="h-10 px-5 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Usuário
+                Adicionar Funcionário
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[450px] rounded-2xl">
+            <DialogContent className="sm:max-w-[500px] rounded-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-xl">{editingRecord ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
+                <DialogTitle className="text-xl">{editingRecord ? "Editar Funcionário" : "Novo Funcionário"}</DialogTitle>
               </DialogHeader>
               <div className="mt-2">
                 <FormContent {...formProps} />
@@ -192,6 +264,7 @@ export default function Usuarios() {
         </div>
       </div>
 
+      {/* Desktop table */}
       <div className="hidden md:block bg-card rounded-2xl border overflow-hidden">
         {isLoading ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
@@ -202,6 +275,9 @@ export default function Usuarios() {
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Perfil</TableHead>
+                <TableHead>Salário</TableHead>
+                <TableHead className="text-center">Faltas</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Cadastrado em</TableHead>
                 <TableHead className="w-[88px]" />
               </TableRow>
@@ -209,12 +285,12 @@ export default function Usuarios() {
             <TableBody>
               {records?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                    Nenhum usuário encontrado.
+                  <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                    Nenhum funcionário encontrado.
                   </TableCell>
                 </TableRow>
               )}
-              {records?.map((r) => (
+              {records?.map((r: any) => (
                 <TableRow 
                   key={r.id} 
                   className="hover:bg-muted/30 cursor-pointer transition-colors"
@@ -233,6 +309,29 @@ export default function Usuarios() {
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]">Operador</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {r.salary ? `R$ ${Number(r.salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : <span className="text-muted-foreground/40">—</span>}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {(r.absences ?? 0) > 0 ? (
+                      <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 gap-1">
+                        <AlertTriangle className="w-3 h-3" />{r.absences}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground/40">0</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {(r.status ?? "ativo") === "ativo" ? (
+                      <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] gap-1">
+                        <BadgeCheck className="w-3 h-3" /> Ativo
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-muted text-muted-foreground gap-1">
+                        <BadgeX className="w-3 h-3" /> Inativo
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -271,16 +370,17 @@ export default function Usuarios() {
         )}
       </div>
 
+      {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {isLoading && (
           <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         )}
         {!isLoading && records?.length === 0 && (
           <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
-            Nenhum usuário encontrado.
+            Nenhum funcionário encontrado.
           </div>
         )}
-        {records?.map((r) => (
+        {records?.map((r: any) => (
           <div 
             key={r.id} 
             className="bg-card rounded-2xl border p-4 touch-card cursor-pointer hover:border-primary/30 transition-colors"
@@ -303,17 +403,32 @@ export default function Usuarios() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{r.email}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    {r.role === "admin" ? (
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 h-5 px-1.5 text-[10px] uppercase tracking-wider font-bold">
-                        <ShieldAlert className="w-2.5 h-2.5 mr-1" /> Admin
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    {(r.status ?? "ativo") === "ativo" ? (
+                      <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] h-5 px-1.5 text-[10px] font-bold gap-0.5">
+                        <BadgeCheck className="w-2.5 h-2.5" /> Ativo
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)] h-5 px-1.5 text-[10px] uppercase tracking-wider font-bold">
-                        Operador
+                      <Badge variant="outline" className="bg-muted text-muted-foreground h-5 px-1.5 text-[10px] font-bold gap-0.5">
+                        <BadgeX className="w-2.5 h-2.5" /> Inativo
                       </Badge>
                     )}
-                    {r.createdAt && <span className="text-xs text-muted-foreground">· {format(new Date(r.createdAt), "dd/MM/yyyy")}</span>}
+                    {r.salary && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                        <DollarSign className="w-3 h-3" />
+                        R$ {Number(r.salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                    {(r.absences ?? 0) > 0 && (
+                      <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 h-5 px-1.5 text-[10px] font-bold gap-0.5">
+                        <AlertTriangle className="w-2.5 h-2.5" /> {r.absences} faltas
+                      </Badge>
+                    )}
+                    {(r.bonifications?.length ?? 0) > 0 && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                        <Gift className="w-3 h-3" /> {r.bonifications.length} bonificação(ões)
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -355,7 +470,7 @@ export default function Usuarios() {
           <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 max-h-[92vh] overflow-y-auto">
             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
             <SheetHeader className="text-left mb-4">
-              <SheetTitle className="text-lg">{editingRecord ? "Editar Usuário" : "Novo Usuário"}</SheetTitle>
+              <SheetTitle className="text-lg">{editingRecord ? "Editar Funcionário" : "Novo Funcionário"}</SheetTitle>
             </SheetHeader>
             <FormContent {...formProps} />
           </SheetContent>

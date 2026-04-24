@@ -16,10 +16,100 @@
 
 ## Contrato Ativo
 
-**Sprint:** S-01
-**Criado por:** Implementador — 14/04/2026
+**Sprint:** S-11
+**Criado por:** Implementador — 24/04/2026
 **Aprovado por:** Validador — *(pendente aprovação)*
-**Status:** 📝 Rascunho
+**Status:** 🔄 Em execução
+
+---
+
+### Tarefas do Sprint S-11: Ajustes WhatsApp 15/04
+
+#### T-AD-01: Dashboard — KPIs por cotações do dia (GQB style)
+**Arquivos:** `src/pages/dashboard.tsx`
+**Critérios:**
+- [ ] KPIs mostram cotações relevantes (Soja R$/sc, Milho R$/sc, Dólar, Diesel)
+- [ ] Layout segue estilo premium existente
+- [ ] Build passa
+
+---
+
+#### T-AD-02: Colheita — remover coluna Produtividade + renomear Logística→Silo / Máquina→Caminhão
+**Arquivos:** `src/features/colheita/page.tsx`
+**Critérios:**
+- [ ] Coluna "Produtividade" removida da tabela desktop e cards mobile
+- [ ] Cabeçalho "Logística" renomeado para "Silo"
+- [ ] Cabeçalho "Máquina" renomeado para "Caminhão"
+- [ ] Build passa
+
+---
+
+#### T-AD-03: Form Colheita — scroll em telas pequenas + Sacas automático + remover Hectares
+**Arquivos:** `src/features/colheita/page.tsx`
+**Critérios:**
+- [ ] Dialog/Sheet tem overflow-y-auto para scroll quando conteúdo > tela
+- [ ] Campo "Sacas" é calculado automaticamente: Peso Líquido / 60 (somente leitura, atualiza em tempo real)
+- [ ] Campo "Hectares (ha)" removido do formulário (areaHectares ainda existe no schema para compatibilidade)
+- [ ] Build passa
+
+---
+
+#### T-AD-04: Form Atividades — Tipo de Operação expansível com "+ Adicionar Tipo"
+**Arquivos:** `src/features/atividades/page.tsx`
+**Critérios:**
+- [ ] Campo "Tipo de Operação" mostra dropdown com tipos existentes + opção "+ Adicionar Tipo" inline
+- [ ] Ao clicar em "+ Adicionar", aparece input inline para digitar novo tipo
+- [ ] Novo tipo é capitalizado (primeira letra maiúscula, resto minúsculo)
+- [ ] Novo tipo é salvo no estado e aparece nas próximas seleções
+- [ ] Schema Zod aceita string genérica (não mais enum fixo)
+- [ ] Build passa
+
+---
+
+#### T-AD-05: Relatórios — filtros por talhão, cultura, fazenda, hectare
+**Arquivos:** `src/features/relatorios/page.tsx`
+**Critérios:**
+- [ ] Painel de filtros na aba de Produtividade com: Talhão (select), Cultura (select)
+- [ ] Filtros aplicados nos dados exibidos nos gráficos
+- [ ] Build passa
+
+---
+
+#### T-AD-06: Relatório Produtividade — comparativo Produção + análise financeira
+**Arquivos:** `src/features/relatorios/page.tsx`
+**Critérios:**
+- [ ] Gráfico de barras comparativo: Produção (sacas) vs Produtividade (sc/ha) por talhão
+- [ ] Gráfico de barras: Lucro (azul) vs Custo (vermelho) por categoria/período
+- [ ] Build passa
+
+---
+
+#### T-AD-07: Abastecimento — filtro por Serviço na aba Abastecimentos
+**Arquivos:** `src/pages/abastecimento.tsx`
+**Critérios:**
+- [ ] Filtro "Serviço" adicionado ao painel de filtros da aba Abastecimentos
+- [ ] Lista de valores únicos de serviço/fuelType dos registros
+- [ ] Build passa
+
+---
+
+#### T-AD-08: Usuários → Funcionários — campos salário, bonificações, faltas, status + tabela
+**Arquivos:** `src/pages/usuarios.tsx`, `src/components/layout/AppLayout.tsx`
+**Critérios:**
+- [ ] Título da página e sidebar: "Usuários" → "Funcionários"
+- [ ] Form adiciona: salário (number), bonificações (lista de itens), faltas (number), status (ativo/não ativo)
+- [ ] Tabela exibe novas colunas: Salário, Faltas, Status
+- [ ] Schema Zod atualizado com novos campos
+- [ ] Build passa
+
+---
+
+### O Que Este Sprint NÃO Faz
+- Banco de dados real
+- Módulo de Locações
+- Novos módulos além dos mencionados
+
+## Sprint S-01 (Histórico)
 
 ---
 

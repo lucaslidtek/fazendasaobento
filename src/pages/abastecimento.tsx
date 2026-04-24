@@ -310,6 +310,7 @@ export default function Abastecimento() {
   const [filterMachine, setFilterMachine] = useState("__all__");
   const [filterOperator, setFilterOperator] = useState("__all__");
   const [filterDate, setFilterDate] = useState("");
+  const [filterService, setFilterService] = useState("__all__");
   const [showFilters, setShowFilters] = useState(false);
 
   // Filtros Movimentações
@@ -336,6 +337,11 @@ export default function Abastecimento() {
     return Array.from(ops).sort();
   }, [records]);
 
+  const uniqueServices = useMemo(() => {
+    const svcs = new Set(records.map(r => r.fuelType).filter(Boolean));
+    return Array.from(svcs).sort();
+  }, [records]);
+
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
       if (selectedSafraId && r.safraId !== selectedSafraId) return false;
@@ -344,9 +350,10 @@ export default function Abastecimento() {
       if (filterMachine !== "__all__" && r.machineId !== Number(filterMachine)) return false;
       if (filterOperator !== "__all__" && r.operatorName !== filterOperator) return false;
       if (filterDate && r.date !== filterDate) return false;
+      if (filterService !== "__all__" && r.fuelType !== filterService) return false;
       return true;
     });
-  }, [records, filterMachine, filterOperator, filterDate, selectedSafraId, selectedTalhaoId]);
+  }, [records, filterMachine, filterOperator, filterDate, filterService, selectedSafraId, selectedTalhaoId]);
 
   const uniqueCategories = useMemo(() => {
     const cats = new Set(transactions.map(t => t.category).filter(Boolean));
@@ -515,12 +522,14 @@ export default function Abastecimento() {
     setFilterMachine("__all__");
     setFilterOperator("__all__");
     setFilterDate("");
+    setFilterService("__all__");
   };
 
   const activeFilterCount = [
     filterMachine !== "__all__",
     filterOperator !== "__all__",
     filterDate !== "",
+    filterService !== "__all__",
   ].filter(Boolean).length;
 
   const clearTransactionFilters = () => {
@@ -642,7 +651,7 @@ export default function Abastecimento() {
         {activeTab === "fuelings" && showFilters && (
           <Card className="border bg-card no-print">
             <CardContent className="p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-muted-foreground uppercase">Máquina</label>
                   <Select value={filterMachine} onValueChange={setFilterMachine}>
@@ -664,6 +673,16 @@ export default function Abastecimento() {
                     <SelectContent>
                       <SelectItem value="__all__">Todos os operadores</SelectItem>
                       {uniqueOperators.map(op => <SelectItem key={op} value={op}>{op}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Serviço</label>
+                  <Select value={filterService} onValueChange={setFilterService}>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="Todos" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Todos os serviços</SelectItem>
+                      {uniqueServices.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
