@@ -57,6 +57,119 @@ const profileSchema = z.object({
   photo: z.any().optional()
 });
 
+function AbsencePanel({ user, onAction }: { user: any; onAction: (msg: string) => void }) {
+  const absenceHistory: any[] = user?.absenceHistory ?? [];
+  const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
+  const [newNote, setNewNote] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  return (
+    <Card className="bg-card border rounded-2xl border-orange-200/60">
+      <CardHeader className="pb-3 border-b border-border">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-bold flex items-center gap-2 text-orange-700">
+            <AlertTriangle className="w-4 h-4" /> Controle de Faltas
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              ({absenceHistory.length} registrada{absenceHistory.length !== 1 ? "s" : ""})
+            </span>
+          </CardTitle>
+          <Button
+            size="sm"
+            className="h-8 gap-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs"
+            onClick={() => setShowForm((v) => !v)}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {showForm ? "Cancelar" : "Registrar Falta"}
+          </Button>
+        </div>
+
+        {showForm && (
+          <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-200 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-orange-700">Data da Falta</label>
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg border border-orange-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-orange-700">Observação (opcional)</label>
+                <input
+                  type="text"
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Ex: Atestado médico"
+                  className="w-full h-9 px-3 rounded-lg border border-orange-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="w-full h-9 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold"
+              onClick={() => {
+                if (!newDate) return;
+                usersStore.addAbsence(user.id, newDate, newNote || undefined);
+                onAction("Falta registrada — " + new Date(newDate + "T12:00:00").toLocaleDateString("pt-BR"));
+                setNewNote("");
+                setShowForm(false);
+              }}
+            >
+              Confirmar Registro
+            </Button>
+          </div>
+        )}
+      </CardHeader>
+
+      <CardContent className="p-0">
+        {absenceHistory.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground text-sm">
+            <AlertTriangle className="w-8 h-8 text-orange-200 mx-auto mb-2" />
+            Nenhuma falta registrada.
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {[...absenceHistory]
+              .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .map((absence: any, idx: number) => (
+                <div key={absence.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 text-xs font-black flex-shrink-0">
+                      {absenceHistory.length - idx}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {new Date(absence.date + "T12:00:00").toLocaleDateString("pt-BR", {
+                          weekday: "short", day: "2-digit", month: "long", year: "numeric"
+                        })}
+                      </p>
+                      {absence.note && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{absence.note}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-7 h-7 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                    onClick={() => {
+                      usersStore.removeAbsence(user.id, absence.id);
+                      onAction("Falta removida.");
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function UsuarioDetalhes() {
   const { id } = useParams();
   const [location, setLocation] = useLocation();
@@ -424,58 +537,7 @@ export default function UsuarioDetalhes() {
 
           {/* Painel de Faltas */}
           {currentUser?.role === "admin" && (
-            <Card className="bg-card border rounded-2xl border-orange-200/60">
-              <CardHeader className="pb-3 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-orange-700">
-                    <AlertTriangle className="w-4 h-4" /> Controle de Faltas
-                  </CardTitle>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-black text-orange-600">
-                      {(user as any)?.absences ?? 0}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-medium">falta(s)</span>
-                    <div className="flex items-center gap-1 ml-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="w-8 h-8 rounded-full border-orange-200 text-orange-600 hover:bg-orange-50"
-                        onClick={() => {
-                          usersStore.removeAbsence(user!.id);
-                          toast({ title: "Falta removida." });
-                        }}
-                        disabled={((user as any)?.absences ?? 0) === 0}
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
-                        onClick={() => {
-                          usersStore.addAbsence(user!.id);
-                          toast({ title: "Falta registrada.", description: `Total: ${((user as any)?.absences ?? 0) + 1}` });
-                        }}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                {((user as any)?.absences ?? 0) === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-2">Nenhuma falta registrada neste período.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from({ length: (user as any)?.absences ?? 0 }).map((_, i) => (
-                      <div key={i} className="w-8 h-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 text-xs font-bold">
-                        {i + 1}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <AbsencePanel user={user} onAction={(msg) => toast({ title: msg })} />
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

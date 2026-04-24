@@ -4,8 +4,29 @@
  */
 import { DEMO_USERS } from "./demo-data";
 
-// Mutable in-memory array (singleton)
-let _users: any[] = [...DEMO_USERS];
+export interface AbsenceRecord {
+  id: number;
+  date: string; // ISO date string YYYY-MM-DD
+  note?: string;
+}
+
+function withAbsenceHistory(user: any): any {
+  if (!user.absenceHistory) {
+    // Build mock history from existing absences count
+    const history: AbsenceRecord[] = [];
+    const count = user.absences ?? 0;
+    for (let i = 0; i < count; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - (count - i) * 7);
+      history.push({ id: Date.now() + i, date: d.toISOString().split("T")[0] });
+    }
+    return { ...user, absenceHistory: history };
+  }
+  return user;
+}
+
+// Mutable in-memory array (singleton) — seed with mock history
+let _users: any[] = DEMO_USERS.map(withAbsenceHistory);
 const _listeners: Set<() => void> = new Set();
 
 function notify() {
@@ -27,6 +48,7 @@ export const usersStore = {
       lastActive: "agora",
       bonifications: [],
       absences: 0,
+      absenceHistory: [] as AbsenceRecord[],
       status: "ativo",
       ...data,
     };
@@ -45,17 +67,24 @@ export const usersStore = {
     notify();
   },
 
-  addAbsence: (id: number) => {
-    _users = _users.map((u) =>
-      u.id === id ? { ...u, absences: (u.absences ?? 0) + 1 } : u
-    );
+  addAbsence: (id: number, date: string, note?: string) => {
+    const record: AbsenceRecord = { id: Date.now(), date, note };
+    _users = _users.map((u) => {
+      if (u.id !== id) return u;
+      const history: AbsenceRecord[] = [...(u.absenceHistory ?? []), record];
+      return { ...u, absences: history.length, absenceHistory: history };
+    });
     notify();
   },
 
-  removeAbsence: (id: number) => {
-    _users = _users.map((u) =>
-      u.id === id ? { ...u, absences: Math.max(0, (u.absences ?? 0) - 1) } : u
-    );
+  removeAbsence: (userId: number, absenceId: number) => {
+    _users = _users.map((u) => {
+      if (u.id !== userId) return u;
+      const history: AbsenceRecord[] = (u.absenceHistory ?? []).filter(
+        (a: AbsenceRecord) => a.id !== absenceId
+      );
+      return { ...u, absences: history.length, absenceHistory: history };
+    });
     notify();
   },
 };
