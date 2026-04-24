@@ -1,6 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DEMO_HARVESTS, DEMO_TRANSPORTS, DEMO_FUELINGS, DEMO_MACHINES, DEMO_TRUCKS, DEMO_PRODUCTS, type FuelingRecord } from "@/lib/demo-data";
-import { Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp, Printer } from "lucide-react";
+import { Tractor, Wheat, Truck, Droplet, CircleAlert, TrendingUp, TrendingDown, Minus, Printer, RefreshCw, DollarSign, BarChart3, Sprout, Beef, Coffee, Leaf, Flower2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -9,6 +9,71 @@ import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/lib/auth";
 import { getCultureChartColor } from "@/lib/colors";
 import { useFarm } from "@/contexts/FarmContext";
+import { cn } from "@/lib/utils";
+
+// ─── Cotações do Dia — dados mock (CEPEA/ESALQ + Google Finance) ────────────
+interface MarketTileData {
+  code: string;
+  label: string;
+  icon: any;
+  iconColor: string;
+  value: string;
+  change: number;
+  direction: "up" | "down" | "neutral";
+  prefix?: string;
+  suffix?: string;
+  highlighted?: boolean;
+}
+
+const MARKET_TILES: MarketTileData[] = [
+  { code: "soja",    label: "Soja",      icon: Sprout,    iconColor: "text-emerald-600", value: "136,50", change: +0.82, direction: "up",      prefix: "R$ ", suffix: "/sc",   highlighted: true  },
+  { code: "milho",   label: "Milho",     icon: Leaf,      iconColor: "text-yellow-600",  value: "62,40",  change: -0.31, direction: "down",    prefix: "R$ ", suffix: "/sc",   highlighted: true  },
+  { code: "USD",     label: "Dólar",     icon: DollarSign,iconColor: "text-emerald-600", value: "5,2240", change: +0.14, direction: "up",      prefix: "R$ "                                     },
+  { code: "IBOV",   label: "Ibovespa",  icon: BarChart3, iconColor: "text-amber-600",   value: "129.847",change: +0.56, direction: "up",      suffix: " pts"                                    },
+  { code: "boi",     label: "Boi Gordo", icon: Beef,      iconColor: "text-red-700",     value: "321,80", change: -0.20, direction: "down",    prefix: "R$ ", suffix: "/@"                       },
+  { code: "cafe",    label: "Café",      icon: Coffee,    iconColor: "text-amber-800",   value: "1.284,00",change:+1.05, direction: "up",     prefix: "R$ ", suffix: "/sc"                       },
+];
+
+function MarketTile({ tile, highlighted }: { tile: MarketTileData; highlighted?: boolean }) {
+  const Icon = tile.icon;
+  return (
+    <div className={cn(
+      "group flex flex-col justify-between rounded-xl border px-3 py-2.5 transition-all duration-200 min-h-[72px]",
+      highlighted
+        ? "bg-primary/5 border-primary/20 hover:bg-primary/8"
+        : "bg-background border-border/40 hover:bg-muted/20 hover:border-border/60"
+    )}>
+      {/* Header: icon + label + badge */}
+      <div className="flex w-full items-start justify-between gap-1 mb-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="shrink-0 p-1 rounded-md bg-muted/20 group-hover:bg-muted/30 transition-colors">
+            <Icon className={cn("h-3.5 w-3.5", tile.iconColor)} />
+          </div>
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate mt-px">
+            {tile.label}
+          </p>
+        </div>
+        <span className={cn(
+          "inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-px rounded border tabular-nums whitespace-nowrap shrink-0",
+          tile.direction === "up"      && "text-emerald-700 bg-emerald-50 border-emerald-200/50",
+          tile.direction === "down"    && "text-red-600 bg-red-50 border-red-200/50",
+          tile.direction === "neutral" && "text-muted-foreground bg-muted/20 border-border/30"
+        )}>
+          {tile.direction === "up"   && <TrendingUp className="h-2 w-2" />}
+          {tile.direction === "down" && <TrendingDown className="h-2 w-2" />}
+          {tile.direction === "neutral" && <Minus className="h-2 w-2" />}
+          {tile.change > 0 ? "+" : ""}{tile.change.toFixed(2)}%
+        </span>
+      </div>
+      {/* Value */}
+      <p className="text-sm font-bold text-foreground tabular-nums leading-tight truncate">
+        {tile.prefix}{tile.value}{tile.suffix}
+      </p>
+    </div>
+  );
+}
+
+
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -151,7 +216,32 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* KPI Grid — 2 colunas no mobile, 3 no sm, 6 no xl */}
+        {/* ─── Cotações do Dia (estilo GQB) ─────────────────────────────────── */}
+        <div className="rounded-2xl border border-border/40 bg-card p-4 md:p-5">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1.5">
+              <Wheat className="h-3.5 w-3.5 text-primary" />
+              <h3 className="text-[11px] font-bold text-foreground uppercase tracking-wider">Cotações do Dia</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-muted-foreground font-medium flex items-center gap-1">
+                <RefreshCw className="h-2.5 w-2.5" />
+                {format(new Date(), "HH:mm", { locale: ptBR })}
+              </span>
+              <span className="text-[8px] text-muted-foreground/40 hidden md:inline">CEPEA/ESALQ · Google Finance</span>
+            </div>
+          </div>
+
+          {/* Tiles Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {MARKET_TILES.map((tile) => (
+              <MarketTile key={tile.code} tile={tile} highlighted={tile.highlighted} />
+            ))}
+          </div>
+        </div>
+
+        {/* ─── KPIs operacionais (linha compacta) ───────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
           {kpis.map((kpi, i) => (
             <Card key={i} className="card-interactive border-card-border">
