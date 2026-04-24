@@ -15,9 +15,9 @@ function notify() {
 export const usersStore = {
   getAll: () => _users,
 
-  subscribe: (fn: () => void) => {
+  subscribe: (fn: () => void): (() => void) => {
     _listeners.add(fn);
-    return () => _listeners.delete(fn);
+    return () => { _listeners.delete(fn); };
   },
 
   create: (data: any) => {

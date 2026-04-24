@@ -11,7 +11,7 @@ export function useUsersStore() {
     const unsubscribe = usersStore.subscribe(() => {
       setUsers(usersStore.getAll());
     });
-    return unsubscribe;
+    return () => { unsubscribe(); };
   }, []);
 
   return { users };
