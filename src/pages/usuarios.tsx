@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useListUsers, useCreateUser, useUpdateUser, useDeleteUser, getListUsersQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Users, Loader2, ShieldAlert, UserCircle2, Trash2, MoreHorizontal, Plus, Pencil, BadgeCheck, BadgeX, DollarSign, AlertTriangle, Gift } from "lucide-react";
+import { Users, UserCircle2, Trash2, MoreHorizontal, Plus, Pencil, BadgeCheck, BadgeX, DollarSign, AlertTriangle, Gift, ShieldAlert, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { usersStore } from "@/lib/users-store";
+import { useUsersStore } from "@/hooks/use-users-store";
 
 export const schema = z.object({
   name: z.string().min(3, "Nome muito curto"),
@@ -89,40 +89,43 @@ export function FormContent({ form, onSubmit, isPending, onClose, isEditing }: a
           <FormField control={form.control} name="salary" render={({ field }) => (
             <FormItem>
               <FormLabel>Salário (R$)</FormLabel>
-              <FormControl><Input type="number" step="0.01" placeholder="Ex: 3500.00" {...field} className="h-12 rounded-xl" /></FormControl>
+              <FormControl>
+                <Input type="number" step="0.01" placeholder="Ex: 3200.00" {...field} className="h-12 rounded-xl" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="absences" render={({ field }) => (
             <FormItem>
-              <FormLabel>Faltas (dias)</FormLabel>
-              <FormControl><Input type="number" min={0} placeholder="0" {...field} className="h-12 rounded-xl" /></FormControl>
+              <FormLabel>Faltas</FormLabel>
+              <FormControl>
+                <Input type="number" min="0" placeholder="0" {...field} className="h-12 rounded-xl" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )} />
         </div>
 
         {/* Bonificações */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <FormLabel className="text-sm font-medium">Bonificações</FormLabel>
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs rounded-lg gap-1"
-              onClick={() => append({ description: "" })}>
+            <Button type="button" variant="outline" size="sm" onClick={() => append({ description: "" })} className="h-8 gap-1 rounded-xl text-xs">
               <Plus className="w-3 h-3" /> Adicionar
             </Button>
           </div>
           {fields.length === 0 && (
-            <p className="text-xs text-muted-foreground italic py-2 px-3 bg-muted/30 rounded-xl">Nenhuma bonificação cadastrada.</p>
+            <p className="text-xs text-muted-foreground">Nenhuma bonificação cadastrada.</p>
           )}
-          {fields.map((f, i) => (
-            <div key={f.id} className="flex gap-2 items-center">
-              <FormField control={form.control} name={`bonifications.${i}.description`} render={({ field }) => (
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex gap-2">
+              <FormField control={form.control} name={`bonifications.${index}.description`} render={({ field }) => (
                 <FormItem className="flex-1 mb-0">
-                  <FormControl><Input placeholder="Ex: Bônus colheita" {...field} className="h-10 rounded-xl" /></FormControl>
+                  <FormControl><Input placeholder="Descrição da bonificação" {...field} className="h-10 rounded-xl" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} className="w-10 h-10 text-destructive hover:text-destructive rounded-xl flex-shrink-0">
+              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-10 w-10 text-destructive hover:text-destructive rounded-xl flex-shrink-0">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -150,47 +153,12 @@ export default function Usuarios() {
     return null;
   }
 
-  const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+  const { users: records } = useUsersStore();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
-
-  const { data: apiRecords, isLoading } = useListUsers();
-  const records = apiRecords ?? [];
-
-  const createMutation = useCreateUser({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Funcionário cadastrado com sucesso." });
-        closeForm();
-      },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
-    },
-  });
-
-  const updateMutation = useUpdateUser({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Funcionário atualizado com sucesso." });
-        closeForm();
-      },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
-    },
-  });
-
-  const deleteMutation = useDeleteUser({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Funcionário excluído." });
-      },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
-    },
-  });
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema) as any,
@@ -221,22 +189,26 @@ export default function Usuarios() {
 
   const handleDelete = (id: number) => {
     if (confirm("Deseja realmente excluir este funcionário?")) {
-      deleteMutation.mutate({ id });
+      usersStore.delete(id);
+      toast({ title: "Funcionário excluído." });
     }
   };
 
   const handleSubmit = (data: z.infer<typeof schema>) => {
     if (editingRecord) {
-      updateMutation.mutate({ id: editingRecord.id, data: { ...data } });
+      usersStore.update(editingRecord.id, data);
+      toast({ title: "Funcionário atualizado com sucesso." });
     } else {
-      createMutation.mutate({ data: { ...data } as any });
+      usersStore.create(data);
+      toast({ title: "Funcionário cadastrado com sucesso." });
     }
+    closeForm();
   };
 
   const formProps = {
     form,
     onSubmit: handleSubmit,
-    isPending: createMutation.isPending || updateMutation.isPending,
+    isPending: false,
     onClose: closeForm,
     isEditing: !!editingRecord,
   };
@@ -247,13 +219,13 @@ export default function Usuarios() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight flex items-center gap-3">
             <Users className="hidden md:block w-7 h-7 text-primary" />
-            Funcionários {records && <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>}
+            Funcionários <span className="text-muted-foreground/60 text-xl md:text-2xl">({records.length})</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Gerencie os funcionários, acessos e dados de RH.
           </p>
         </div>
-        
+
         <div className="hidden md:block">
           <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeForm(); else setIsDialogOpen(true); }}>
             <DialogTrigger asChild>
@@ -276,123 +248,116 @@ export default function Usuarios() {
 
       {/* Desktop table */}
       <div className="hidden md:block bg-card rounded-2xl border overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
-        ) : (
-          <Table>
-            <TableHeader className="bg-muted/40">
+        <Table>
+          <TableHeader className="bg-muted/40">
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Perfil</TableHead>
+              <TableHead>Salário</TableHead>
+              <TableHead className="text-center">Faltas</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Cadastrado em</TableHead>
+              <TableHead className="w-[88px]" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {records.length === 0 && (
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead>Salário</TableHead>
-                <TableHead className="text-center">Faltas</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Cadastrado em</TableHead>
-                <TableHead className="w-[88px]" />
+                <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                  Nenhum funcionário encontrado.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {records?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
-                    Nenhum funcionário encontrado.
-                  </TableCell>
-                </TableRow>
-              )}
-              {records?.map((r: any) => (
-                <TableRow 
-                  key={r.id} 
-                  className="hover:bg-muted/30 cursor-pointer transition-colors"
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest('.dropdown-trigger') || target.closest('.action-button')) return;
-                    setLocation(`/usuarios/${r.id}`);
-                  }}
-                >
-                  <TableCell className="font-bold text-foreground">{r.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.email}</TableCell>
-                  <TableCell>
-                    {r.role === "admin" ? (
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                        <ShieldAlert className="w-3 h-3 mr-1" /> Admin
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]">Operador</Badge>
+            )}
+            {records.map((r: any) => (
+              <TableRow
+                key={r.id}
+                className="hover:bg-muted/30 cursor-pointer transition-colors"
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest('.dropdown-trigger') || target.closest('.action-button')) return;
+                  setLocation(`/usuarios/${r.id}`);
+                }}
+              >
+                <TableCell className="font-bold text-foreground">{r.name}</TableCell>
+                <TableCell className="text-muted-foreground">{r.email}</TableCell>
+                <TableCell>
+                  {r.role === "admin" ? (
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                      <ShieldAlert className="w-3 h-3 mr-1" /> Admin
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-[hsl(var(--info-subtle))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.2)]">Operador</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="font-mono text-sm">
+                  {r.salary ? `R$ ${Number(r.salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : <span className="text-muted-foreground/40">—</span>}
+                </TableCell>
+                <TableCell className="text-center">
+                  {(r.absences ?? 0) > 0 ? (
+                    <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 gap-1">
+                      <AlertTriangle className="w-3 h-3" />{r.absences}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground/40">0</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {(r.status ?? "ativo") === "ativo" ? (
+                    <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] gap-1">
+                      <BadgeCheck className="w-3 h-3" /> Ativo
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-muted text-muted-foreground gap-1">
+                      <BadgeX className="w-3 h-3" /> Inativo
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {r.createdAt ? format(new Date(r.createdAt), "dd/MM/yyyy") : "—"}
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="action-button rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    {r.id !== user?.id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="dropdown-trigger rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditOpen(r, false)} className="gap-2 cursor-pointer">
+                            <Pencil className="w-4 h-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {r.salary ? `R$ ${Number(r.salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : <span className="text-muted-foreground/40">—</span>}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {(r.absences ?? 0) > 0 ? (
-                      <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 gap-1">
-                        <AlertTriangle className="w-3 h-3" />{r.absences}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground/40">0</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {(r.status ?? "ativo") === "ativo" ? (
-                      <Badge variant="outline" className="bg-[hsl(var(--success-subtle))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.2)] gap-1">
-                        <BadgeCheck className="w-3 h-3" /> Ativo
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-muted text-muted-foreground gap-1">
-                        <BadgeX className="w-3 h-3" /> Inativo
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {r.createdAt ? format(new Date(r.createdAt), "dd/MM/yyyy") : "—"}
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEditOpen(r, false)} className="action-button rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      {r.id !== user?.id && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="dropdown-trigger rounded-full w-8 h-8 text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditOpen(r, false)} className="gap-2 cursor-pointer">
-                              <Pencil className="w-4 h-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(r.id)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
-        {isLoading && (
-          <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
-        )}
-        {!isLoading && records?.length === 0 && (
+        {records.length === 0 && (
           <div className="bg-card rounded-2xl border p-8 text-center text-muted-foreground text-sm">
             Nenhum funcionário encontrado.
           </div>
         )}
-        {records?.map((r: any) => (
-          <div 
-            key={r.id} 
+        {records.map((r: any) => (
+          <div
+            key={r.id}
             className="bg-card rounded-2xl border p-4 touch-card cursor-pointer hover:border-primary/30 transition-colors"
             onClick={(e) => {
               const target = e.target as HTMLElement;

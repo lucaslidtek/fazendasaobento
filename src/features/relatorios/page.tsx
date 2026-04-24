@@ -332,8 +332,8 @@ export default function Relatorios() {
                       cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 600, paddingTop: '16px' }} />
-                    <Bar yAxisId="left" dataKey="sacks" name="Produção (sacas)" fill="hsl(var(--success))" radius={[8, 8, 0, 0]} barSize={28} />
-                    <Bar yAxisId="right" dataKey="prod" name="Produtividade (sc/ha)" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} barSize={28} />
+                    <Bar yAxisId="left" dataKey="sacks" name="Produção (sacas)" fill="#10b981" radius={[8, 8, 0, 0]} barSize={26} />
+                    <Bar yAxisId="right" dataKey="prod" name="Produtividade (sc/ha)" fill="#6366f1" radius={[8, 8, 0, 0]} barSize={26} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -20,11 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useUpdateUser, useDeleteUser, getListUsersQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { schema, FormContent } from "./usuarios";
+import { usersStore } from "@/lib/users-store";
+import { useUsersStore } from "@/hooks/use-users-store";
 import { 
-  DEMO_USERS, 
   DEMO_HARVESTS, 
   DEMO_TRANSPORTS, 
   DEMO_FUELINGS 
@@ -41,7 +40,10 @@ import {
   Pencil,
   Upload,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Plus,
+  Minus,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -69,33 +71,30 @@ export default function UsuarioDetalhes() {
   const queryClient = useQueryClient();
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isUserSheetOpen, setIsUserSheetOpen] = useState(false);
+  const { users: allUsers } = useUsersStore();
 
   const userForm = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema) as any,
     defaultValues: { name: "", email: "", role: "operador", salary: undefined, bonifications: [], absences: 0, status: "ativo" }
   });
 
-  const updateMutation = useUpdateUser({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Usuário atualizado com sucesso." });
-        closeUserForm();
-      },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
-    }
-  });
+  const updateMutation = {
+    mutate: (args: { id: number; data: any }) => {
+      usersStore.update(args.id, args.data);
+      toast({ title: "Usuário atualizado com sucesso." });
+      closeUserForm();
+    },
+    isPending: false,
+  };
 
-  const deleteMutation = useDeleteUser({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
-        toast({ title: "Usuário excluído com sucesso." });
-        setLocation("/usuarios");
-      },
-      onError: (err: any) => toast({ variant: "destructive", title: "Erro", description: err.message }),
-    }
-  });
+  const deleteMutation = {
+    mutate: (args: { id: number }) => {
+      usersStore.delete(args.id);
+      toast({ title: "Usuário excluído com sucesso." });
+      setLocation("/usuarios");
+    },
+    isPending: false,
+  };
 
   const openUserEdit = () => {
     if (user) {
@@ -130,11 +129,12 @@ export default function UsuarioDetalhes() {
   };
 
   const user = useMemo(() => {
-    if (isProfileRoute) {
-      return DEMO_USERS.find(u => u.id === currentUser?.id);
-    }
-    return DEMO_USERS.find(u => u.id === Number(id));
-  }, [id, isProfileRoute, currentUser]);
+    // Re-derive from reactive store so changes propagate
+    const found = isProfileRoute
+      ? allUsers.find((u: any) => u.id === currentUser?.id)
+      : allUsers.find((u: any) => u.id === Number(id));
+    return found;
+  }, [id, isProfileRoute, currentUser, allUsers]);
 
   const stats = useMemo(() => {
     if (!user) return null;
@@ -422,6 +422,63 @@ export default function UsuarioDetalhes() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+
+          {/* Painel de Faltas */}
+          {currentUser?.role === "admin" && (
+            <Card className="bg-card border rounded-2xl border-orange-200/60">
+              <CardHeader className="pb-3 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-orange-700">
+                    <AlertTriangle className="w-4 h-4" /> Controle de Faltas
+                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black text-orange-600">
+                      {(user as any)?.absences ?? 0}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">falta(s)</span>
+                    <div className="flex items-center gap-1 ml-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-8 h-8 rounded-full border-orange-200 text-orange-600 hover:bg-orange-50"
+                        onClick={() => {
+                          usersStore.removeAbsence(user!.id);
+                          toast({ title: "Falta removida." });
+                        }}
+                        disabled={((user as any)?.absences ?? 0) === 0}
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+                        onClick={() => {
+                          usersStore.addAbsence(user!.id);
+                          toast({ title: "Falta registrada.", description: `Total: ${((user as any)?.absences ?? 0) + 1}` });
+                        }}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {((user as any)?.absences ?? 0) === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">Nenhuma falta registrada neste período.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from({ length: (user as any)?.absences ?? 0 }).map((_, i) => (
+                      <div key={i} className="w-8 h-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 text-xs font-bold">
+                        {i + 1}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-card border rounded-2xl">
               <CardHeader className="pb-3 border-b border-border">
